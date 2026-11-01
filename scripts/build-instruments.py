@@ -3,7 +3,7 @@ import json,html,re
 from pathlib import Path
 root=Path(__file__).resolve().parents[1];dist=root/'dist'
 items=json.loads((root/'content/instruments.json').read_text());esc=lambda x:html.escape(str(x),quote=True)
-portraits={'اکبری':'akbari','جعفری':'jafari','علیرضایی':'alirezaei','کرمی':'karami','محسن اکبری':'mohsen-akbari','فروغی':'foroughi','رضایی':'rezaei'}
+portraits={'هوشیانی':'hooshiani','حاجیان':'hajian','سلیمانی':'soleimani','ریاحی':'riahi','اکبری':'akbari','جعفری':'jafari','علیرضایی':'alirezaei','کرمی':'karami','محسن اکبری':'mohsen-akbari','فروغی':'foroughi','رضایی':'rezaei'}
 credits=json.loads((dist/'instrument-photos/credits.json').read_text()) if (dist/'instrument-photos/credits.json').exists() else {}
 def photo(x,prefix=''):
  return prefix+'instrument-photos/'+x.get('imageKey',x['slug'])+'.webp'
