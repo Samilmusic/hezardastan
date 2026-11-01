@@ -1,0 +1,3 @@
+FluidR3_GM soundfont samples rendered by gleitz/midi-js-soundfonts. CC BY 3.0 https://creativecommons.org/licenses/by/3.0/
+Source: https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM/
+C4 MP3 samples extracted; pitched and arranged interactively in browser. Short educational sequences arranged for Hezarava; not recordings of academy teachers.
