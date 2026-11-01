@@ -3,3 +3,4 @@
 @font-face{font-family:'Vazir';font-style:normal;font-weight:400;font-display:swap;src:url('fonts/Vazir.woff') format('woff')}
 @font-face{font-family:'Vazir';font-style:normal;font-weight:500;font-display:swap;src:url('fonts/Vazir-Medium.woff') format('woff')}
 @font-face{font-family:'Vazir';font-style:normal;font-weight:700;font-display:swap;src:url('fonts/Vazir-Bold.woff') format('woff')}
+body{font-weight:500}input,select,textarea,button{font-family:inherit;font-weight:500}p{line-height:2}h1,h2,h3,h4,strong,b{font-weight:700}
