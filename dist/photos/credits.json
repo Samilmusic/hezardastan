@@ -1,0 +1,49 @@
+{
+  "guitar": {
+    "title": "A guitar leaning against a wall",
+    "source": "https://unsplash.com/photos/a-guitar-leaning-against-a-wall-HALqu3hIsuk",
+    "author": "Brent Ninaber",
+    "license": "Unsplash License",
+    "license_url": "https://unsplash.com/license"
+  },
+  "violin": {
+    "title": "File:Violin VL100.png",
+    "source": "https://commons.wikimedia.org/wiki/File:Violin_VL100.png",
+    "author": "Just plain Bill",
+    "license": "CC0",
+    "license_url": "http://creativecommons.org/publicdomain/zero/1.0/deed.en"
+  },
+  "piano": {
+    "title": "File:Steinway & Sons concert grand piano, model D-274, manufactured at Steinway's factory in Hamburg, Germany.png",
+    "source": "https://commons.wikimedia.org/wiki/File:Steinway_%26_Sons_concert_grand_piano,_model_D-274,_manufactured_at_Steinway%27s_factory_in_Hamburg,_Germany.png",
+    "author": "Steinway &amp; Sons, 10 Rondenbarg, Hamburg D-22525, Germany, eu.steinway.com.Steinway &amp; Sons, 1 Steinway Place, Long Island City, New York 11105, The United States, www.steinway.com.",
+    "license": "CC BY-SA 3.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/3.0",
+    "size": [
+      950,
+      915
+    ]
+  },
+  "tar": {
+    "title": "File:Persian Tar.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File:Persian_Tar.jpg",
+    "author": "Sandika7",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "size": [
+      589,
+      1050
+    ]
+  },
+  "trumpet": {
+    "title": "File:Yamaha Trumpet YTR-8335LA crop.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File:Yamaha_Trumpet_YTR-8335LA_crop.jpg",
+    "author": "Yamaha Corporation",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "size": [
+      950,
+      519
+    ]
+  }
+}
