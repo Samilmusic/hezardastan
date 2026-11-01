@@ -1,3 +1,5 @@
-@font-face{font-family:'Noto Naskh Arabic';font-weight:600;font-display:swap;src:url('fonts/noto-naskh-arabic-600.ttf') format('truetype')}
-@font-face{font-family:'Vazirmatn';font-weight:400;font-display:swap;src:url('fonts/vazirmatn-400.ttf') format('truetype')}
-@font-face{font-family:'Vazirmatn';font-weight:700;font-display:swap;src:url('fonts/vazirmatn-700.ttf') format('truetype')}
+@font-face{font-family:'Vazir';font-style:normal;font-weight:100;font-display:swap;src:url('fonts/Vazir-Thin.woff') format('woff')}
+@font-face{font-family:'Vazir';font-style:normal;font-weight:300;font-display:swap;src:url('fonts/Vazir-Light.woff') format('woff')}
+@font-face{font-family:'Vazir';font-style:normal;font-weight:400;font-display:swap;src:url('fonts/Vazir.woff') format('woff')}
+@font-face{font-family:'Vazir';font-style:normal;font-weight:500;font-display:swap;src:url('fonts/Vazir-Medium.woff') format('woff')}
+@font-face{font-family:'Vazir';font-style:normal;font-weight:700;font-display:swap;src:url('fonts/Vazir-Bold.woff') format('woff')}
