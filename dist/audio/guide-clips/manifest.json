@@ -1,0 +1,92 @@
+{
+  "style-iran": {
+    "source_name": "موسیقی ایرانی.mp3",
+    "source_duration": 9.432,
+    "file": "style-iran.mp3"
+  },
+  "style-classic": {
+    "source_name": "موسقی کلاسیک.mp3",
+    "source_duration": 9.432,
+    "file": "style-classic.mp3"
+  },
+  "style-pop": {
+    "source_name": "پاپ و ترانه.mp3",
+    "source_duration": 9.432,
+    "file": "style-pop.mp3"
+  },
+  "style-rhythm": {
+    "source_name": "ریتم و موسیقی کوبه ای.mp3",
+    "source_duration": 9.432,
+    "file": "style-rhythm.mp3"
+  },
+  "style-electronic": {
+    "source_name": "الکترونیک و ساخت موسیقی.mp3",
+    "source_duration": 7.752,
+    "file": "style-electronic.mp3"
+  },
+  "sound-pluck": {
+    "source_name": "صدای زخمه ای و شفاف.mp3",
+    "source_duration": 9.288,
+    "file": "sound-pluck.mp3"
+  },
+  "sound-bow": {
+    "source_name": "صدای کشیده و پیوسته.mp3",
+    "source_duration": 9.576,
+    "file": "sound-bow.mp3"
+  },
+  "sound-keys": {
+    "source_name": "ملودی و چند صدایی با کلاویه.mp3",
+    "source_duration": 9.576,
+    "file": "sound-keys.mp3"
+  },
+  "sound-wind": {
+    "source_name": "صدایی که با نفس شکل میگیرد.mp3",
+    "source_duration": 9.576,
+    "file": "sound-wind.mp3"
+  },
+  "sound-beat": {
+    "source_name": "ضربه ُ بافت و الگوی ریتم.mp3",
+    "source_duration": 9.816,
+    "file": "sound-beat.mp3"
+  },
+  "sound-voice": {
+    "source_name": "صدای انسان.mp3",
+    "source_duration": 9.816,
+    "file": "sound-voice.mp3"
+  },
+  "goal-accompany": {
+    "source_name": "اهنگ بزنم و همراهش بخوانم.mp3",
+    "source_duration": 9.816,
+    "file": "goal-accompany.mp3"
+  },
+  "goal-melody": {
+    "source_name": "ملودی دلخواهم را اجرا کنم.mp3",
+    "source_duration": 8.712,
+    "file": "goal-melody.mp3"
+  },
+  "goal-ensemble": {
+    "source_name": "در جمع یا گروه بنوازم .mp3",
+    "source_duration": 9.528,
+    "file": "goal-ensemble.mp3"
+  },
+  "goal-rhythm": {
+    "source_name": "ریتم بسازم و گروه را همراهی کنم.mp3",
+    "source_duration": 7.08,
+    "file": "goal-rhythm.mp3"
+  },
+  "goal-compose": {
+    "source_name": "موسیقی و تنظیم را بسازم.mp3",
+    "source_duration": 7.224,
+    "file": "goal-compose.mp3"
+  },
+  "goal-sing": {
+    "source_name": "بهتر و اصولی تر بخوانم.mp3",
+    "source_duration": 9.864,
+    "file": "goal-sing.mp3"
+  },
+  "melody-alternate": {
+    "source_name": "ملودی دلخواه را اجرا کنم.mp3",
+    "source_duration": 8.712,
+    "file": "melody-alternate.mp3"
+  }
+}
