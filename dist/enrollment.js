@@ -103,7 +103,7 @@ f.addEventListener('submit',e=>{f.querySelectorAll('.registration-field-error').
 for(const name of ['first_name','last_name','father_name','national_id','mobile','birth_date','address','password','confirmation']){const el=f.elements[name];if(!el.value.trim())fail(el,labels[name]+' را وارد کنید');}
 const national=f.elements.national_id,mobile=f.elements.mobile,birth=f.elements.birth_date;
 if(national.value.trim()&&!/^\d{10}$/.test(academyNumbers(national.value)))fail(national,'کد ملی باید ۱۰ رقم باشد؛ صفر ابتدای آن را هم بنویسید');
-const nationalValue=academyNumbers(national.value);if(/^\d{10}$/.test(nationalValue)){const sum=[...nationalValue.slice(0,9)].reduce((n,c,i)=>n+Number(c)*(10-i),0)%11;if(/^(\d)\1{9}$/.test(nationalValue)||Number(nationalValue[9])!==(sum<2?sum:11-sum))fail(national,'رقم کنترل کد ملی درست نیست؛ آن را با کارت ملی تطبیق دهید');}
+
 if(mobile.value.trim()&&!/^09\d{9}$/.test(academyNumbers(mobile.value)))fail(mobile,'شماره موبایل باید ۱۱ رقم و با ۰۹ شروع شود');
 if(birth.value.trim())try{const iso=AcademyDates.iso(birth.value);if(!iso||iso>AcademyDates.today())fail(birth,'تاریخ تولد معتبر نیست؛ مانند ۱۳۸۰/۰۵/۲۰ وارد کنید')}catch{fail(birth,'تاریخ تولد را کامل وارد کنید؛ مانند ۱۳۸۰/۰۵/۲۰')}
 if(f.elements.password.value&&f.elements.password.value.length<6)fail(f.elements.password,'رمز باید حداقل ۶ کاراکتر باشد');
