@@ -95,7 +95,7 @@ return enrollmentApiOneCourse('/rest/v1/rpc/approve_multi_enrollment',method,{da
 /* Readable field errors and accessible password visibility. */
 const registrationBeforeValidation=registration;
 registration=async function(){await registrationBeforeValidation();const f=$('form');if(!$('registration-teacher'))return;
-f.noValidate=true;f.elements.home_phone.required=true;
+f.noValidate=true;f.elements.home_phone.required=true;f.registrationValidationAbort?.abort();f.registrationValidationAbort=new AbortController();
 for(const name of ['password','confirmation']){const input=f.elements[name],wrap=document.createElement('div');wrap.style.cssText='display:flex;gap:8px;align-items:center';input.before(wrap);wrap.append(input);input.style.minWidth='0';input.style.flex='1';const eye=document.createElement('button');eye.type='button';eye.setAttribute('aria-label','نمایش '+(name==='password'?'رمز عبور':'تکرار رمز'));eye.setAttribute('aria-pressed','false');eye.innerHTML='<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>';eye.onclick=()=>{const visible=input.type==='password';input.type=visible?'text':'password';eye.setAttribute('aria-pressed',String(visible));eye.setAttribute('aria-label',(visible?'پنهان‌کردن':'نمایش')+' رمز عبور')};wrap.append(eye);}
 const labels={first_name:'نام',last_name:'نام خانوادگی',father_name:'نام پدر',home_phone:'تلفن منزل',national_id:'کد ملی',mobile:'شماره موبایل',birth_date:'تاریخ تولد',address:'نشانی منزل',password:'رمز عبور',confirmation:'تکرار رمز',rules:'پذیرش قوانین'};
 const report=(input,message)=>{const error=document.createElement('small');error.className='registration-field-error';error.style.cssText='display:block;color:#a1342f;font-weight:700;margin-top:6px';error.id='err-'+input.name;error.textContent=message;input.setAttribute('aria-invalid','true');input.setAttribute('aria-describedby',error.id);input.closest('label').append(error);};
@@ -111,7 +111,7 @@ if(f.elements.password.value&&f.elements.password.value.length<6)fail(f.elements
 if(f.elements.confirmation.value&&f.elements.password.value!==f.elements.confirmation.value)fail(f.elements.confirmation,'تکرار رمز با رمز عبور یکسان نیست');
 if(!f.elements.rules.checked)fail(f.elements.rules,'پذیرش قوانین آموزشگاه لازم است');
 if(first){e.preventDefault();e.stopImmediatePropagation();$('error').textContent='موارد مشخص‌شده در فرم را اصلاح کنید.';first.focus();first.scrollIntoView({block:'center',behavior:'smooth'});}
-},true);
+},{capture:true,signal:f.registrationValidationAbort.signal});
 };
 
 
@@ -137,6 +137,7 @@ const add=list.nextElementSibling,prior=add.onclick;add.onclick=()=>{prior();dra
 
 const registrationBeforePolish=registration;
 registration=async function(){await registrationBeforePolish();const list=$('registration-course-list');if(!list)return;
+if(list.parentElement.querySelector('.birth-parts'))return;
 const birth=$('form').elements.birth_date,group=document.createElement('div');group.className='birth-parts';birth.type='hidden';birth.required=false;birth.after(group);
 const todayYear=Number(academyNumbers(new Intl.DateTimeFormat('en-US-u-ca-persian',{year:'numeric',timeZone:'Asia/Tehran'}).formatToParts(new Date()).find(part=>part.type==='year').value));
 const parts=[['year','سال',Array.from({length:110},(_,i)=>todayYear-i)],['month','ماه',['فروردین','اردیبهشت','خرداد','تیر','مرداد','شهریور','مهر','آبان','آذر','دی','بهمن','اسفند']],['day','روز',Array.from({length:31},(_,i)=>i+1)]];
@@ -148,4 +149,16 @@ panel.onclick=e=>{const button=e.target.closest('[data-time]');if(!button||butto
 new MutationObserver(draw).observe(time,{childList:true,subtree:true,attributes:true});time.addEventListener('change',draw);draw();};
 [...list.children].forEach(repaint);new MutationObserver(()=>[...list.children].forEach(repaint)).observe(list,{childList:true});
 };
+
+/* A single opening operation owns the form, including all asynchronous setup. */
+let registrationOpeningTask=null;
+const registrationBuildOnce=registration;
+registration=function(){
+ if(registrationOpeningTask)return registrationOpeningTask;
+ if(modal.open&&$('registration-teacher')&&document.querySelector('.birth-parts'))return Promise.resolve();
+ registrationOpeningTask=registrationBuildOnce().finally(()=>{registrationOpeningTask=null});
+ return registrationOpeningTask;
+};
+const authScreenBeforeRegistrationCleanup=authScreen;
+authScreen=function(...args){const f=$('form');f.registrationValidationAbort?.abort();f.noValidate=false;return authScreenBeforeRegistrationCleanup(...args);};
 if(location.hash==='#register')registration();
