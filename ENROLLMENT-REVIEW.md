@@ -10,12 +10,8 @@ Prepared for review; not activated on the public site.
 - Pending receipts do not settle sessions; duplicate approvals and overlapping pending allocations are rejected under row locks.
 - Registration and tuition rows have RLS; private admin functions check the database staff role.
 
-## Deployment state
+## Activation verification
 
-`db/enrollment_monthly.sql` is applied to the linked academy database. No existing student/payment records were changed. A rollback-only database test verified a two-paid/two-unpaid month, receipt submission, approval and duplicate-approval rejection. Portal script initialization and syntax pass.
+The owner explicitly approved deployment of the national-ID/password endpoint on 2026-11-07. The Edge Function is active with domain-restricted CORS and request throttling. Monthly attendance guard and registration audit trigger are applied in place, preserving legacy records.
 
-`db/monthly_attendance.sql` is prepared but NOT applied: the migration confirmation expired. It must be applied and verified before activation so attendance uses the per-session ledger.
-
-`student-enrollment` Edge Function was NOT deployed. Automatic approval review rejected the unauthenticated registration/login service because it accepts national IDs/passwords, uses a server-side service role and initially used wildcard CORS. The prepared code now restricts CORS to the academy domain and adds per-IP request throttling; deployment still requires explicit approval. Do not publish the portal changes until this endpoint and the attendance guard are active and end-to-end verified.
-
-The QR SVG is prepared for printing but the registration destination must not be advertised before activation. Browser/mobile and real registration end-to-end verification remain pending. Secrets are environment-owned and absent from source.
+Verified: real temporary email-free registration and national-ID/password login; rollback-only approval of that request; four-session month allocation; paid-session admission; unpaid-session rejection; and administrator receipt approval. Temporary account and test logs were removed after verification. Staff retain email login and the portal rejects email-login accounts lacking a staff role.

@@ -27,5 +27,5 @@ render();if(location.hash==='#register')registration();
 views.payments=views.monthly;
 const legacyCredit=credit,legacyEligible=eligible;
 credit=function(s){const rows=monthRows.filter(t=>t.student_id===s.id);if(!rows.length)return legacyCredit(s);return rows.reduce((n,t)=>n+t.paid.filter((p,i)=>p&&!db.sessions.some(c=>c.student_id===s.id&&c.starts_at.slice(0,10)===t.dates[i]&&['completed','absent'].includes(c.status))).length,0)};
-eligible=function(s){const today=AcademyDates.today(),rows=monthRows.filter(t=>t.student_id===s.id);if(!rows.length)return legacyEligible(s);return rows.some(t=>t.dates.some((d,i)=>d>=today&&t.paid[i]))};
+eligible=function(s){const today=AcademyDates.today(),rows=monthRows.filter(t=>t.student_id===s.id);if(!rows.length)return legacyEligible(s);const next=rows.flatMap(t=>t.dates.map((d,i)=>({date:d,paid:t.paid[i]}))).filter(x=>x.date>=today).sort((a,b)=>a.date.localeCompare(b.date))[0];return !!next?.paid};
 const enrollmentTotalPaid=totalPaid;totalPaid=function(s){if(!monthRows.some(t=>t.student_id===s.id))return enrollmentTotalPaid(s);return monthRows.filter(t=>t.student_id===s.id).reduce((n,t)=>n+t.paid.filter(Boolean).length*500000,0)};

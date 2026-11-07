@@ -1,9 +1,8 @@
 create function academy_private.enrollment_log() returns trigger language plpgsql security definer set search_path='' as $$begin insert into public.academy_activity(actor,action,entity_id) values(new.user_id,'registration_submitted',new.id);return new;end$$;
 revoke all on function academy_private.enrollment_log() from public,anon,authenticated;
 create trigger enrollment_log after insert on public.enrollment_requests for each row execute function academy_private.enrollment_log();
--- Preserve the original term guard for records that have not been migrated.
-alter function public.session_guard() rename to legacy_session_guard;
-create function public.session_guard() returns trigger language plpgsql security definer set search_path='' as $$declare t public.monthly_tuition;i int;credits int;debt bigint;begin
+-- Replace the guard in place; preserve its trigger and legacy fallback.
+create or replace function public.session_guard() returns trigger language plpgsql security definer set search_path='' as $$declare t public.monthly_tuition;i int;credits int;debt bigint;begin
 if TG_OP='UPDATE' and old.status<>'scheduled' then raise exception 'جلسه نهایی شده قابل تغییر نیست';end if;
 if new.status in('completed','absent') then
  perform 1 from public.students where id=new.student_id for update;
@@ -16,7 +15,7 @@ if new.status in('completed','absent') then
  end if;
 end if;new.teacher_share:=case when new.status='completed' then 300000 else 0 end;return new;end$$;
 -- Rebind the existing attendance trigger to the new implementation.
-drop trigger if exists session_guard on public.sessions;
 
-create trigger session_guard before insert or update on public.sessions for each row execute function public.session_guard();
+
+
 revoke all on function public.session_guard() from public,anon,authenticated;
