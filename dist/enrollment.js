@@ -111,4 +111,12 @@ if(first){e.preventDefault();e.stopImmediatePropagation();$('error').textContent
 },true);
 };
 
+
+const registrationBeforeDays=registration;
+registration=async function(){await registrationBeforeDays();const list=$('registration-course-list');if(!list)return;
+const bind=box=>{if(box.dataset.daysBound)return;box.dataset.daysBound='true';const selects=[...box.querySelectorAll('select')];const find=key=>selects.find(e=>(e.dataset.courseKey||e.name)===key);const teacherSelect=find('teacher_id'),subjectSelect=find('subject'),daySelect=find('weekday');
+const updateDays=()=>{const teacher=registrationTeachers.find(t=>t.id===teacherSelect.value),allowed=teacher?.subject_days?.[subjectSelect.value]||[],old=daySelect.value;daySelect.innerHTML=allowed.length?allowed.map(i=>'<option value="'+i+'">'+days[i]+'</option>').join(''):'<option value="">برای تعیین روز این رشته با دفتر هماهنگ کنید</option>';daySelect.required=true;if(allowed.includes(Number(old)))daySelect.value=old;};
+teacherSelect.addEventListener('change',updateDays);subjectSelect.addEventListener('change',updateDays);updateDays();};
+[...list.children].forEach(bind);const add=list.nextElementSibling,oldAdd=add.onclick;add.onclick=()=>{oldAdd();[...list.children].forEach(bind);};
+};
 if(location.hash==='#register')registration();
