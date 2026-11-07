@@ -1,5 +1,5 @@
 /* Supabase owns persistence, token rotation and cross-tab session events. */
-const portalAuth=AcademyAuth.createPortalAuth(URL,KEY);
+const portalAuth=AcademyAuth.createPortalAuth(SUPABASE_ENDPOINT,KEY);
 window.portalSessionReady=true;
 let portalRefreshTask=null,portalRestoreTask=null,portalLastRefresh=0;
 function clearPortalAccount(){
