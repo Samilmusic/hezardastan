@@ -137,7 +137,7 @@ const add=list.nextElementSibling,prior=add.onclick;add.onclick=()=>{prior();dra
 const registrationBeforePolish=registration;
 registration=async function(){await registrationBeforePolish();const list=$('registration-course-list');if(!list)return;
 const birth=$('form').elements.birth_date,group=document.createElement('div');group.className='birth-parts';birth.type='hidden';birth.required=false;birth.after(group);
-const todayYear=Number(new Intl.DateTimeFormat('en-US-u-ca-persian',{year:'numeric'}).format(new Date()));
+const todayYear=Number(academyNumbers(new Intl.DateTimeFormat('en-US-u-ca-persian',{year:'numeric',timeZone:'Asia/Tehran'}).formatToParts(new Date()).find(part=>part.type==='year').value));
 const parts=[['year','سال',Array.from({length:110},(_,i)=>todayYear-i)],['month','ماه',['فروردین','اردیبهشت','خرداد','تیر','مرداد','شهریور','مهر','آبان','آذر','دی','بهمن','اسفند']],['day','روز',Array.from({length:31},(_,i)=>i+1)]];
 parts.forEach(([key,label,values])=>{const select=document.createElement('select');select.setAttribute('aria-label',label+' تولد');select.dataset.birth=key;select.innerHTML='<option value="">'+label+'</option>'+values.map((v,i)=>'<option value="'+(key==='month'?i+1:v)+'">'+(typeof v==='number'?v.toLocaleString('fa-IR',{useGrouping:false}):v)+'</option>').join('');group.append(select);});
 group.onchange=()=>{const values=[...group.querySelectorAll('select')].map(s=>s.value);birth.value=values.every(Boolean)?values[0]+'/'+values[1].padStart(2,'0')+'/'+values[2].padStart(2,'0'):'';};
