@@ -5,7 +5,7 @@ let portalRefreshTask=null,portalRestoreTask=null,portalLastRefresh=0;
 function clearPortalAccount(){
  token=null;uid=null;admin=false;office=false;role='guest';currentTeacherId=null;page='login';
  for(const key of Object.keys(db))db[key]=[];
- enrollmentRows=[];monthRows=[];receiptRows=[];monthCalendar=[];activityRows=[];bankAccount=null;
+ enrollmentRows=[];monthRows=[];receiptRows=[];monthCalendar=[];activityRows=[];bankAccount=null;learnerProfiles=[];learnerListMode='active';
  $('loginbtn').textContent='ورود به حساب';$('loginbtn').onclick=login;
  $('notice').textContent='برای مشاهدهٔ اطلاعات، وارد حساب خود شوید.';
  $('portal-refresh').hidden=true;$('portal-refresh-status').textContent='';
