@@ -3,7 +3,7 @@ let learnerProfiles=[],learnerListMode='active';
 const learnerKey=s=>s.profile_id||s.national_id||s.id;
 const activeClasses=()=>db.students.filter(s=>!s.archived_at);
 const learnerGroups=list=>Array.from(list.reduce((map,s)=>{const key=learnerKey(s);if(!map.has(key))map.set(key,[]);map.get(key).push(s);return map},new Map()).values());
-const classesFor=s=>db.students.filter(c=>learnerKey(c)===learnerKey(s));
+const classesFor=s=>db.students.filter(c=>learnerKey(c)===learnerKey(s)&&Boolean(c.archived_at)===Boolean(s.archived_at));
 const classLabel=s=>`${s.subject||'کلاس'} · استاد ${teacher(s.teacher_id)} · ${days[s.weekday]} ${s.class_time?.slice(0,5)||''}`;
 const reloadBeforeClasses=reload;
 reload=async function(){learnerProfiles=role!=='teacher'?await api('/rest/v1/learner_profiles?select=*&order=created_at'):[];return reloadBeforeClasses()};
@@ -26,11 +26,11 @@ function addLearnerClass(id){if(!admin)return;const s=db.students.find(c=>c.id==
  const dates=()=>{const values=tuitionDates(f.elements.month_key.value,f.elements.weekday.value);[1,2,3,4].forEach(i=>{const label=f.elements['p'+i].parentElement;let small=label.querySelector('small');if(!small){small=document.createElement('small');label.append(small)}small.textContent=values[i-1]?AcademyDates.show(values[i-1]):''})};f.elements.month_key.onchange=dates;f.elements.weekday.onchange=dates;dates();f.querySelector('[type=submit]').textContent='ثبت کلاس و شهریهٔ مستقل';
 }
 function archiveLearner(id,restore=false){if(!admin)return;const s=db.students.find(c=>c.id===id);if(!s)return;
- form(restore?'بازیابی '+full(s):'حذف '+full(s)+' از فهرست فعال',[field('reason',restore?'دلیل بازیابی':'دلیل حذف؛ الزامی')],async d=>{if(d.reason.trim().length<3)throw Error('دلیل را حداقل در ۳ حرف وارد کنید');await api('/rest/v1/rpc/learner_action','POST',{op:restore?'restore':'archive',data:{student_id:id,reason:d.reason.trim()}});learnerListMode=restore?'active':'archived'});
+ form(restore?'بازیابی '+full(s):'حذف '+full(s)+' از فهرست فعال',[field('reason',restore?'دلیل بازیابی':'دلیل حذف؛ الزامی')],async d=>{if(d.reason.trim().length<3)throw Error('دلیل را حداقل در ۳ حرف وارد کنید');await api('/rest/v1/rpc/learner_action','POST',{op:restore?'restore':'archive',data:{student_id:id,reason:d.reason.trim()}});learnerListMode='active'});
  const f=$('form'),area=document.createElement('textarea');area.name='reason';area.required=true;area.minLength=3;area.maxLength=1000;area.rows=3;f.elements.reason.replaceWith(area);
  const info=document.createElement('p');info.className='class-form-help';info.textContent=restore?'همهٔ کلاس‌های هنرجو بازیابی می‌شوند؛ اگر زمان‌ها اشغال شده باشند، بازیابی انجام نمی‌شود.':`${money(classesFor(s).length)} کلاس از فهرست فعال کنار می‌رود. سوابق شهریه، رسیدها، حضور و دستمزد پاک نمی‌شوند. دلیل و حساب مدیر در گزارش ثبت می‌شود.`;$('fields').prepend(info);
  const button=f.querySelector('[type=submit]');button.textContent=restore?'بازیابی هنرجو':'ثبت دلیل و حذف از فعال‌ها';if(!restore)button.classList.add('archive-submit');area.focus();
 }
 const portalBeforeClasses=views.portal;
-views.portal=function(){const courses=db.students.filter(s=>s.user_id===uid);if(!courses.length)return portalBeforeClasses();return title('کلاس‌های من','هر کلاس، برنامه و شهریهٔ جدا دارد')+`<div class="hero"><div><h2>${esc(full(courses[0]))}</h2><p>${money(courses.filter(c=>!c.archived_at).length)} کلاس فعال · یک حساب هنرجو</p></div></div><div class="learner-class-list">${courses.map(c=>classCard(c)).join('')}</div><div class="card"><h3>اطلاعیه‌ها</h3>${db.notices.map(n=>`<p>${esc(n.message)}</p>`).join('')||'<p>اطلاعیه‌ای ثبت نشده است.</p>'}<button onclick="go('monthly')">شهریه و رسیدهای من</button></div>`};
+views.portal=function(){const courses=db.students.filter(s=>s.user_id===uid&&!s.archived_at);if(!courses.length)return portalBeforeClasses();return title('کلاس‌های من','هر کلاس، برنامه و شهریهٔ جدا دارد')+`<div class="hero"><div><h2>${esc(full(courses[0]))}</h2><p>${money(courses.filter(c=>!c.archived_at).length)} کلاس فعال · یک حساب هنرجو</p></div></div><div class="learner-class-list">${courses.map(c=>classCard(c)).join('')}</div><div class="card"><h3>اطلاعیه‌ها</h3>${db.notices.map(n=>`<p>${esc(n.message)}</p>`).join('')||'<p>اطلاعیه‌ای ثبت نشده است.</p>'}<button onclick="go('monthly')">شهریه و رسیدهای من</button></div>`};
 render();

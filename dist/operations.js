@@ -5,7 +5,7 @@ function shiftISO(day,n){const d=new Date(day+'T12:00:00Z');d.setUTCDate(d.getUT
 function dailyClassRows(day=attendanceDay){
  const rows=db.sessions.filter(c=>tehranDay(c.starts_at)===day).map(c=>{const student=db.students.find(s=>s.id===c.student_id),t=monthRows.find(t=>t.student_id===c.student_id&&t.dates.includes(day));return {day,student,session:c,time:new Date(c.starts_at).toLocaleTimeString('en-GB',{timeZone:'Asia/Tehran',hour:'2-digit',minute:'2-digit'}),paid:t?!!t.paid[t.dates.indexOf(day)]:!!(student&&eligible(student))}});
  for(const t of monthRows){if(!t.published)continue;const i=t.dates.indexOf(day),s=db.students.find(s=>s.id===t.student_id);if(i<0||!s||s.archived_at||rows.some(r=>r.student?.id===s.id))continue;rows.push({day,student:s,time:s.class_time.slice(0,5),paid:!!t.paid[i],session:null})}
- return rows.filter(r=>r.student&&(!r.student.archived_at||r.session)).sort((a,b)=>a.time.localeCompare(b.time));
+ return rows.filter(r=>r.student&&!r.student.archived_at).sort((a,b)=>a.time.localeCompare(b.time));
 }
 function attendanceRange(){if(attendanceMode==='month'){const m=monthCalendar.find(m=>m.starts_on<=attendanceDay&&m.ends_on>=attendanceDay);if(m)return [m.starts_on,m.ends_on];const key=AcademyDates.show(attendanceDay).replace(/[۰-۹]/g,c=>'۰۱۲۳۴۵۶۷۸۹'.indexOf(c)).slice(0,7),first=AcademyDates.iso(key+'/01');let last=first;while(AcademyDates.show(shiftISO(last,1)).slice(0,7)===AcademyDates.show(first).slice(0,7))last=shiftISO(last,1);return [first,last]}
  if(attendanceMode==='week'){const dow=new Date(attendanceDay+'T12:00:00Z').getUTCDay(),first=shiftISO(attendanceDay,-((dow+1)%7));return [first,shiftISO(first,6)]}return [attendanceDay,attendanceDay]}
