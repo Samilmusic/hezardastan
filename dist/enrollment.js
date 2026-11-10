@@ -15,8 +15,8 @@ const oldDashboard=views.dashboard;views.dashboard=function(){return `<div class
 menu.push(['enrollments','♧','ثبت‌نام‌ها و گزارش فعالیت'],['monthly','▦','جدول شهریه ماهانه']);
 function goMonthly(){go('monthly')}
 views.enrollments=function(){if(!admin)return '';return title('ثبت‌نام‌ها و گزارش فعالیت','درخواست هنرجو تا تأیید نهایی، برنامه قطعی ایجاد نمی‌کند')+`<div class="card enrollment-list-card">${table(['هنرجو','کلاس‌های درخواستی','وضعیت',''],enrollmentRows.map(r=>`<tr><td><div class="enrollment-student"><strong>${esc(r.details.first_name+' '+r.details.last_name)}</strong><small dir="ltr">${esc(r.national_id)}</small></div></td><td><div class="enrollment-courses">${(r.details.courses||[r.details]).map(c=>`<div class="enrollment-course"><span class="enrollment-course-name">استاد ${esc(teacher(c.teacher_id))}<span class="enrollment-subject">${esc(c.subject)}</span></span><span class="enrollment-course-time">${days[c.weekday]} <b dir="ltr">${esc(c.class_time)}</b></span></div>`).join('')}</div></td><td><span class="enrollment-status ${['pending','approved','rejected'].includes(r.status)?r.status:'pending'}">${esc(({pending:'منتظر تأیید',approved:'تأییدشده',rejected:'ردشده'})[r.status]||r.status)}</span>${r.review_note?`<small class="enrollment-review-note">${esc(r.review_note)}</small>`:''}</td><td>${r.status==='pending'?`<button class="enrollment-review-button" onclick="reviewEnrollment('${r.id}')" aria-label="بررسی و اصلاح ثبت‌نام ${esc(r.details.first_name+' '+r.details.last_name)}">بررسی <span aria-hidden="true">←</span></button>`:'<span class="enrollment-reviewed">بررسی‌شده</span>'}</td></tr>`))}</div><div class="card"><h3>گزارش فعالیت</h3>${table(['عملیات','تاریخ'],activityRows.map(a=>`<tr><td>${esc(({approve:'تأیید ثبت‌نام',reject:'رد ثبت‌نام',month:'تنظیم و انتشار شهریه',receipt_submitted:'ارسال رسید',receipt_review:'بررسی رسید',add_class:'افزودن کلاس',archive_student:'حذف هنرجو از فعال‌ها',restore_student:'بازیابی هنرجو'})[a.action]||a.action)}${a.details?.student_name?'<p>'+esc(a.details.student_name)+'</p>':''}${a.details?.reason?'<p class="activity-reason">'+esc(a.details.reason)+'</p>':''}</td><td>${new Date(a.created_at).toLocaleString('fa-IR')}</td></tr>`))}</div>`};
-function tuitionFields(){return [{...field('discount_percent','تخفیف این ماه / درصد','number'),required:true},field('month_key','ماه شهریه','text',monthCalendar.map(m=>[m.key,monthLabel(m.key)])),...[1,2,3,4].map(i=>field('p'+i,'جلسهٔ '+money(i),'text',[[false,'پرداخت‌نشده'],[true,'پرداخت‌شده']])),{...field('note','توضیحات مدیر / مرجع دفتر'),required:false}]}
-function defaultMonth(){const today=AcademyDates.today();return monthCalendar.find(m=>m.starts_on<=today&&m.ends_on>=today)?.key||monthCalendar[0]?.key}
+function tuitionFields(){return [{...field('discount_percent','تخفیف این ماه / درصد','number'),required:true},field('month_key','ماه شهریه','text',monthCalendar.filter(m=>m.starts_on>=AcademyDates.start).map(m=>[m.key,monthLabel(m.key)])),...[1,2,3,4].map(i=>field('p'+i,'جلسهٔ '+money(i),'text',[[false,'پرداخت‌نشده'],[true,'پرداخت‌شده']])),{...field('note','توضیحات مدیر / مرجع دفتر'),required:false}]}
+function defaultMonth(){const today=AcademyDates.today();return monthCalendar.find(m=>m.starts_on>=AcademyDates.start&&m.starts_on<=today&&m.ends_on>=today)?.key||monthCalendar.find(m=>m.starts_on>=AcademyDates.start)?.key}
 function tuitionDates(key,weekday){const m=monthCalendar.find(m=>m.key===key);if(!m)return [];const dates=[];const d=new Date(m.starts_on+'T12:00:00Z');for(;d.toISOString().slice(0,10)<=m.ends_on&&dates.length<4;d.setUTCDate(d.getUTCDate()+1))if(d.getUTCDay()===Number(weekday))dates.push(d.toISOString().slice(0,10));return dates}
 function groupTuitionFields(){
  const f=$('form'),box=document.createElement('fieldset');box.className='tuition-setup';
@@ -174,15 +174,19 @@ if(location.hash==='#register')registration();
 // Financial reporting includes approved receipts and manually settled monthly slots.
 // A receipt covers its slots once; pending/rejected receipts never count as income.
 function dashboardPayments(){
- const rows=confirmedPayments().map(p=>({...p,created_at:p.paid_on||p.created_at}));
+ const inScope=sid=>{const s=db.students.find(s=>s.id===sid);return !!s&&(!s.archived_at||s.archived_at.slice(0,10)>=AcademyDates.start)};
+ const validMonth=t=>t&&t.month_key>=financeMonthKey(AcademyDates.start)&&inScope(t.student_id);
+ const rows=confirmedPayments().filter(p=>inScope(p.student_id)&&(p.paid_on||p.created_at||'').slice(0,10)>=AcademyDates.start).map(p=>({...p,created_at:p.paid_on||p.created_at}));
  const covered=new Map();
  for(const r of receiptRows){
-  if(r.status!=='approved')continue;
-  rows.push({id:'monthly-receipt:'+r.id,student_id:monthRows.find(t=>t.id===r.tuition_id)?.student_id,amount:Number(r.amount)||0,created_at:r.reviewed_at||r.created_at});
+  const tuition=monthRows.find(t=>t.id===r.tuition_id);
+  if(r.status!=='approved'||!validMonth(tuition))continue;
+  rows.push({month_key:tuition.month_key,id:'monthly-receipt:'+r.id,student_id:monthRows.find(t=>t.id===r.tuition_id)?.student_id,amount:Number(r.amount)||0,created_at:r.reviewed_at||r.created_at});
   if(!covered.has(r.tuition_id))covered.set(r.tuition_id,new Set());
   for(const slot of r.slots||[])covered.get(r.tuition_id).add(Number(slot));
  }
  for(const t of monthRows){
+  if(!validMonth(t))continue;
   const slots=(t.paid||[]).map((paid,i)=>paid&&!covered.get(t.id)?.has(i+1)?i:-1).filter(i=>i>=0);
   if(slots.length)rows.push({id:'monthly-manual:'+t.id,student_id:t.student_id,amount:slots.length*tuitionUnit(t),created_at:t.dates?.[0]||null,month_key:t.month_key,manual:true});
  }
