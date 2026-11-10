@@ -196,9 +196,9 @@ function financeMonthKey(date){
  return parts.year+'/'+parts.month.padStart(2,'0');
 }
 function dashboardFinanceChart(){
- const income=dashboardPayments(),expenses=db.expenses||[],start=financeMonthKey(AcademyDates.start),now=financeMonthKey(AcademyDates.today());
+ const income=dashboardPayments(),expenses=db.expenses||[],start='1405/09',now=financeMonthKey(AcademyDates.today());
  const index=k=>{const [y,m]=k.split('/').map(Number);return y*12+m-1},key=n=>Math.floor(n/12)+'/'+String(n%12+1).padStart(2,'0');
- const end=index(now),first=Math.max(index(start),end-5),months=[];
+ const end=Math.max(index(now),index(start)),first=Math.max(index(start),end-5),months=[];
  for(let i=first;i<=end;i++)months.push(key(i));
  const sum=(rows,k)=>rows.filter(p=>(p.month_key?p.month_key.split('/').map((v,i)=>i?String(Number(v)).padStart(2,'0'):String(Number(v))).join('/'):financeMonthKey(p.expense_date||p.created_at))===k).reduce((n,p)=>n+Number(p.amount||0),0);
  const points=months.map(k=>({key:k,income:sum(income,k),expense:sum(expenses,k)})),max=Math.max(1,...points.flatMap(p=>[p.income,p.expense]));
