@@ -171,3 +171,20 @@ const reviewWithAddClass=reviewEnrollment;
 reviewEnrollment=function(id){reviewWithAddClass(id);if(!admin||!$('form').elements.teacher_id)return;const button=document.createElement('button');button.type='button';button.textContent='＋ افزودن کلاس دیگر به این درخواست';button.onclick=()=>{const index=document.querySelectorAll('.review-extra-course').length,box=document.createElement('fieldset');box.className='review-extra-course';box.innerHTML='<legend>کلاس '+(index+2).toLocaleString('fa-IR')+'</legend>';for(const [key,name] of [['teacher_id','teacher_id'],['subject','subject'],['weekday','weekday'],['class_time','class_time']]){const label=$('form').elements[name].closest('label').cloneNode(true),select=label.querySelector('select');select.dataset.courseKey=key;select.name='review_extra_'+index+'_'+key;select.removeAttribute('id');box.append(label);}const teacher=box.querySelector('[data-course-key="teacher_id"]'),subject=box.querySelector('[data-course-key="subject"]');teacher.onchange=()=>{subject.innerHTML=(db.teachers.find(t=>t.id===teacher.value)?.subjects||[]).map(v=>'<option>'+esc(v)+'</option>').join('')};teacher.onchange();$('fields').append(box);};$('fields').append(button);
 };
 if(location.hash==='#register')registration();
+// Financial reporting includes approved receipts and manually settled monthly slots.
+// A receipt covers its slots once; pending/rejected receipts never count as income.
+function dashboardPayments(){
+ const rows=confirmedPayments().map(p=>({...p,created_at:p.paid_on||p.created_at}));
+ const covered=new Map();
+ for(const r of receiptRows){
+  if(r.status!=='approved')continue;
+  rows.push({id:'monthly-receipt:'+r.id,amount:Number(r.amount)||0,created_at:r.reviewed_at||r.created_at});
+  if(!covered.has(r.tuition_id))covered.set(r.tuition_id,new Set());
+  for(const slot of r.slots||[])covered.get(r.tuition_id).add(Number(slot));
+ }
+ for(const t of monthRows){
+  const slots=(t.paid||[]).map((paid,i)=>paid&&!covered.get(t.id)?.has(i+1)?i:-1).filter(i=>i>=0);
+  if(slots.length)rows.push({id:'monthly-manual:'+t.id,amount:slots.length*tuitionUnit(t),created_at:t.dates?.[0]||null,manual:true});
+ }
+ return rows;
+}
