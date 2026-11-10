@@ -184,7 +184,23 @@ function dashboardPayments(){
  }
  for(const t of monthRows){
   const slots=(t.paid||[]).map((paid,i)=>paid&&!covered.get(t.id)?.has(i+1)?i:-1).filter(i=>i>=0);
-  if(slots.length)rows.push({id:'monthly-manual:'+t.id,amount:slots.length*tuitionUnit(t),created_at:t.dates?.[0]||null,manual:true});
+  if(slots.length)rows.push({id:'monthly-manual:'+t.id,amount:slots.length*tuitionUnit(t),created_at:t.dates?.[0]||null,month_key:t.month_key,manual:true});
  }
  return rows;
+}
+
+function financeMonthKey(date){
+ if(!date)return null;
+ const d=new Date(date.length===10?date+'T12:00:00Z':date);if(Number.isNaN(d.getTime()))return null;
+ const parts=Object.fromEntries(new Intl.DateTimeFormat('en-US-u-ca-persian',{year:'numeric',month:'2-digit',timeZone:'Asia/Tehran'}).formatToParts(d).map(p=>[p.type,p.value]));
+ return parts.year+'/'+parts.month.padStart(2,'0');
+}
+function dashboardFinanceChart(){
+ const income=dashboardPayments(),expenses=db.expenses||[],start=financeMonthKey(AcademyDates.start),now=financeMonthKey(AcademyDates.today());
+ const index=k=>{const [y,m]=k.split('/').map(Number);return y*12+m-1},key=n=>Math.floor(n/12)+'/'+String(n%12+1).padStart(2,'0');
+ const end=index(now),first=Math.max(index(start),end-5),months=[];
+ for(let i=first;i<=end;i++)months.push(key(i));
+ const sum=(rows,k)=>rows.filter(p=>(p.month_key?p.month_key.split('/').map((v,i)=>i?String(Number(v)).padStart(2,'0'):String(Number(v))).join('/'):financeMonthKey(p.expense_date||p.created_at))===k).reduce((n,p)=>n+Number(p.amount||0),0);
+ const points=months.map(k=>({key:k,income:sum(income,k),expense:sum(expenses,k)})),max=Math.max(1,...points.flatMap(p=>[p.income,p.expense]));
+ return `<div class="card finance-chart-card"><div class="cardhead"><div><h3>درآمد و هزینهٔ آموزشگاه</h3><span class="sub">از ${monthLabel(months[0]||start)} · تقویم شمسی</span></div><span class="finance-chart-unit">تومان</span></div><div class="finance-chart-legend"><span><i class="finance-income-dot"></i>شهریه دریافتی</span><span><i class="finance-expense-dot"></i>هزینه‌ها</span></div><div class="finance-month-list">${points.map(p=>`<div class="finance-month"><strong>${monthLabel(p.key)}</strong><div class="finance-month-metrics"><div class="finance-metric"><span>دریافتی</span><div class="finance-track"><i style="width:${p.income/max*100}%"></i></div><b>${money(p.income)}</b></div><div class="finance-metric expense"><span>هزینه</span><div class="finance-track"><i style="width:${p.expense/max*100}%"></i></div><b>${money(p.expense)}</b></div></div></div>`).join('')}</div><p class="finance-chart-note">پرداخت دستی: ماه شهریه · رسید تأییدشده: تاریخ تأیید</p></div>`;
 }
