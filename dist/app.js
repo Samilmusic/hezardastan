@@ -50,7 +50,7 @@ const staff=await api('/rest/v1/academy_staff?select=role,teacher_id&user_id=eq.
 if(!staff[0]&&!/^[0-9]{10}@students\.avayehezardastan\.com$/.test(a.user.email||'')){await portalAuth.signOut({scope:'local'});const denied=Error('ورود با ایمیل فقط برای کارکنان است؛ هنرجویان با کد ملی وارد شوند.');denied.status=403;throw denied;}
 role=staff[0]?.role||'student';currentTeacherId=staff[0]?.teacher_id||null;admin=role==='admin';office=admin||role==='secretary';page=admin?'dashboard':role==='secretary'?'students':role==='teacher'?'schedule':'portal';
 if(restoring){try{page=sessionStorage.getItem('academy-page')||page}catch{}}
-$('notice').textContent='متصل به حساب واقعی · '+({admin:'مدیر',secretary:'منشی',teacher:'استاد',student:'هنرجو'})[role];
+$('notice').textContent='';$('notice').hidden=true;
 $('loginbtn').textContent='خروج';$('loginbtn').onclick=portalSignOut;
 authPending=null;if(modal.open)modal.close();
 try{await reload()}catch(e){render();toast('ورود برقرار است؛ دریافت اطلاعات ناموفق بود. «به‌روزرسانی» را بزنید.');}

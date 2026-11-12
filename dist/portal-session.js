@@ -7,7 +7,7 @@ function clearPortalAccount(){
  for(const key of Object.keys(db))db[key]=[];
  enrollmentRows=[];monthRows=[];receiptRows=[];monthCalendar=[];activityRows=[];bankAccount=null;learnerProfiles=[];learnerListMode='active';
  $('loginbtn').textContent='ورود به حساب';$('loginbtn').onclick=login;
- $('notice').textContent='برای مشاهدهٔ اطلاعات، وارد حساب خود شوید.';
+ $('notice').hidden=false;$('notice').textContent='برای مشاهدهٔ اطلاعات، وارد حساب خود شوید.';
  $('portal-refresh').hidden=true;$('portal-refresh-status').textContent='';
  if(modal.open)modal.close();render();
 }
@@ -37,7 +37,7 @@ async function portalRestore(){
    if(e.status===401||e.status===403||e.name==='AuthSessionMissingError'){
     await portalAuth.signOut({scope:'local'});clearPortalAccount();toast('نشست ورود پایان یافته؛ دوباره وارد شوید.');
    }else{
-    $('notice').textContent='بازیابی حساب به اینترنت نیاز دارد؛ به‌روزرسانی را بزنید.';
+    $('notice').hidden=false;$('notice').textContent='بازیابی حساب به اینترنت نیاز دارد؛ به‌روزرسانی را بزنید.';
     $('portal-refresh').hidden=false;toast('ارتباط برقرار نشد؛ ورود ذخیره‌شده پاک نشده است.');
    }
   }
