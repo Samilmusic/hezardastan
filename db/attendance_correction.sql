@@ -12,6 +12,7 @@ create policy attendance_corrections_manager_read on public.attendance_correctio
 create table academy_private.attendance_correction_context(tx bigint,session_id uuid,actor uuid not null,primary key(tx,session_id));
 alter table academy_private.attendance_correction_context enable row level security;
 revoke all on academy_private.attendance_correction_context from public,anon,authenticated;
+
 CREATE OR REPLACE FUNCTION public.session_guard()
  RETURNS trigger
  LANGUAGE plpgsql
@@ -31,6 +32,7 @@ if new.status in('completed','absent') then
  if credits<=0 or debt>0 then raise exception 'شهریه تأییدشده کافی نیست';end if;
  end if;
 end if;new.teacher_share:=case when new.status='completed' then 300000 else 0 end;return new;end$function$
+
 ;
 create function academy_private.correct_absence(target_session uuid,reason text,request_key uuid) returns jsonb language plpgsql security definer set search_path='' as $$
 declare who uuid:=auth.uid();s public.sessions;c public.attendance_corrections;old_share bigint;
