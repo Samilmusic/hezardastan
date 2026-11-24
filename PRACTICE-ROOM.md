@@ -29,3 +29,9 @@ Recording now uses a shared microphone owner and waits for the final MediaRecord
 Fifteen focused tests pass, including pitch accuracy on synthetic bass/guitar/violin signals at 44.1/48 kHz, harmonic-rich signals, silence/noise, complete final recording data, interrupted recording, late permission cancellation and refresh guards. Chrome browser QA at a 390px iframe detected a synthetic A4 input at approximately 440.1 Hz; a 52-second synthetic recording survived periodic refresh, finalized and played correctly. This does not establish physical iPhone/Safari or real instrument microphone accuracy.
 
 Teacher national-ID login is separate from learner login, with server-verified teacher role and teacher linkage. Existing email-based manager/secretary login remains. Passwords and national-ID provisioning data are not stored in project source. The one-time provisioning endpoint was disabled after account creation; all eight requested credentials and mappings were verified.
+
+### Automatic string tuning guidance (2026-11-24)
+- Standard guitar/violin nearest-open-string matching, within 180 cents and at least 60 cents separation from the runner-up; explicit string selection and return to auto retained.
+- Three consistent frames within 15 cents before tighten/loosen advice; ±5 cents in tune. Ambiguity, excessive offset, loud/clipped input, silence and unstable sound suppress turning advice.
+- Other instruments retain chromatic/manual/quarter-tone targets, with explicit target explanation. All sound analysis stays on device.
+- 18 focused audio/practice tests passed. Browser fixture verified 107 Hz → tighten A2, 113 Hz → loosen A2, 110 Hz → in tune, 220 Hz → ambiguous, and no overflow at a 390px component width. Synthetic browser input only; physical phone and instrument validation remains outstanding.
