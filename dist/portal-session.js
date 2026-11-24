@@ -51,7 +51,7 @@ portalAuth.onAuthStateChange((event,session)=>{
   token=session.access_token;
  }
 });
-function portalAutoRefresh(){if(token&&role!=='guest'&&!document.hidden&&!modal.open&&Date.now()-portalLastRefresh>25000)reload().catch(()=>{$('portal-refresh-status').textContent='ارتباط قطع است؛ دوباره تلاش می‌کنیم';});}
+function portalAutoRefresh(){if(token&&role!=='guest'&&!document.hidden&&!document.querySelector('dialog[open]')&&!window.AcademyAudio?.busy&&Date.now()-portalLastRefresh>25000)reload().catch(()=>{$('portal-refresh-status').textContent='ارتباط قطع است؛ دوباره تلاش می‌کنیم';});}
 setInterval(portalAutoRefresh,30000);
 window.addEventListener('focus',portalAutoRefresh);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)portalAutoRefresh();});
