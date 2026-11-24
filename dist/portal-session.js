@@ -43,7 +43,7 @@ async function portalRestore(){
   }
  })().finally(()=>{portalRestoreTask=null;});return portalRestoreTask;
 }
-$('portal-refresh').onclick=async()=>{try{if(role==='guest')await portalRestore();else{await reload();toast('اطلاعات پرتال به‌روز شد');}}catch(e){toast('دریافت اطلاعات ناموفق بود؛ دوباره به‌روزرسانی کنید.');}};
+$('portal-refresh').onclick=async()=>{try{if(page==='journey'&&window.PracticeJournal){await window.PracticeJournal.refresh();return;}if(role==='guest')await portalRestore();else{await reload();toast('اطلاعات پرتال به‌روز شد');}}catch(e){toast('دریافت اطلاعات ناموفق بود؛ دوباره به‌روزرسانی کنید.');}};
 portalAuth.onAuthStateChange((event,session)=>{
  if(event==='SIGNED_OUT'){clearPortalAccount();return;}
  if(session){
@@ -51,7 +51,7 @@ portalAuth.onAuthStateChange((event,session)=>{
   token=session.access_token;
  }
 });
-function portalAutoRefresh(){if(token&&role!=='guest'&&!document.hidden&&!document.querySelector('dialog[open]')&&!window.AcademyAudio?.busy&&Date.now()-portalLastRefresh>25000)reload().catch(()=>{$('portal-refresh-status').textContent='ارتباط قطع است؛ دوباره تلاش می‌کنیم';});}
+function portalAutoRefresh(){if(token&&role!=='guest'&&page!=='journey'&&!document.hidden&&!document.querySelector('dialog[open]')&&!window.AcademyAudio?.busy&&!window.PracticeRoom?.busy&&Date.now()-portalLastRefresh>25000)reload().catch(()=>{$('portal-refresh-status').textContent='ارتباط قطع است؛ دوباره تلاش می‌کنیم';});}
 setInterval(portalAutoRefresh,30000);
 window.addEventListener('focus',portalAutoRefresh);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)portalAutoRefresh();});
