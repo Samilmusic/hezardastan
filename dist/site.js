@@ -6,11 +6,15 @@ const body=document.body,reduce=matchMedia('(prefers-reduced-motion: reduce)');
 
 /* ---------------------------------------------------------- mobile menu sheet */
 const menu=$('.sx-menu'),sheet=$('#sx-sheet'),header=$('.sx-header');
-function setSheet(open,focusBack){if(!menu||!sheet)return;menu.setAttribute('aria-expanded',String(open));menu.setAttribute('aria-label',open?'بستن فهرست':'باز کردن فهرست');
-  sheet.hidden=!open;body.classList.toggle('sx-sheet-open',open);if(open)(sheet.querySelector('[aria-current]')||sheet.querySelector('a,button'))?.focus({preventScroll:true});else if(focusBack)menu.focus();}
-menu?.addEventListener('click',()=>setSheet(menu.getAttribute('aria-expanded')!=='true'));
-sheet?.addEventListener('click',e=>{if(e.target===sheet)setSheet(false,true);else if(e.target.closest('a,.discover-trigger'))setSheet(false);});
+function setSheet(open,focusBack=false){if(!menu||!sheet)return;
+menu.setAttribute('aria-expanded',String(open));menu.setAttribute('aria-label',open?'بستن فهرست':'باز کردن فهرست');body.classList.toggle('sx-sheet-open',open);
+if(open)document.dispatchEvent(new Event('academy:pause-tools'));if(open&&!sheet.open)sheet.showModal();else if(!open&&sheet.open)sheet.close();if(!open&&focusBack)menu.focus();}
+menu?.addEventListener('click',()=>setSheet(!sheet.open,true));
+sheet?.addEventListener('click',e=>{if(e.target===sheet||e.target.closest('[data-menu-close]'))setSheet(false,true);else if(e.target.closest('a,.discover-trigger'))setSheet(false);});
+sheet?.addEventListener('close',()=>{menu?.setAttribute('aria-expanded','false');menu?.setAttribute('aria-label','باز کردن فهرست');body.classList.remove('sx-sheet-open');});
+sheet?.addEventListener('cancel',()=>setSheet(false,true));
 matchMedia('(min-width: 1024px)').addEventListener?.('change',e=>{if(e.matches)setSheet(false);});
+addEventListener('pagehide',()=>setSheet(false));
 
 /* ---------------------------------------------------------- tools dropdown (desktop) */
 const moreBtn=$('.sx-more-btn'),drop=$('#sx-tools');
@@ -22,19 +26,21 @@ document.addEventListener('click',e=>{if(moreBtn&&!e.target.closest('.sx-more'))
 document.addEventListener('focusin',e=>{if(drop&&!drop.hidden&&!e.target.closest('.sx-more'))setDrop(false);});
 document.addEventListener('keydown',e=>{if(e.key!=='Escape')return;if(menu?.getAttribute('aria-expanded')==='true')setSheet(false,true);if(moreBtn?.getAttribute('aria-expanded')==='true')setDrop(false,true);});
 
+const pagePath=p=>p.replace(/\/index\.html$/,'/');document.querySelectorAll('.sx-header a,.sx-sheet a,.sx-dock a').forEach(a=>{if(pagePath(new URL(a.href,location.href).pathname)===pagePath(location.pathname))a.setAttribute('aria-current','page');});
+
 /* header shadow once the page has scrolled */
 let ticking=false;const onScroll=()=>{if(ticking)return;ticking=true;requestAnimationFrame(()=>{ticking=false;header?.classList.toggle('is-scrolled',scrollY>8);});};
 addEventListener('scroll',onScroll,{passive:true});onScroll();
 
 /* ---------------------------------------------------------- HezarAva: loaded only when someone asks for it */
-const V='20261126p';let havaP=null,havaReady=false;
+const V='20261126-refined';let havaP=null,havaReady=false;
 const css=href=>new Promise(res=>{const l=document.createElement('link');l.rel='stylesheet';l.href=href;l.onload=l.onerror=()=>res();document.head.append(l);});
 const js=src=>new Promise((res,rej)=>{const s=document.createElement('script');s.src=src;s.async=false;s.onload=()=>res();s.onerror=()=>rej(new Error(src));document.body.append(s);});
 function loadHava(){return havaP||(havaP=Promise.all([css('hezarava-guide.css?v='+V),css('hezarava-assistant.css?v='+V)])
   .then(()=>js('guide-audio.js?v='+V)).then(()=>js('guide.js?v='+V)).then(()=>js('hezarava-assistant.js?v='+V)).then(()=>{havaReady=true;})
   .catch(err=>{havaP=null;throw err;}));}
 function busy(el,on){el.toggleAttribute('aria-busy',on);el.classList.toggle('is-loading',on);}
-document.addEventListener('click',e=>{const t=e.target.closest('.discover-trigger,[data-open-assistant]');if(!t)return;
+document.addEventListener('click',e=>{const t=e.target.closest('.discover-trigger,[data-open-assistant]');if(!t)return;document.dispatchEvent(new Event('academy:pause-tools'));if(sheet?.open)setSheet(false);setDrop(false);
   if(havaReady){if(t.matches('[data-open-assistant]')){e.preventDefault();$('.ha-launcher')?.click();}return;}
   e.preventDefault();e.stopImmediatePropagation();busy(t,true);
   loadHava().then(()=>{busy(t,false);if(t.matches('[data-open-assistant]'))$('.ha-launcher')?.click();else t.click();})
@@ -50,13 +56,7 @@ document.addEventListener('pointerover',warm,{passive:true});document.addEventLi
       if(key){const im=document.createElement('img');im.className='teacher-avatar';im.src=map[key];im.alt='';im.loading='lazy';w.append(im);}w.append(document.createTextNode(p));s.append(w);});});}).observe(box,{childList:true,subtree:true});})();
 
 /* ---------------------------------------------------------- HezarAva bird on the homepage: one arrival flight, then a quiet idle */
-(()=>{const sec=$('#discover'),bird=$('.hv-bird');if(!sec||!bird)return;let seen=false;try{seen=sessionStorage.getItem('hv-landed')==='1';}catch{}
-  if(reduce.matches||seen||!('IntersectionObserver'in window)){bird.classList.add('is-perched');return;}
-  bird.classList.add('is-waiting');
-  const io=new IntersectionObserver(es=>{if(!es.some(e=>e.isIntersecting))return;io.disconnect();bird.classList.remove('is-waiting');bird.classList.add('is-arriving');
-    const done=()=>{bird.classList.remove('is-arriving');bird.classList.add('is-perched');try{sessionStorage.setItem('hv-landed','1');}catch{}};
-    bird.addEventListener('animationend',e=>{if(e.animationName==='hv-fly')done();});setTimeout(()=>{if(!bird.classList.contains('is-perched'))done();},3200);},{threshold:.35});
-  io.observe(sec);})();
+(()=>{const bird=$('.hv-bird');if(!bird)return;bird.classList.remove('is-waiting');bird.classList.add('is-perched');})();
 
 /* service worker (offline notice only; no authenticated responses are cached) */
 if('serviceWorker'in navigator)addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
