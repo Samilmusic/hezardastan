@@ -54,7 +54,7 @@ $$('[data-open-assistant]').forEach(b=>on(b,'click',()=>{const l=$('.ha-launcher
   const more=document.createElement('button');more.type='button';more.className='st-more';more.setAttribute('aria-expanded','false');$('.st-inst-grid',root).after(more);
   const limit=()=>matchMedia('(max-width: 767px)').matches?6:12;
   function apply(){const q=normalize(input.value),filtered=!!q||family!=='all';let n=0,shown=0;cards.forEach(c=>{const match=(family==='all'||c.dataset.family===family)&&normalize(c.dataset.name).includes(q);c.hidden=!match;if(match){n++;c.classList.toggle('is-folded',!filtered&&!expanded&&shown>=limit());shown++;}else c.classList.remove('is-folded');});
-    out.textContent=faDigits(n)+' ساز و مسیر آموزشی';empty.hidden=n!==0;more.hidden=filtered||cards.length<=limit();more.setAttribute('aria-expanded',String(expanded));more.textContent=expanded?'نمایش کوتاه‌تر ↑':`دیدن همهٔ ${faDigits(cards.length)} ساز ↓`;}
+    out.textContent=faDigits(n)+' ساز و مسیر آموزشی';empty.hidden=n!==0;more.hidden=filtered||cards.length<=limit();more.setAttribute('aria-expanded',String(expanded));more.textContent=expanded?'نمایش کوتاه‌تر':`دیدن همهٔ ${faDigits(cards.length)} ساز`;}
   on(more,'click',()=>{const first=!expanded?cards.find(c=>c.classList.contains('is-folded')):null;expanded=!expanded;apply();if(first)first.focus();else root.scrollIntoView({block:'start',behavior:reduce.matches?'auto':'smooth'});});
   buttons.forEach(b=>on(b,'click',()=>{family=b.dataset.family;buttons.forEach(x=>x.setAttribute('aria-pressed',String(x===b)));apply();}));on(input,'input',apply);on(window,'resize',()=>apply(),{passive:true});apply();})();
 
@@ -67,7 +67,7 @@ $$('[data-open-assistant]').forEach(b=>on(b,'click',()=>{const l=$('.ha-launcher
   days.innerHTML=week.map(([d],i)=>`<button type="button" role="tab" id="st-day-${i}" aria-controls="st-day-panel" aria-selected="false" tabindex="-1">${d}<small>${faDigits(week[i][1].length)} رشته</small></button>`).join('');
   const tabs=$$('button',days);
   function select(i,focus){tabs.forEach((t,k)=>{t.setAttribute('aria-selected',String(k===i));t.tabIndex=k===i?0:-1;});panel.setAttribute('aria-labelledby','st-day-'+i);const [d,list]=week[i];
-    panel.innerHTML=`<h3>${d}‌ها</h3><ul class="st-day-list">${list.map(n=>`<li><svg viewBox="0 0 100 105" aria-hidden="true"><use href="instruments.svg#${icons[n]||'book'}"></use></svg>${pages[n]?`<a href="instruments/${pages[n]}.html">${esc(n)}</a>`:`<span>${esc(n)}</span>`}</li>`).join('')}</ul><p class="st-day-note">ساعت دقیق، ظرفیت و شهریهٔ هر کلاس را از دفتر آموزشگاه بپرس. زمان کلاس هنرجویان ثبت‌نام‌شده در پرتال نمایش داده می‌شود.</p>`;
+    panel.innerHTML=`<h3>${d}‌ها</h3><ul class="st-day-list">${list.map(n=>`<li>${pages[n]?`<a href="instruments/${pages[n]}.html">${esc(n)}</a>`:`<span>${esc(n)}</span>`}</li>`).join('')}</ul><p class="st-day-note">ساعت دقیق، ظرفیت و شهریهٔ هر کلاس را از دفتر آموزشگاه بپرس. زمان کلاس هنرجویان ثبت‌نام‌شده در پرتال نمایش داده می‌شود.</p>`;
     if(focus)tabs[i].focus();}
   tabs.forEach((t,i)=>{on(t,'click',()=>select(i));on(t,'keydown',e=>{const k={ArrowLeft:1,ArrowRight:-1,ArrowDown:1,ArrowUp:-1}[e.key];if(k){e.preventDefault();select((i+k+tabs.length)%tabs.length,true);}else if(e.key==='Home'){e.preventDefault();select(0,true);}else if(e.key==='End'){e.preventDefault();select(tabs.length-1,true);}});});
   const today=(new Date().getDay()+1)%7;select(today<6?today:0);})();
@@ -89,7 +89,7 @@ try{
 
   /* reveal on entering view */
   const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('is-in');io.unobserve(e.target);}}),{rootMargin:'0px 0px -18% 0px',threshold:.05});
-  $$('.st-path-node,.st-niche,.st-world,[data-reveal]').forEach(el=>io.observe(el));cleanups.push(()=>io.disconnect());
+  $$('.st-path-node,.st-niche,.st-world,.st-section-head,.st-hava').forEach(el=>io.observe(el));cleanups.push(()=>io.disconnect());
 
   /* practice layers per step */
   const steps=$$('.st-pr-step'),layers={4:$('.pr-metronome'),5:$('.pr-tuner'),6:$('.pr-record'),7:$('.pr-feedback')};let current=-1;

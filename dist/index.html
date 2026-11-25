@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#f7f1e6">
+<meta name="theme-color" content="#f6f0e4">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>آوای هزاردستان | درس موسیقی، بعد از کلاس هم ادامه دارد</title>
 <meta name="description" content="آموزشگاه موسیقی و هنر آوای هزاردستان در دیزیچه؛ موسیقی ایرانی و جهانی، آواز و ریتم، هنرهای تجسمی، همراه با پرتال هنرجو برای تمرین با نمونهٔ استاد، بازخورد جلسه و پیگیری کلاس‌ها.">
@@ -12,17 +12,50 @@
 <link rel="apple-touch-icon" href="app-icon-192.png">
 <link rel="icon" href="logo.png">
 <link rel="preload" href="fonts/naskh-display-600.woff" as="font" type="font/woff" crossorigin>
+<link rel="preload" as="image" href="art/hero-instruments-1024.webp" media="(min-width: 768px)">
+<link rel="preload" as="image" href="art/hero-instruments-720.webp" media="(max-width: 767px)">
 <link rel="stylesheet" href="fonts.css">
-<link rel="stylesheet" href="story.css?v=20261126">
+<link rel="stylesheet" href="story.css?v=20261126b">
 <link rel="stylesheet" href="hezarava-guide.css?v=20261126">
 <link rel="stylesheet" href="hezarava-assistant.css?v=20261112-assistant">
 </head>
 <body class="st academy">
 <a class="st-skip" href="#main">رفتن به محتوای اصلی</a>
 
+<!-- Glass object set: one light source (top-right), shared materials, 64×64 grid. -->
+<svg class="st-sprite" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="gl-ivory" x1="0" y1="0" x2=".85" y2="1"><stop offset="0" stop-color="#fffdf8" stop-opacity=".97"/><stop offset=".55" stop-color="#f2e8d7" stop-opacity=".82"/><stop offset="1" stop-color="#d9c6a4" stop-opacity=".74"/></linearGradient>
+    <linearGradient id="gl-teal" x1=".1" y1="0" x2=".8" y2="1"><stop offset="0" stop-color="#6aa39b" stop-opacity=".9"/><stop offset=".45" stop-color="#255e59" stop-opacity=".88"/><stop offset="1" stop-color="#0f3330" stop-opacity=".96"/></linearGradient>
+    <linearGradient id="gl-brass" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f1e4c3"/><stop offset=".42" stop-color="#b8975f"/><stop offset=".68" stop-color="#e4d09f"/><stop offset="1" stop-color="#8c6c3d"/></linearGradient>
+    <linearGradient id="gl-edge" x1="1" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".95"/><stop offset=".45" stop-color="#fff" stop-opacity=".15"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+    <linearGradient id="gl-sheen" x1="1" y1="0" x2=".2" y2=".8"><stop offset="0" stop-color="#fff" stop-opacity=".75"/><stop offset=".5" stop-color="#fff" stop-opacity=".08"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+    <radialGradient id="gl-shadow"><stop offset="0" stop-color="#3b2518" stop-opacity=".3"/><stop offset="1" stop-color="#3b2518" stop-opacity="0"/></radialGradient>
+  </defs>
+  <symbol id="i-listen" viewBox="0 0 64 64"><ellipse cx="32" cy="58" rx="19" ry="3.4" fill="url(#gl-shadow)"/><circle cx="32" cy="30" r="23" fill="url(#gl-teal)"/><circle cx="32" cy="30" r="22.3" fill="none" stroke="url(#gl-edge)" stroke-width="1"/><circle cx="32" cy="30" r="15.5" fill="none" stroke="#fff" stroke-opacity=".14"/><circle cx="32" cy="30" r="10" fill="url(#gl-ivory)"/><path d="M29.4 25.6 37 30l-7.6 4.4Z" fill="#1d4f4b"/><circle cx="32" cy="30" r="23" fill="none" stroke="url(#gl-brass)" stroke-width=".9" stroke-opacity=".8"/><path class="gl-sheen" d="M44 12c5 3 9 9 9 15-4-7-10-11-17-12 3-2 5-3 8-3Z" fill="url(#gl-sheen)"/></symbol>
+  <symbol id="i-metronome" viewBox="0 0 64 64"><ellipse cx="32" cy="58" rx="18" ry="3.2" fill="url(#gl-shadow)"/><path d="M20 51 27.5 8.5h9L44 51Z" fill="url(#gl-ivory)"/><path d="M20 51 27.5 8.5h9L44 51Z" fill="none" stroke="url(#gl-edge)" stroke-width="1"/><path d="M27 22h10M26 28h12M25 34h14" stroke="#1d4f4b" stroke-opacity=".22"/><path d="m32 46 8.5-30" stroke="url(#gl-brass)" stroke-width="2.1" stroke-linecap="round"/><rect x="34.6" y="24" width="6" height="7" rx="1.4" transform="rotate(16 37.6 27.5)" fill="url(#gl-teal)"/><rect x="17" y="49.5" width="30" height="5" rx="2.2" fill="url(#gl-brass)"/><path class="gl-sheen" d="M35.5 10h1L42 42c-2-9-4-20-6.5-32Z" fill="url(#gl-sheen)"/></symbol>
+  <symbol id="i-tuner" viewBox="0 0 64 64"><ellipse cx="32" cy="57" rx="22" ry="3.2" fill="url(#gl-shadow)"/><path d="M5 45a27 27 0 0 1 54 0h-8.5a18.5 18.5 0 0 0-37 0Z" fill="url(#gl-teal)"/><path d="M13.5 45a18.5 18.5 0 0 1 37 0Z" fill="url(#gl-ivory)"/><path d="M5 45a27 27 0 0 1 54 0" fill="none" stroke="url(#gl-edge)" stroke-width="1"/><path d="M28.5 21.5a24 24 0 0 1 7 0" stroke="#bfe3d6" stroke-width="3" stroke-linecap="round" opacity=".9"/><path d="m32 45 7.5-17" stroke="url(#gl-brass)" stroke-width="2.2" stroke-linecap="round"/><circle cx="32" cy="45" r="3.3" fill="url(#gl-brass)"/><rect x="8" y="45" width="48" height="6" rx="3" fill="url(#gl-ivory)" stroke="#fff" stroke-opacity=".6" stroke-width=".6"/><path class="gl-sheen" d="M46 22c5 4 9 10 10 17-4-6-9-10-15-13 2-2 3-3 5-4Z" fill="url(#gl-sheen)"/></symbol>
+  <symbol id="i-feedback" viewBox="0 0 64 64"><ellipse cx="30" cy="58" rx="19" ry="3.2" fill="url(#gl-shadow)"/><path d="M9 15a7 7 0 0 1 7-7h32a7 7 0 0 1 7 7v19a7 7 0 0 1-7 7H29l-10.5 9.5V41H16a7 7 0 0 1-7-7Z" fill="url(#gl-ivory)"/><path d="M9 15a7 7 0 0 1 7-7h32a7 7 0 0 1 7 7v19a7 7 0 0 1-7 7H29l-10.5 9.5V41H16a7 7 0 0 1-7-7Z" fill="none" stroke="url(#gl-edge)" stroke-width="1"/><rect x="16.5" y="16" width="24" height="3.2" rx="1.6" fill="#1d4f4b" fill-opacity=".72"/><rect x="16.5" y="23.5" width="16" height="3.2" rx="1.6" fill="#1d4f4b" fill-opacity=".42"/><circle cx="45.5" cy="25" r="4.2" fill="url(#gl-brass)"/><path class="gl-sheen" d="M47 9h1a7 7 0 0 1 6 6v10c-2-7-5-12-7-16Z" fill="url(#gl-sheen)"/></symbol>
+  <symbol id="i-schedule" viewBox="0 0 64 64"><ellipse cx="32" cy="58" rx="21" ry="3.2" fill="url(#gl-shadow)"/><rect x="9" y="12" width="46" height="41" rx="6" fill="url(#gl-ivory)"/><path d="M15 12h34a6 6 0 0 1 6 6v6H9v-6a6 6 0 0 1 6-6Z" fill="url(#gl-teal)"/><rect x="9" y="12" width="46" height="41" rx="6" fill="none" stroke="url(#gl-edge)" stroke-width="1"/><g fill="#1d4f4b" fill-opacity=".3"><rect x="16" y="31" width="7" height="5" rx="1.5"/><rect x="28.5" y="31" width="7" height="5" rx="1.5"/><rect x="16" y="41" width="7" height="5" rx="1.5"/><rect x="28.5" y="41" width="7" height="5" rx="1.5"/></g><rect x="41" y="31" width="7" height="5" rx="1.5" fill="url(#gl-brass)"/><rect x="20" y="7" width="4" height="10" rx="2" fill="url(#gl-brass)"/><rect x="40" y="7" width="4" height="10" rx="2" fill="url(#gl-brass)"/><path class="gl-sheen" d="M50 13a6 6 0 0 1 5 6v14c-2-8-4-14-8-19Z" fill="url(#gl-sheen)"/></symbol>
+  <symbol id="i-receipt" viewBox="0 0 64 64"><ellipse cx="32" cy="58" rx="17" ry="3" fill="url(#gl-shadow)"/><path d="M16 7h32v45l-4-2.8-4 2.8-4-2.8-4 2.8-4-2.8-4 2.8-4-2.8-4 2.8Z" fill="url(#gl-ivory)"/><path d="M16 7h32v45l-4-2.8-4 2.8-4-2.8-4 2.8-4-2.8-4 2.8-4-2.8-4 2.8Z" fill="none" stroke="url(#gl-edge)" stroke-width="1"/><g fill="#1d4f4b" fill-opacity=".32"><rect x="21" y="14" width="22" height="3" rx="1.5"/><rect x="21" y="21" width="15" height="3" rx="1.5"/><rect x="21" y="28" width="18" height="3" rx="1.5"/></g><circle cx="41.5" cy="40.5" r="8.5" fill="url(#gl-teal)"/><circle cx="41.5" cy="40.5" r="8.5" fill="none" stroke="url(#gl-brass)" stroke-width=".9"/><path d="m37.6 40.6 2.8 2.8 5-5.4" fill="none" stroke="#f4ecdc" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-notex" viewBox="0 0 64 64"><ellipse cx="32" cy="58" rx="18" ry="3.2" fill="url(#gl-shadow)"/><circle cx="32" cy="30" r="22" fill="url(#gl-teal)"/><circle cx="32" cy="30" r="22" fill="none" stroke="url(#gl-brass)" stroke-width="2.4"/><circle cx="32" cy="30" r="17" fill="none" stroke="#fff" stroke-opacity=".16"/><path d="M35.5 17v17.2a5.6 4.4 0 1 1-2.4-3.6V17h2.4Zm0 0c3.6 1.6 6.8 3.7 6.8 8.4-1.6-2.4-3.8-3.3-6.8-3.6Z" fill="url(#gl-ivory)"/><path class="gl-sheen" d="M43 11c5 3 9 9 10 15-4-6-10-10-16-11 2-2 4-3 6-4Z" fill="url(#gl-sheen)"/></symbol>
+  <symbol id="i-swap" viewBox="0 0 64 64"><ellipse cx="32" cy="58" rx="19" ry="3.2" fill="url(#gl-shadow)"/><rect x="8" y="9" width="48" height="42" rx="21" fill="url(#gl-ivory)"/><rect x="8" y="9" width="48" height="42" rx="21" fill="none" stroke="url(#gl-edge)" stroke-width="1"/><path d="M19 25h24l-5.5-5.5M45 36H21l5.5 5.5" fill="none" stroke="url(#gl-teal)" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="32" cy="30.5" r="2.4" fill="url(#gl-brass)"/></symbol>
+  <symbol id="i-letter" viewBox="0 0 64 64"><ellipse cx="32" cy="58" rx="20" ry="3.2" fill="url(#gl-shadow)"/><rect x="8" y="14" width="48" height="35" rx="5" fill="url(#gl-ivory)"/><path d="m9.5 16.5 22.5 17 22.5-17" fill="none" stroke="#1d4f4b" stroke-opacity=".35" stroke-width="1.6"/><rect x="8" y="14" width="48" height="35" rx="5" fill="none" stroke="url(#gl-edge)" stroke-width="1"/><circle cx="32" cy="34" r="6.2" fill="url(#gl-teal)"/><circle cx="32" cy="34" r="6.2" fill="none" stroke="url(#gl-brass)" stroke-width="1.1"/><path class="gl-sheen" d="M50 15a5 5 0 0 1 6 5v11c-2-6-4-11-6-16Z" fill="url(#gl-sheen)"/></symbol>
+  <symbol id="i-practice" viewBox="0 0 64 64"><ellipse cx="32" cy="58" rx="21" ry="3.2" fill="url(#gl-shadow)"/><path d="M13 54V27C13 15 23 8 32 5c9 3 19 10 19 22v27Z" fill="url(#gl-ivory)"/><path d="M13 54V27C13 15 23 8 32 5c9 3 19 10 19 22v27Z" fill="none" stroke="url(#gl-edge)" stroke-width="1"/><path d="M19 54V29c0-8 6-14 13-17 7 3 13 9 13 17v25Z" fill="url(#gl-teal)" fill-opacity=".9"/><g stroke="#e9f1ec" stroke-width="2" stroke-linecap="round"><path d="M25 36v6M29 31v16M33 34v10M37 29v20M41 36v6" stroke-opacity=".85"/></g><rect x="9" y="52" width="46" height="4" rx="2" fill="url(#gl-brass)"/><path class="gl-sheen" d="M33 6c8 3 16 9 17 19-4-7-9-12-15-15Z" fill="url(#gl-sheen)"/></symbol>
+  <symbol id="i-hezarava" viewBox="0 0 64 64"><ellipse cx="32" cy="58" rx="20" ry="3.2" fill="url(#gl-shadow)"/><circle cx="32" cy="30" r="23" fill="url(#gl-teal)"/><circle cx="32" cy="30" r="23" fill="none" stroke="url(#gl-brass)" stroke-width="1.2"/><circle cx="32" cy="30" r="22" fill="none" stroke="url(#gl-edge)" stroke-width="1"/><path d="M17.5 37.5c5.5-.6 9.4-3.8 12-8.2 2.8-4.7 6.4-7.6 11-7.6 2.7 0 4.6 1 5.7 2.8l4 .9-3.8 1.8c-.9 6.4-5.6 11.4-12.6 12.8-5.3 1.1-11 .3-16.3-2.5Zm0 0-5.5 5.6 8.8-3.1" fill="url(#gl-ivory)"/><circle cx="43" cy="25.8" r="1.2" fill="#1d4f4b"/><path class="gl-sheen" d="M43 11c5 3 9 9 10 15-4-6-10-10-16-11 2-2 4-3 6-4Z" fill="url(#gl-sheen)"/></symbol>
+  <!-- simple line glyphs for controls and navigation -->
+  <symbol id="l-arrow" viewBox="0 0 24 24"><path d="M19 12H5m5-5-5 5 5 5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="l-down" viewBox="0 0 24 24"><path d="M12 5v14m-5-5 5 5 5-5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="l-out" viewBox="0 0 24 24"><path d="M17 7 7 17m0-8v8h8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="l-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="m16 16 4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
+  <symbol id="l-minus" viewBox="0 0 24 24"><path d="M6 12h12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+  <symbol id="l-plus" viewBox="0 0 24 24"><path d="M6 12h12M12 6v12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+  <symbol id="l-loop" viewBox="0 0 24 24"><path d="M17 4l3 3-3 3M4 11V9a2 2 0 0 1 2-2h14M7 20l-3-3 3-3m13-1v2a2 2 0 0 1-2 2H4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+</svg>
+
 <header class="st-header">
   <a class="st-identity" href="#home" aria-label="آوای هزاردستان، بازگشت به ابتدای صفحه">
-    <img src="logo.png" alt="" width="48" height="48">
+    <img src="logo.png" alt="" width="46" height="46">
     <span>آوای هزاردستان<small>آموزشگاه موسیقی و هنر</small></span>
   </a>
   <nav id="st-nav" class="st-nav" aria-label="فهرست سایت">
@@ -34,7 +67,7 @@
     <a href="#contact">تماس</a>
   </nav>
   <div class="st-header-actions">
-    <a class="st-btn st-btn--line" href="portal.html">پرتال من</a>
+    <a class="st-btn st-btn--quiet" href="portal.html">ورود به پرتال</a>
     <button class="st-menu" type="button" aria-label="باز کردن فهرست" aria-expanded="false" aria-controls="st-nav"><span></span><span></span></button>
   </div>
   <div class="st-progress" aria-hidden="true"><i></i></div>
@@ -43,41 +76,41 @@
 <main id="main">
 
 <!-- 1 · THE ENTRANCE ------------------------------------------------ -->
-<section class="st-entrance" id="home" data-scene aria-labelledby="entrance-title">
+<section class="st-entrance" id="home" aria-labelledby="entrance-title">
   <div class="st-entrance-copy">
-    <p class="st-kicker"><i></i>آموزشگاه موسیقی و هنر · دیزیچه</p>
+    <p class="st-kicker">آموزشگاه موسیقی و هنر · دیزیچه</p>
     <h1 id="entrance-title"><span>درس موسیقی</span> <span>با پایان کلاس</span> <em>تمام نمی‌شود.</em></h1>
     <p class="st-lead">در آوای هزاردستان با استادت یاد می‌گیری؛ در خانه، صدای نمونهٔ او، نت جلسه و ابزارهای تمرین همراهت می‌مانند.</p>
     <div class="st-actions">
-      <a class="st-btn st-btn--solid" href="#courses">قدم بزن در هزاردستان <span aria-hidden="true">↓</span></a>
-      <button class="st-btn st-btn--text discover-trigger" type="button">هنوز سازم را انتخاب نکرده‌ام <span aria-hidden="true">←</span></button>
+      <a class="st-btn st-btn--primary" href="#courses">قدم بزن در هزاردستان <svg class="st-ico" aria-hidden="true"><use href="#l-down"/></svg></a>
+      <button class="st-btn st-btn--link discover-trigger" type="button">هنوز سازم را انتخاب نکرده‌ام <svg class="st-ico" aria-hidden="true"><use href="#l-arrow"/></svg></button>
     </div>
-    <ul class="st-facts" aria-label="آوای هزاردستان در یک نگاه">
-      <li><b>۱۳</b> استاد</li>
-      <li><b>۲۱</b> ساز برای شناختن</li>
-      <li><b>۴</b> جهان آموزشی</li>
-    </ul>
+    <dl class="st-facts">
+      <div><dt>استاد</dt><dd>۱۳</dd></div>
+      <div><dt>ساز برای شناختن</dt><dd>۲۱</dd></div>
+      <div><dt>جهان آموزشی</dt><dd>۴</dd></div>
+    </dl>
   </div>
-  <div class="st-entrance-stage" aria-hidden="false">
-    <div class="st-arch-ring" aria-hidden="true"></div>
+  <div class="st-entrance-stage">
     <figure class="st-arch">
-      <picture>
-        <source media="(max-width: 700px)" srcset="art/persian-salon-900.webp">
-        <img src="art/persian-salon.webp" alt="تصویر مفهومی از سازها در فضایی با معماری ایرانی" width="1536" height="1024" fetchpriority="high" decoding="async">
-      </picture>
+      <div class="st-arch-window">
+        <picture>
+          <source media="(max-width: 767px)" srcset="art/hero-instruments-720.webp">
+          <img src="art/hero-instruments-1024.webp" alt="تصویر مفهومی: گیتار، ویولن و پیانو در تالاری با معماری ایرانی" width="1024" height="1536" fetchpriority="high" decoding="async">
+        </picture>
+        <span class="st-arch-light" aria-hidden="true"></span>
+      </div>
       <figcaption>تصویر مفهومی؛ عکس فضای آموزشگاه نیست</figcaption>
     </figure>
-    <img class="st-float st-float--tar" src="instrument-photos/setar.webp" alt="" width="719" height="1100" decoding="async" aria-hidden="true">
-    <img class="st-float st-float--santoor" src="instrument-photos/santoor.webp" alt="" width="1000" height="492" decoding="async" aria-hidden="true">
-    <svg class="st-entrance-wave" viewBox="0 0 800 120" preserveAspectRatio="none" aria-hidden="true"><path d="M0 60 C 60 20, 100 100, 160 60 S 260 15, 320 60 S 420 105, 480 60 S 580 25, 640 60 S 740 95, 800 60"/><path class="w2" d="M0 60 C 70 40, 110 82, 170 60 S 270 38, 330 60 S 430 84, 490 60 S 590 42, 650 60 S 750 78, 800 60"/></svg>
   </div>
-  <a class="st-scroll-cue" href="#courses"><span>از درگاه بگذر</span><i aria-hidden="true"></i></a>
 </section>
 
+<div class="st-divider" aria-hidden="true"><svg viewBox="0 0 240 24"><path d="M0 12h96M144 12h96"/><path class="d" d="M120 3l9 9-9 9-9-9Z"/><path class="d" d="M104 12l4-4 4 4-4 4ZM128 12l4-4 4 4-4 4Z"/></svg></div>
+
 <!-- 2 · WALK THROUGH THE CLASSES ------------------------------------ -->
-<section class="st-worlds" id="courses" data-scene="worlds" aria-labelledby="worlds-title">
+<section class="st-worlds" id="courses" aria-labelledby="worlds-title">
   <header class="st-section-head">
-    <p class="st-kicker"><i></i>کلاس‌ها</p>
+    <p class="st-kicker">کلاس‌ها</p>
     <h2 id="worlds-title">چهار اتاق، <em>چهار جهان صدا</em></h2>
     <p>از درگاه که بگذری، هر اتاق زبان خودش را دارد. رشته‌ها و استادهای هر جهان را ببین و برای شناختن هر ساز، روی نامش بزن.</p>
   </header>
@@ -91,64 +124,55 @@
       </ol>
       
     <article class="st-world st-world--iran" data-world="0" aria-labelledby="world-iran">
-      <div class="st-world-art" aria-hidden="true"><div class="st-world-motif"></div><img class="st-cut a-sun" src="instrument-photos/daf.webp" alt="" loading="lazy" decoding="async"><img class="st-cut a-tall" src="instrument-photos/tar.webp" alt="" loading="lazy" decoding="async"><img class="st-cut a-floor" src="instrument-photos/santoor.webp" alt="" loading="lazy" decoding="async"><img class="st-cut a-thin" src="instrument-photos/ney.webp" alt="" loading="lazy" decoding="async"></div>
+      <div class="st-world-art"><div class="st-room-frame st-room-frame--still" aria-hidden="true"><span class="st-room-light"></span><img class="st-cut a-wall" src="instrument-photos/daf.webp" alt="" loading="lazy" decoding="async"><img class="st-cut a-lean-r" src="instrument-photos/tar.webp" alt="" loading="lazy" decoding="async"><img class="st-cut a-floor" src="instrument-photos/santoor.webp" alt="" loading="lazy" decoding="async"><span class="st-room-floor"></span></div></div>
       <div class="st-world-copy">
-        <p class="st-world-index"><b>۱</b><span>اتاق اول</span> · موسیقی ایرانی</p>
+        <p class="st-world-index"><span class="st-numeral">۱</span><span>اتاق اول</span><i aria-hidden="true"></i>موسیقی ایرانی</p>
         <h3 id="world-iran">صدایی که<br>ریشه دارد</h3>
-        <p>از زخمهٔ تار و مضراب سنتور تا نفَس نی و ضرب تنبک و دف؛ موسیقی ایرانی را با حال و ظرافت خودش، قدم‌به‌قدم یاد بگیر.</p>
-        <ul class="st-chips" aria-label="رشته‌های موسیقی ایرانی"><li><a href="instruments/tar.html">تار</a></li><li><a href="instruments/setar.html">سه‌تار</a></li><li><a href="instruments/oud.html">عود</a></li><li><a href="instruments/santoor.html">سنتور</a></li><li><a href="instruments/ney.html">نی</a></li><li><a href="instruments/tombak.html">تنبک</a></li><li><a href="instruments/daf.html">دف</a></li></ul>
+        <p class="st-world-text">از زخمهٔ تار و مضراب سنتور تا نفَس نی و ضرب تنبک و دف؛ موسیقی ایرانی را با حال و ظرافت خودش، قدم‌به‌قدم یاد بگیر.</p>
+        <ul class="st-subjects" aria-label="رشته‌های موسیقی ایرانی"><li><a href="instruments/tar.html">تار</a></li><li><a href="instruments/setar.html">سه‌تار</a></li><li><a href="instruments/oud.html">عود</a></li><li><a href="instruments/santoor.html">سنتور</a></li><li><a href="instruments/ney.html">نی</a></li><li><a href="instruments/tombak.html">تنبک</a></li><li><a href="instruments/daf.html">دف</a></li></ul>
         <ul class="st-world-teachers" aria-label="استادهای موسیقی ایرانی"><li><img class="st-face" src="teachers/jafari.webp" alt="استاد جعفری" width="96" height="96" loading="lazy" decoding="async"><span><b>استاد جعفری</b><small>تار، سه‌تار، عود</small></span></li><li><img class="st-face" src="teachers/rezaei.webp" alt="استاد رضایی" width="96" height="96" loading="lazy" decoding="async"><span><b>استاد رضایی</b><small>سنتور</small></span></li><li><img class="st-face" src="teachers/mohsen-akbari.webp" alt="استاد محسن اکبری" width="96" height="96" loading="lazy" decoding="async"><span><b>استاد محسن اکبری</b><small>نی</small></span></li><li><img class="st-face" src="teachers/alirezaei.webp" alt="استاد علیرضایی" width="96" height="96" loading="lazy" decoding="async"><span><b>استاد علیرضایی</b><small>تنبک</small></span></li><li><img class="st-face" src="teachers/karami.webp" alt="استاد کرمی" width="96" height="96" loading="lazy" decoding="async"><span><b>استاد کرمی</b><small>دف</small></span></li><li><img class="st-face" src="teachers/hooshiani.webp" alt="استاد هوشیانی" width="96" height="96" loading="lazy" decoding="async"><span><b>استاد هوشیانی</b><small>دف</small></span></li></ul>
       </div>
     </article>
     <article class="st-world st-world--world" data-world="1" aria-labelledby="world-world">
-      <div class="st-world-art" aria-hidden="true"><div class="st-world-motif"></div><img class="st-cut a-grand" src="instrument-photos/piano.webp" alt="" loading="lazy" decoding="async"><img class="st-cut a-tall" src="instrument-photos/violin.webp" alt="" loading="lazy" decoding="async"><img class="st-cut a-lean" src="instrument-photos/guitar.webp" alt="" loading="lazy" decoding="async"><img class="st-cut a-floor" src="instrument-photos/trumpet.webp" alt="" loading="lazy" decoding="async"></div>
+      <div class="st-world-art"><div class="st-room-frame st-room-frame--still" aria-hidden="true"><span class="st-room-light"></span><img class="st-cut a-grand" src="instrument-photos/piano.webp" alt="" loading="lazy" decoding="async"><img class="st-cut a-lean-l" src="instrument-photos/guitar.webp" alt="" loading="lazy" decoding="async"><img class="st-cut a-lean-r" src="instrument-photos/violin.webp" alt="" loading="lazy" decoding="async"><span class="st-room-floor"></span></div></div>
       <div class="st-world-copy">
-        <p class="st-world-index"><b>۲</b><span>اتاق دوم</span> · پیانو و موسیقی جهانی</p>
+        <p class="st-world-index"><span class="st-numeral">۲</span><span>اتاق دوم</span><i aria-hidden="true"></i>پیانو و موسیقی جهانی</p>
         <h3 id="world-world">زبانی که<br>همه‌جا فهمیده می‌شود</h3>
-        <p>پیانو و کیبورد، ویولن، گیتار و گیتار فلامنکو، کلارینت، ترومپت و درام؛ از اولین گام تا نواختن قطعه‌ای که دوستش داری.</p>
-        <ul class="st-chips" aria-label="رشته‌های پیانو و موسیقی جهانی"><li><a href="instruments/piano.html">پیانو</a></li><li><a href="instruments/keyboard.html">کیبورد</a></li><li><a href="instruments/violin.html">ویولن</a></li><li><a href="instruments/guitar.html">گیتار</a></li><li><a href="instruments/flamenco-guitar.html">گیتار فلامنکو</a></li><li><a href="instruments/clarinet.html">کلارینت</a></li><li><a href="instruments/trumpet.html">ترومپت</a></li><li><a href="instruments/drums.html">درام</a></li></ul>
+        <p class="st-world-text">پیانو و کیبورد، ویولن، گیتار و گیتار فلامنکو، کلارینت، ترومپت و درام؛ از اولین گام تا نواختن قطعه‌ای که دوستش داری.</p>
+        <ul class="st-subjects" aria-label="رشته‌های پیانو و موسیقی جهانی"><li><a href="instruments/piano.html">پیانو</a></li><li><a href="instruments/keyboard.html">کیبورد</a></li><li><a href="instruments/violin.html">ویولن</a></li><li><a href="instruments/guitar.html">گیتار</a></li><li><a href="instruments/flamenco-guitar.html">گیتار فلامنکو</a></li><li><a href="instruments/clarinet.html">کلارینت</a></li><li><a href="instruments/trumpet.html">ترومپت</a></li><li><a href="instruments/drums.html">درام</a></li></ul>
         <ul class="st-world-teachers" aria-label="استادهای پیانو و موسیقی جهانی"><li><img class="st-face" src="teachers/foroughi.webp" alt="استاد فروغی" width="96" height="96" loading="lazy" decoding="async"><span><b>استاد فروغی</b><small>پیانو، کیبورد، درام</small></span></li><li><img class="st-face" src="teachers/akbari.webp" alt="استاد اکبری" width="96" height="96" loading="lazy" decoding="async"><span><b>استاد اکبری</b><small>ویولن، ترومپت</small></span></li><li><img class="st-face" src="teachers/hajian.webp" alt="استاد حاجیان" width="96" height="96" loading="lazy" decoding="async"><span><b>استاد حاجیان</b><small>گیتار</small></span></li><li><img class="st-face" src="teachers/soleimani.webp" alt="استاد سلیمانی" width="96" height="96" loading="lazy" decoding="async"><span><b>استاد سلیمانی</b><small>گیتار فلامنکو</small></span></li><li><img class="st-face" src="teachers/mohsen-akbari.webp" alt="استاد محسن اکبری" width="96" height="96" loading="lazy" decoding="async"><span><b>استاد محسن اکبری</b><small>کلارینت، ترومپت</small></span></li></ul>
       </div>
     </article>
     <article class="st-world st-world--voice" data-world="2" aria-labelledby="world-voice">
-      <div class="st-world-art" aria-hidden="true"><div class="st-world-motif"></div><img class="st-cut a-sun" src="instrument-photos/handpan.webp" alt="" loading="lazy" decoding="async"><img class="st-cut a-lean" src="instrument-photos/djembe.webp" alt="" loading="lazy" decoding="async"><img class="st-cut a-floor" src="instrument-photos/cajon.webp" alt="" loading="lazy" decoding="async"></div>
+      <div class="st-world-art"><div class="st-room-frame st-room-frame--still" aria-hidden="true"><span class="st-room-light"></span><img class="st-cut a-wall" src="instrument-photos/handpan.webp" alt="" loading="lazy" decoding="async"><img class="st-cut a-box" src="instrument-photos/cajon.webp" alt="" loading="lazy" decoding="async"><img class="st-cut a-drum" src="instrument-photos/djembe.webp" alt="" loading="lazy" decoding="async"><span class="st-room-floor"></span></div></div>
       <div class="st-world-copy">
-        <p class="st-world-index"><b>۳</b><span>اتاق سوم</span> · آواز و ریتم</p>
+        <p class="st-world-index"><span class="st-numeral">۳</span><span>اتاق سوم</span><i aria-hidden="true"></i>آواز و ریتم</p>
         <h3 id="world-voice">صدای خودت،<br>ضرب خودت</h3>
-        <p>آواز و صداسازی، سلفژ و تئوری، آهنگسازی و تنظیم، دی‌جی و سازهای کوبه‌ای؛ و برای کودکان، موسیقی کودک و ارف.</p>
-        <ul class="st-chips" aria-label="رشته‌های آواز و ریتم"><li><a href="instruments/cajon.html">کاخن</a></li><li><a href="instruments/djembe.html">جیمبی</a></li><li><a href="instruments/handpan.html">هنگ‌درام / هندپن</a></li><li><span>آواز</span></li><li><span>صداسازی</span></li><li><span>سلفژ و تئوری</span></li><li><span>آهنگسازی و تنظیم</span></li><li><span>دی‌جی</span></li><li><span>موسیقی کودک</span></li></ul>
+        <p class="st-world-text">آواز و صداسازی، سلفژ و تئوری، آهنگسازی و تنظیم، دی‌جی و سازهای کوبه‌ای؛ و برای کودکان، موسیقی کودک و ارف.</p>
+        <ul class="st-subjects" aria-label="رشته‌های آواز و ریتم"><li><a href="instruments/cajon.html">کاخن</a></li><li><a href="instruments/djembe.html">جیمبی</a></li><li><a href="instruments/handpan.html">هنگ‌درام / هندپن</a></li><li><span>آواز</span></li><li><span>صداسازی</span></li><li><span>سلفژ و تئوری</span></li><li><span>آهنگسازی و تنظیم</span></li><li><span>دی‌جی</span></li><li><span>موسیقی کودک</span></li></ul>
         <ul class="st-world-teachers" aria-label="استادهای آواز و ریتم"><li><img class="st-face" src="teachers/mohsen-akbari.webp" alt="استاد محسن اکبری" width="96" height="96" loading="lazy" decoding="async"><span><b>استاد محسن اکبری</b><small>آواز</small></span></li><li><img class="st-face" src="teachers/hajian.webp" alt="استاد حاجیان" width="96" height="96" loading="lazy" decoding="async"><span><b>استاد حاجیان</b><small>صداسازی، سلفژ</small></span></li><li><img class="st-face" src="teachers/akbari.webp" alt="استاد اکبری" width="96" height="96" loading="lazy" decoding="async"><span><b>استاد اکبری</b><small>آهنگسازی و تنظیم</small></span></li><li><img class="st-face" src="teachers/pourbakhtgan.webp" alt="استاد پوربختگان" width="96" height="96" loading="lazy" decoding="async"><span><b>استاد پوربختگان</b><small>دی‌جی</small></span></li><li><img class="st-face" src="teachers/hooshiani.webp" alt="استاد هوشیانی" width="96" height="96" loading="lazy" decoding="async"><span><b>استاد هوشیانی</b><small>کاخن، جیمبی، هنگ‌درام</small></span></li><li><img class="st-face" src="teachers/karami.webp" alt="استاد کرمی" width="96" height="96" loading="lazy" decoding="async"><span><b>استاد کرمی</b><small>موسیقی کودک</small></span></li></ul>
       </div>
     </article>
     <article class="st-world st-world--art" data-world="3" aria-labelledby="world-art">
-      <div class="st-world-art" aria-hidden="true"><div class="st-world-motif"></div><svg class="st-artboard" viewBox="0 0 520 520" aria-hidden="true">
-  <defs><linearGradient id="wash" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#c58a5c" stop-opacity=".55"/><stop offset="1" stop-color="#2f6b66" stop-opacity=".45"/></linearGradient></defs>
-  <rect class="ab-frame" x="96" y="70" width="300" height="370" rx="4"/>
-  <rect class="ab-mat" x="122" y="96" width="248" height="318" rx="2"/>
-  <path class="ab-wash" d="M140 330c40-60 90-40 120-90s60-90 110-60c-10 70-40 120-100 150s-110 40-130 0z" fill="url(#wash)"/>
-  <path class="ab-sketch" d="M150 210c30-40 70-60 118-52M150 236c44-30 92-38 150-20M162 262c36-12 72-12 108 0"/>
-  <circle class="ab-lens" cx="402" cy="112" r="54"/><circle class="ab-lens" cx="402" cy="112" r="30"/>
-  <path class="ab-iris" d="M402 82l14 26M432 112l-26 14M402 142l-14-26M372 112l26-14"/>
-  <path class="ab-brush" d="M60 470c80-30 170-44 260-30 50 8 100 4 140-12" />
-  <path class="ab-pencil" d="M420 300l60-60 14 14-60 60-20 6z"/>
-</svg></div>
+      <div class="st-world-art"><figure class="st-room-frame st-room-frame--photo"><picture><source media="(max-width: 767px)" srcset="art/atelier-720.webp"><img src="art/atelier-1100.webp" alt="تصویر مفهومی از کارگاه هنر: نقاشی آبرنگ روی سه‌پایه، دوربین عکاسی و طراحی سیاه‌قلم روی میز" width="1100" height="1225" loading="lazy" decoding="async"></picture><span class="st-room-light" aria-hidden="true"></span><figcaption>تصویر مفهومی؛ عکس کارگاه آموزشگاه نیست</figcaption></figure></div>
       <div class="st-world-copy">
-        <p class="st-world-index"><b>۴</b><span>اتاق چهارم</span> · هنرهای تجسمی</p>
+        <p class="st-world-index"><span class="st-numeral">۴</span><span>اتاق چهارم</span><i aria-hidden="true"></i>هنرهای تجسمی</p>
         <h3 id="world-art">دیدن هم<br>تمرین می‌خواهد</h3>
-        <p>عکاسی و فیلم‌برداری، فتوشاپ، آب‌رنگ، سیاه‌قلم و نقاشی کودک؛ برای نگاهی که هر روز دقیق‌تر می‌شود.</p>
-        <ul class="st-chips" aria-label="رشته‌های هنرهای تجسمی"><li><span>عکاسی و فیلم‌برداری</span></li><li><span>فتوشاپ</span></li><li><span>آب‌رنگ</span></li><li><span>سیاه‌قلم</span></li><li><span>نقاشی کودک</span></li></ul>
+        <p class="st-world-text">عکاسی و فیلم‌برداری، فتوشاپ، آب‌رنگ، سیاه‌قلم و نقاشی کودک؛ برای نگاهی که هر روز دقیق‌تر می‌شود.</p>
+        <ul class="st-subjects" aria-label="رشته‌های هنرهای تجسمی"><li><span>عکاسی و فیلم‌برداری</span></li><li><span>فتوشاپ</span></li><li><span>آب‌رنگ</span></li><li><span>سیاه‌قلم</span></li><li><span>نقاشی کودک</span></li></ul>
         <ul class="st-world-teachers" aria-label="استادهای هنرهای تجسمی"><li><img class="st-face" src="teachers/riahi.webp" alt="استاد ریاحی" width="96" height="96" loading="lazy" decoding="async"><span><b>استاد ریاحی</b><small>عکاسی، فیلم‌برداری، فتوشاپ، آب‌رنگ</small></span></li><li><img class="st-face" src="teachers/somayeh-soleimani.webp" alt="استاد سمیه سلیمانی" width="96" height="96" loading="lazy" decoding="async"><span><b>استاد سمیه سلیمانی</b><small>سیاه‌قلم، نقاشی کودک</small></span></li></ul>
       </div>
     </article>
     </div>
   </div>
-  <p class="st-note">عکس سازها برای معرفی رشته‌هاست؛ تصویر کلاس‌ها یا فضای آموزشگاه نیست.</p>
+  <p class="st-note">عکس سازها و تصویر کارگاه برای معرفی رشته‌هاست؛ تصویر کلاس‌ها یا فضای آموزشگاه نیست.</p>
 </section>
 
 <!-- 3 · THE PRACTICE ROOM ------------------------------------------- -->
-<section class="st-practice" id="experience" data-scene="practice" aria-labelledby="practice-title">
+<section class="st-practice" id="experience" aria-labelledby="practice-title">
   <header class="st-section-head st-section-head--center">
-    <p class="st-kicker"><i></i>اتاق تمرین</p>
+    <svg class="st-glass st-glass--lg" aria-hidden="true"><use href="#i-practice"/></svg>
+    <p class="st-kicker">اتاق تمرین</p>
     <h2 id="practice-title">استاد، در تمرینِ خانه هم <em>کنارت است.</em></h2>
     <p>بعد از جلسه، استاد می‌تواند نمونهٔ اجرا، تصویر نت و یادداشت‌هایش را برای کلاس تو در پرتال بگذارد. ببین تمرین با آن‌ها چه شکلی دارد.</p>
   </header>
@@ -157,9 +181,8 @@
     <div class="st-pr-visual">
       <div class="st-pr" data-step="0" id="practice-stage">
         <div class="pr-chrome">
-          <span class="pr-dots" aria-hidden="true"><i></i><i></i><i></i></span>
-          <b>اتاق تمرین · کلاس نمونه</b>
-          <small>نمایش معرفی</small>
+          <span class="pr-title"><svg class="st-glass st-glass--xs" aria-hidden="true"><use href="#i-practice"/></svg><b>اتاق تمرین</b><span>کلاس نمونه</span></span>
+          <small class="pr-badge">نمایش معرفی</small>
         </div>
 
         <div class="pr-layer pr-lesson">
@@ -179,13 +202,14 @@
               <button type="button" data-rate="0.75" aria-pressed="false">۰٫۷۵×</button>
               <button type="button" data-rate="1" aria-pressed="true">۱×</button>
             </div>
-            <button class="pr-loop-toggle" type="button" id="demo-loop" aria-pressed="false">تکرار بخش انتخابی</button>
+            <button class="pr-loop-toggle" type="button" id="demo-loop" aria-pressed="false"><svg class="st-ico" aria-hidden="true"><use href="#l-loop"/></svg>تکرار بخش A تا B</button>
           </div>
           <p class="pr-status" id="demo-status" role="status">نمونه فقط با زدن دکمهٔ پخش شنیده می‌شود.</p>
         </div>
 
+
         <div class="pr-layer pr-score">
-          <div class="pr-score-head"><b>نت جلسه</b><small>۲ یادداشت استاد</small></div>
+          <div class="pr-pane-head"><b>نت جلسه</b><small>۲ یادداشت استاد</small></div>
           <svg class="st-staff" viewBox="0 0 600 130" aria-hidden="true">
       <rect class="loop-zone" x="160" y="22" width="280" height="92" rx="6"/>
       <g class="lines"><line x1="10" x2="590" y1="40" y2="40"/><line x1="10" x2="590" y1="54" y2="54"/><line x1="10" x2="590" y1="68" y2="68"/><line x1="10" x2="590" y1="82" y2="82"/><line x1="10" x2="590" y1="96" y2="96"/><line class="bar" x1="155" x2="155" y1="40" y2="96"/><line class="bar" x1="300" x2="300" y1="40" y2="96"/><line class="bar" x1="445" x2="445" y1="40" y2="96"/><line class="bar" x1="590" x2="590" y1="40" y2="96"/></g><g class="note"><ellipse cx="40" cy="75" rx="8" ry="6" transform="rotate(-20 40 75)"/><line x1="47" x2="47" y1="75" y2="37"/></g><g class="note"><ellipse cx="75" cy="68" rx="8" ry="6" transform="rotate(-20 75 68)"/><line x1="82" x2="82" y1="68" y2="30"/></g><g class="note"><ellipse cx="110" cy="61" rx="8" ry="6" transform="rotate(-20 110 61)"/><line x1="117" x2="117" y1="61" y2="23"/></g><g class="note"><ellipse cx="185" cy="54" rx="8" ry="6" transform="rotate(-20 185 54)"/><line x1="192" x2="192" y1="54" y2="16"/></g><g class="note"><ellipse cx="220" cy="61" rx="8" ry="6" transform="rotate(-20 220 61)"/><line x1="227" x2="227" y1="61" y2="23"/></g><g class="note"><ellipse cx="255" cy="68" rx="8" ry="6" transform="rotate(-20 255 68)"/><line x1="262" x2="262" y1="68" y2="30"/></g><g class="note"><ellipse cx="330" cy="82" rx="8" ry="6" transform="rotate(-20 330 82)"/><line x1="337" x2="337" y1="82" y2="44"/></g><g class="note"><ellipse cx="365" cy="75" rx="8" ry="6" transform="rotate(-20 365 75)"/><line x1="372" x2="372" y1="75" y2="37"/></g><g class="note"><ellipse cx="400" cy="68" rx="8" ry="6" transform="rotate(-20 400 68)"/><line x1="407" x2="407" y1="68" y2="30"/></g><g class="note"><ellipse cx="475" cy="61" rx="8" ry="6" transform="rotate(-20 475 61)"/><line x1="482" x2="482" y1="61" y2="23"/></g><g class="note"><ellipse cx="510" cy="68" rx="8" ry="6" transform="rotate(-20 510 68)"/><line x1="517" x2="517" y1="68" y2="30"/></g><g class="note"><ellipse cx="545" cy="75" rx="8" ry="6" transform="rotate(-20 545 75)"/><line x1="552" x2="552" y1="75" y2="37"/></g>
@@ -199,14 +223,14 @@
         </div>
 
         <div class="pr-layer pr-tool pr-metronome">
-          <div class="pr-tool-head"><b>مترونوم</b><small>۳۰ تا ۲۴۰ ضرب در دقیقه</small></div>
-          <div class="pr-bpm"><button type="button" data-bpm="-4" aria-label="کاهش سرعت مترونوم">−</button><output id="demo-bpm" aria-live="polite">۷۲</output><button type="button" data-bpm="4" aria-label="افزایش سرعت مترونوم">+</button></div>
+          <div class="pr-pane-head"><span><svg class="st-glass st-glass--sm" aria-hidden="true"><use href="#i-metronome"/></svg><b>مترونوم</b></span><small>۳۰ تا ۲۴۰ ضرب در دقیقه</small></div>
+          <div class="pr-bpm"><button type="button" data-bpm="-4" aria-label="کاهش سرعت مترونوم"><svg class="st-ico" aria-hidden="true"><use href="#l-minus"/></svg></button><output id="demo-bpm" aria-live="polite">۷۲</output><button type="button" data-bpm="4" aria-label="افزایش سرعت مترونوم"><svg class="st-ico" aria-hidden="true"><use href="#l-plus"/></svg></button></div>
           <div class="pr-beats" aria-hidden="true"><i class="accent"></i><i></i><i></i><i></i></div>
           <button class="pr-metro-start" type="button" id="demo-metro" aria-pressed="false">شنیدن مترونوم</button>
         </div>
 
         <div class="pr-layer pr-tool pr-tuner">
-          <div class="pr-tool-head"><b>تیونر</b><small>گیتار · سیم پنجم</small></div>
+          <div class="pr-pane-head"><span><svg class="st-glass st-glass--sm" aria-hidden="true"><use href="#i-tuner"/></svg><b>تیونر</b></span><small>گیتار · سیم پنجم</small></div>
           <svg class="pr-gauge" viewBox="0 0 240 132" aria-hidden="true">
             <path class="arc" d="M20 120 A100 100 0 0 1 220 120"/>
             <path class="ok" d="M106 21 A100 100 0 0 1 134 21"/>
@@ -219,21 +243,21 @@
         </div>
 
         <div class="pr-layer pr-tool pr-record">
-          <div class="pr-tool-head"><b>اجرای من</b><small>برای استاد</small></div>
-          <div class="pr-rec-row"><span class="pr-rec-dot" aria-hidden="true"></span><span class="pr-rec-time" dir="ltr">0:24</span><span class="pr-rec-label">در حال ضبط تمرین</span></div>
+          <div class="pr-pane-head"><span><svg class="st-glass st-glass--sm" aria-hidden="true"><use href="#i-listen"/></svg><b>اجرای من</b></span><small>برای استاد</small></div>
+          <div class="pr-rec-row"><span class="pr-rec-dot" aria-hidden="true"></span><span class="pr-rec-time" dir="ltr">0:24</span><span class="pr-rec-label">ضبط تمرین</span></div>
           <svg class="st-wave st-wave--take" viewBox="0 0 720 100" preserveAspectRatio="none" aria-hidden="true"><rect x="2" y="40.5" width="5" height="19.1" rx="2.5"/><rect x="12" y="43.1" width="5" height="13.7" rx="2.5"/><rect x="22" y="35.6" width="5" height="28.8" rx="2.5"/><rect x="32" y="30.6" width="5" height="38.8" rx="2.5"/><rect x="42" y="29.7" width="5" height="40.7" rx="2.5"/><rect x="52" y="35.1" width="5" height="29.8" rx="2.5"/><rect x="62" y="37.4" width="5" height="25.2" rx="2.5"/><rect x="72" y="34.0" width="5" height="31.9" rx="2.5"/><rect x="82" y="36.6" width="5" height="26.8" rx="2.5"/><rect x="92" y="41.0" width="5" height="17.9" rx="2.5"/><rect x="102" y="33.1" width="5" height="33.8" rx="2.5"/><rect x="112" y="38.7" width="5" height="22.6" rx="2.5"/><rect x="122" y="31.3" width="5" height="37.3" rx="2.5"/><rect x="132" y="23.7" width="5" height="52.5" rx="2.5"/><rect x="142" y="16.3" width="5" height="67.4" rx="2.5"/><rect x="152" y="28.1" width="5" height="43.9" rx="2.5"/><rect x="162" y="32.9" width="5" height="34.3" rx="2.5"/><rect x="172" y="24.4" width="5" height="51.2" rx="2.5"/><rect x="182" y="18.2" width="5" height="63.6" rx="2.5"/><rect x="192" y="28.7" width="5" height="42.6" rx="2.5"/><rect x="202" y="34.4" width="5" height="31.2" rx="2.5"/><rect x="212" y="35.9" width="5" height="28.1" rx="2.5"/><rect x="222" y="38.9" width="5" height="22.2" rx="2.5"/><rect x="232" y="26.4" width="5" height="47.3" rx="2.5"/><rect x="242" y="14.7" width="5" height="70.7" rx="2.5"/><rect x="252" y="27.7" width="5" height="44.7" rx="2.5"/><rect x="262" y="34.5" width="5" height="31.0" rx="2.5"/><rect x="272" y="17.9" width="5" height="64.3" rx="2.5"/><rect x="282" y="5.5" width="5" height="88.9" rx="2.5"/><rect x="292" y="20.2" width="5" height="59.7" rx="2.5"/><rect x="302" y="35.5" width="5" height="29.1" rx="2.5"/><rect x="312" y="31.9" width="5" height="36.2" rx="2.5"/><rect x="322" y="25.5" width="5" height="48.9" rx="2.5"/><rect x="332" y="36.0" width="5" height="28.0" rx="2.5"/><rect x="342" y="26.0" width="5" height="47.9" rx="2.5"/><rect x="352" y="30.6" width="5" height="38.9" rx="2.5"/><rect x="362" y="37.4" width="5" height="25.1" rx="2.5"/><rect x="372" y="18.3" width="5" height="63.5" rx="2.5"/><rect x="382" y="7.6" width="5" height="84.9" rx="2.5"/><rect x="392" y="18.0" width="5" height="63.9" rx="2.5"/><rect x="402" y="29.6" width="5" height="40.8" rx="2.5"/><rect x="412" y="28.2" width="5" height="43.6" rx="2.5"/><rect x="422" y="19.0" width="5" height="62.1" rx="2.5"/><rect x="432" y="30.4" width="5" height="39.2" rx="2.5"/><rect x="442" y="37.3" width="5" height="25.3" rx="2.5"/><rect x="452" y="34.0" width="5" height="32.0" rx="2.5"/><rect x="462" y="35.4" width="5" height="29.3" rx="2.5"/><rect x="472" y="27.8" width="5" height="44.5" rx="2.5"/><rect x="482" y="22.1" width="5" height="55.9" rx="2.5"/><rect x="492" y="22.9" width="5" height="54.3" rx="2.5"/><rect x="502" y="31.6" width="5" height="36.8" rx="2.5"/><rect x="512" y="30.0" width="5" height="40.0" rx="2.5"/><rect x="522" y="23.3" width="5" height="53.4" rx="2.5"/><rect x="532" y="26.0" width="5" height="48.0" rx="2.5"/><rect x="542" y="32.4" width="5" height="35.2" rx="2.5"/><rect x="552" y="38.7" width="5" height="22.5" rx="2.5"/><rect x="562" y="38.0" width="5" height="24.1" rx="2.5"/><rect x="572" y="41.9" width="5" height="16.1" rx="2.5"/><rect x="582" y="38.8" width="5" height="22.3" rx="2.5"/><rect x="592" y="34.0" width="5" height="31.9" rx="2.5"/><rect x="602" y="39.9" width="5" height="20.1" rx="2.5"/><rect x="612" y="39.3" width="5" height="21.4" rx="2.5"/><rect x="622" y="36.4" width="5" height="27.3" rx="2.5"/><rect x="632" y="34.9" width="5" height="30.2" rx="2.5"/><rect x="642" y="39.0" width="5" height="22.0" rx="2.5"/><rect x="652" y="44.7" width="5" height="10.7" rx="2.5"/><rect x="662" y="42.3" width="5" height="15.4" rx="2.5"/><rect x="672" y="41.2" width="5" height="17.5" rx="2.5"/><rect x="682" y="44.5" width="5" height="11.0" rx="2.5"/><rect x="692" y="41.9" width="5" height="16.3" rx="2.5"/><rect x="702" y="44.1" width="5" height="11.8" rx="2.5"/><rect x="712" y="44.2" width="5" height="11.7" rx="2.5"/></svg>
-          <span class="pr-send">ارسال برای استاد ←</span>
+          <span class="pr-send">ارسال برای استاد</span>
           <small class="pr-demo-tag">نمایش؛ چیزی ضبط نمی‌شود</small>
         </div>
 
         <div class="pr-layer pr-tool pr-feedback">
-          <div class="pr-tool-head"><b>نظر استاد</b><small>روی ثانیهٔ ۰:۱۴ اجرای تو</small></div>
+          <div class="pr-pane-head"><span><svg class="st-glass st-glass--sm" aria-hidden="true"><use href="#i-feedback"/></svg><b>نظر استاد</b></span><small>روی ثانیهٔ ۰:۱۴ اجرای تو</small></div>
           <p class="pr-quote">«از این‌جا آرشه را آرام‌تر بکش تا صدا نلرزد. شروعت خیلی بهتر شده.»</p>
           <div class="pr-next"><small>تمرین جلسهٔ بعد</small><b>نت‌های کشیده با آرشهٔ کامل، همراه مترونوم</b></div>
           <small class="pr-demo-tag">مثال معرفی؛ نظر واقعی یک استاد نیست</small>
         </div>
       </div>
-      <p class="st-pr-caption">محتوای این صفحه نمونه است و به حساب هیچ هنرجویی وصل نیست. نمونهٔ صوتی برای معرفی ساخته شده و صدای استادهای آموزشگاه نیست.</p>
+      <p class="st-pr-caption">محتوای این بخش نمونه است و به حساب هیچ هنرجویی وصل نیست. نمونهٔ صوتی برای معرفی ساخته شده و صدای استادهای آموزشگاه نیست.</p>
     </div>
 
     <ol class="st-pr-steps">
@@ -244,69 +268,54 @@
       <li class="st-pr-step" data-step="4"><span class="st-step-n">۰۵</span><h3>ضرب، زیر انگشت</h3><p>مترونوم از ۳۰ تا ۲۴۰ ضرب در دقیقه، با ضرب اول مشخص و شمارش پیش از شروع. همین‌جا امتحانش کن.</p></li>
       <li class="st-pr-step" data-step="5"><span class="st-step-n">۰۶</span><h3>سفت کن، شل کن، کوک است</h3><p>تیونر پرتال نت را تشخیص می‌دهد و برای سیم‌های گیتار و ویولن می‌گوید گوشی را سفت کنی یا شل. صدا روی همان گوشی یا رایانه تحلیل می‌شود و جایی فرستاده نمی‌شود.</p></li>
       <li class="st-pr-step" data-step="6"><span class="st-step-n">۰۷</span><h3>اجرای خودت را بفرست</h3><p>تمرینت را در پرتال ضبط یا بارگذاری کن و برای استاد بفرست؛ تا سه دقیقه برای هر اجرا.</p></li>
-      <li class="st-pr-step" data-step="7"><span class="st-step-n">۰۸</span><h3>نظر استاد، روی همان لحظه</h3><p>استاد روی زمان مشخصی از اجرای تو نظر نوشتاری یا صوتی می‌گذارد و تمرین جلسهٔ بعد را روشن می‌کند.</p></li>
+      <li class="st-pr-step" data-step="7"><span class="st-step-n">۰۸</span><h3>نظر استاد، تمرین بعدی</h3><p>استاد روی زمان مشخصی از اجرای تو نظر نوشتاری یا صوتی می‌گذارد و همان نظر به تمرین جلسهٔ بعد تبدیل می‌شود.</p></li>
     </ol>
   </div>
 </section>
 
 <!-- 4 · FEEDBACK BECOMES PROGRESS ----------------------------------- -->
-<section class="st-progress-story" id="progress" data-scene aria-labelledby="progress-title">
+<section class="st-progress-story" id="progress" aria-labelledby="progress-title">
   <header class="st-section-head">
-    <p class="st-kicker"><i></i>بازخورد جلسه</p>
+    <p class="st-kicker">بازخورد جلسه</p>
     <h2 id="progress-title">بازخورد، <em>قدم بعدی را روشن می‌کند.</em></h2>
     <p>«بیشتر تمرین کن» کافی نیست. بعد از هر جلسه، ارزیابی استاد برای همان کلاس در پرتال تو ثبت می‌شود؛ تا بدانی چه چیزی خوب پیش رفته و جلسهٔ بعد روی چه کار کنی.</p>
   </header>
   <div class="st-path">
     <svg class="st-path-line" viewBox="0 0 100 1000" preserveAspectRatio="none" aria-hidden="true"><path pathLength="1" d="M50 0 C 90 120, 10 240, 50 360 S 90 600, 50 720 S 10 900, 50 1000"/></svg>
     <ol>
-      <li class="st-path-node"><span class="st-path-dot" aria-hidden="true"></span><div><small>۱ · نقطهٔ قوت</small><h3>آنچه درست پیش رفت</h3><p>تا با اطمینان ادامه‌اش بدهی.</p><q>ریتم را در تمام قطعه پیوسته نگه داشتی.</q></div></li>
-      <li class="st-path-node"><span class="st-path-dot" aria-hidden="true"></span><div><small>۲ · قابل بهبود</small><h3>یک تمرکز روشن</h3><p>به‌جای فهرستی بلند، چیزی که این هفته ارزش کار دارد.</p><q>حرکت آرشه را آرام و یکنواخت نگه دار.</q></div></li>
-      <li class="st-path-node"><span class="st-path-dot" aria-hidden="true"></span><div><small>۳ · تمرین تعیین‌شده</small><h3>کار این هفته</h3><p>تمرینی که استاد برای جلسهٔ بعد مشخص می‌کند، کنار نمونه و نت همان درس.</p><q>نت‌های کشیده با آرشهٔ کامل؛ اول آرام، بعد با مترونوم.</q></div></li>
-      <li class="st-path-node st-path-node--archive"><span class="st-path-dot" aria-hidden="true"></span><div><small>۴ · بازخوردهای قبلی</small><h3>مسیری که پشت سر گذاشتی</h3><p>ارزیابی جلسه‌های گذشته کنار هم می‌مانند تا هر وقت خواستی مرورشان کنی.</p><div class="st-archive" aria-hidden="true"><span>جلسهٔ قبل</span><span>دو جلسه پیش</span><span>سه جلسه پیش</span></div></div></li>
+      <li class="st-path-node"><span class="st-path-dot" aria-hidden="true"></span><div><small><span class="st-numeral">۱</span>نقطهٔ قوت</small><h3>آنچه درست پیش رفت</h3><p>تا با اطمینان ادامه‌اش بدهی.</p><q>ریتم را در تمام قطعه پیوسته نگه داشتی.</q></div></li>
+      <li class="st-path-node"><span class="st-path-dot" aria-hidden="true"></span><div><small><span class="st-numeral">۲</span>قابل بهبود</small><h3>یک تمرکز روشن</h3><p>به‌جای فهرستی بلند، چیزی که این هفته ارزش کار دارد.</p><q>حرکت آرشه را آرام و یکنواخت نگه دار.</q></div></li>
+      <li class="st-path-node"><span class="st-path-dot" aria-hidden="true"></span><div><small><span class="st-numeral">۳</span>تمرین تعیین‌شده</small><h3>کار این هفته</h3><p>تمرینی که استاد برای جلسهٔ بعد مشخص می‌کند، کنار نمونه و نت همان درس.</p><q>نت‌های کشیده با آرشهٔ کامل؛ اول آرام، بعد با مترونوم.</q></div></li>
+      <li class="st-path-node st-path-node--archive"><span class="st-path-dot" aria-hidden="true"></span><div><small><span class="st-numeral">۴</span>بازخوردهای قبلی</small><h3>مسیری که پشت سر گذاشتی</h3><p>ارزیابی جلسه‌های گذشته کنار هم می‌مانند تا هر وقت خواستی مرورشان کنی.</p><div class="st-archive" aria-hidden="true"><span>جلسهٔ قبل</span><span>دو جلسه پیش</span><span>سه جلسه پیش</span></div></div></li>
     </ol>
   </div>
   <p class="st-note">جمله‌های داخل گیومه مثال‌اند؛ ارزیابی هیچ هنرجوی واقعی نیستند.</p>
 </section>
 
 <!-- 5 · EVERYTHING HAS ITS PLACE ------------------------------------ -->
-<section class="st-portal" id="portal" data-scene aria-labelledby="portal-title">
+<section class="st-portal" id="portal" aria-labelledby="portal-title">
   <header class="st-section-head st-section-head--center">
-    <p class="st-kicker"><i></i>پرتال هنرجو</p>
+    <p class="st-kicker">پرتال هنرجو</p>
     <h2 id="portal-title">هر چیز، <em>سر جای خودش.</em></h2>
     <p>برنامه، شهریه، رسید و درخواست‌ها؛ برای هر کلاس جدا و همیشه در دسترس.</p>
   </header>
   <ul class="st-niches">
-    <li class="st-niche st-niche--classes">
-      <div class="st-niche-object" aria-hidden="true"><span class="tab on">کلاس ۱</span><span class="tab">کلاس ۲</span><span class="row"><i></i>روز و ساعت</span><span class="row"><i></i>استاد</span><span class="row"><i></i>شهریه</span></div>
-      <h3>چند کلاس، هر کدام جدا</h3><p>اگر بیش از یک کلاس داری، برنامه، استاد و شهریهٔ هر کلاس جدا نمایش داده می‌شود.</p>
-    </li>
-    <li class="st-niche st-niche--receipt">
-      <div class="st-niche-object" aria-hidden="true"><span class="paper"><i></i><i></i><i></i></span><span class="status"><b class="s1">در انتظار بررسی</b><b class="s2">تأیید شد</b></span></div>
-      <h3>رسید و وضعیت بررسی</h3><p>رسید پرداخت را ثبت کن و ببین در انتظار بررسی دفتر است یا تأیید شده.</p>
-    </li>
-    <li class="st-niche st-niche--change">
-      <div class="st-niche-object" aria-hidden="true"><span class="swap"><i>روز</i><i>ساعت</i><i>استاد</i></span><span class="pending">منتظر تصمیم مدیریت</span></div>
-      <h3>تغییر روز، ساعت یا استاد</h3><p>درخواستت را از پرتال بفرست؛ تغییر پس از بررسی و تأیید مدیریت انجام می‌شود.</p>
-    </li>
-    <li class="st-niche st-niche--voice">
-      <div class="st-niche-object" aria-hidden="true"><span class="bubble">پیشنهادی دارم…</span><span class="bubble b2">به مدیریت</span></div>
-      <h3>انتقاد و پیشنهاد</h3><p>نظرت دربارهٔ کلاس‌ها و آموزشگاه را مستقیم برای مدیریت بنویس.</p>
-    </li>
-    <li class="st-niche st-niche--notex">
-      <div class="st-niche-object" aria-hidden="true"><span class="coin">N</span><span class="word">NOTEX</span></div>
-      <h3>نوتکس، باشگاه هنرجویان</h3><p>امتیازها و پاداش‌های قابل استفاده‌ات را در حساب خودت ببین؛ مطابق قوانین باشگاه.</p>
-    </li>
+    <li class="st-niche"><span class="st-niche-object"><svg class="st-glass" aria-hidden="true"><use href="#i-schedule"/></svg></span><div><h3>چند کلاس، هر کدام جدا</h3><p>اگر بیش از یک کلاس داری، روز و ساعت، استاد و شهریهٔ هر کلاس جدا نمایش داده می‌شود.</p></div></li>
+    <li class="st-niche"><span class="st-niche-object"><svg class="st-glass" aria-hidden="true"><use href="#i-receipt"/></svg></span><div><h3>رسید و وضعیت بررسی</h3><p>رسید پرداخت را ثبت کن و ببین در انتظار بررسی دفتر است یا تأیید شده.</p></div></li>
+    <li class="st-niche"><span class="st-niche-object"><svg class="st-glass" aria-hidden="true"><use href="#i-swap"/></svg></span><div><h3>تغییر روز، ساعت یا استاد</h3><p>درخواستت را از پرتال بفرست؛ تغییر پس از بررسی و تأیید مدیریت انجام می‌شود.</p></div></li>
+    <li class="st-niche"><span class="st-niche-object"><svg class="st-glass" aria-hidden="true"><use href="#i-letter"/></svg></span><div><h3>انتقاد و پیشنهاد</h3><p>نظرت دربارهٔ کلاس‌ها و آموزشگاه را مستقیم برای مدیریت بنویس.</p></div></li>
+    <li class="st-niche"><span class="st-niche-object"><svg class="st-glass" aria-hidden="true"><use href="#i-notex"/></svg></span><div><h3>نوتکس، باشگاه هنرجویان</h3><p>امتیازها و پاداش‌های قابل استفاده‌ات را در حساب خودت ببین؛ مطابق قوانین باشگاه.</p></div></li>
   </ul>
-  <div class="st-portal-actions">
-    <a class="st-btn st-btn--solid" href="portal.html">ورود به پرتال <span aria-hidden="true">↖</span></a>
-    <a class="st-btn st-btn--line" href="portal.html#register">ثبت‌نام هنرجوی تازه</a>
+  <div class="st-actions st-actions--center">
+    <a class="st-btn st-btn--primary" href="portal.html">ورود به پرتال <svg class="st-ico" aria-hidden="true"><use href="#l-out"/></svg></a>
+    <a class="st-btn st-btn--secondary" href="portal.html#register">ثبت‌نام هنرجوی تازه</a>
   </div>
 </section>
 
 <!-- 6 · TEACHERS + PATH --------------------------------------------- -->
 <section class="st-teachers" id="masters" aria-labelledby="teachers-title">
   <header class="st-section-head">
-    <p class="st-kicker"><i></i>استادها</p>
+    <p class="st-kicker">استادها</p>
     <h2 id="teachers-title">کسانی که <em>کنارت می‌نوازند</em></h2>
     <p>۱۳ استاد، هر کدام با سازها و رشته‌های خودشان. نام استاد یا رشته را جست‌وجو کن.</p>
   </header>
@@ -318,7 +327,7 @@
       <button type="button" aria-pressed="false" data-group="voice">آواز و ریتم</button>
       <button type="button" aria-pressed="false" data-group="art">هنرهای تجسمی</button>
     </div>
-    <label class="st-search"><span aria-hidden="true">⌕</span><input type="search" id="master-search" placeholder="نام استاد یا رشته…" aria-label="جست‌وجوی استادها" autocomplete="off"></label>
+    <label class="st-search"><svg class="st-ico" aria-hidden="true"><use href="#l-search"/></svg><input type="search" id="master-search" placeholder="نام استاد یا رشته…" aria-label="جست‌وجوی استادها" autocomplete="off"></label>
   </div>
   <p class="st-results" id="teacher-results" aria-live="polite"></p>
   <div class="st-teacher-grid">
@@ -381,7 +390,7 @@
 
 <section class="st-library" id="instruments" aria-labelledby="library-title">
   <header class="st-section-head">
-    <p class="st-kicker"><i></i>سازشناسی</p>
+    <p class="st-kicker">سازشناسی</p>
     <h2 id="library-title">۲۱ ساز، <em>هر کدام یک جهان</em></h2>
     <p>جنس صدا، شیوهٔ نواختن، اولین تمرین‌ها و استاد هر ساز را بشناس.</p>
   </header>
@@ -390,72 +399,72 @@
       <button type="button" aria-pressed="true" data-family="all">همهٔ سازها</button>
       <button type="button" aria-pressed="false" data-family="زهی">زهی</button><button type="button" aria-pressed="false" data-family="آرشه‌ای">آرشه‌ای</button><button type="button" aria-pressed="false" data-family="کلاویه‌ای">کلاویه‌ای</button><button type="button" aria-pressed="false" data-family="بادی">بادی</button><button type="button" aria-pressed="false" data-family="کوبه‌ای">کوبه‌ای</button><button type="button" aria-pressed="false" data-family="ملودیک">ملودیک</button>
     </div>
-    <label class="st-search"><span aria-hidden="true">⌕</span><input type="search" id="instrument-search" placeholder="کدام ساز را می‌خواهی بشناسی؟" aria-label="جست‌وجوی ساز" autocomplete="off"></label>
+    <label class="st-search"><svg class="st-ico" aria-hidden="true"><use href="#l-search"/></svg><input type="search" id="instrument-search" placeholder="کدام ساز را می‌خواهی بشناسی؟" aria-label="جست‌وجوی ساز" autocomplete="off"></label>
   </div>
   <p class="st-results" id="instrument-results" aria-live="polite">۲۱ ساز و مسیر آموزشی</p>
   <div class="st-inst-grid">
     <a class="st-inst" href="instruments/guitar.html" style="--tone:#87552d;--wash:#f6ecdc" data-family="زهی" data-name="گیتار">
-          <span class="st-inst-art"><img src="instrument-photos/guitar.webp" alt="" loading="lazy" decoding="async" width="200" height="200"></span>
+          <span class="st-inst-art"><img src="instrument-photos/guitar.webp" alt="" loading="lazy" decoding="async"></span>
           <span class="st-inst-body"><small>زهی</small><b>گیتار</b><span>یک ساز، هزار ترانه</span></span>
         </a><a class="st-inst" href="instruments/flamenco-guitar.html" style="--tone:#a34f38;--wash:#f9e9e1" data-family="زهی" data-name="گیتار فلامنکو">
-          <span class="st-inst-art"><img src="instrument-photos/flamenco-guitar.webp" alt="" loading="lazy" decoding="async" width="200" height="200"></span>
+          <span class="st-inst-art"><img src="instrument-photos/flamenco-guitar.webp" alt="" loading="lazy" decoding="async"></span>
           <span class="st-inst-body"><small>زهی</small><b>گیتار فلامنکو</b><span>ضرب، حرکت و بیان</span></span>
         </a><a class="st-inst" href="instruments/violin.html" style="--tone:#8d593b;--wash:#f5e9e1" data-family="آرشه‌ای" data-name="ویولن">
-          <span class="st-inst-art"><img src="instrument-photos/violin.webp" alt="" loading="lazy" decoding="async" width="200" height="200"></span>
+          <span class="st-inst-art"><img src="instrument-photos/violin.webp" alt="" loading="lazy" decoding="async"></span>
           <span class="st-inst-body"><small>آرشه‌ای</small><b>ویولن</b><span>صدایی پیوسته، بیانی شخصی</span></span>
         </a><a class="st-inst" href="instruments/piano.html" style="--tone:#3f555d;--wash:#eaf0ef" data-family="کلاویه‌ای" data-name="پیانو">
-          <span class="st-inst-art"><img src="instrument-photos/piano.webp" alt="" loading="lazy" decoding="async" width="200" height="200"></span>
+          <span class="st-inst-art"><img src="instrument-photos/piano.webp" alt="" loading="lazy" decoding="async"></span>
           <span class="st-inst-body"><small>کلاویه‌ای</small><b>پیانو</b><span>جهانی از ملودی و هارمونی</span></span>
         </a><a class="st-inst" href="instruments/keyboard.html" style="--tone:#53679a;--wash:#edf0f9" data-family="کلاویه‌ای" data-name="کیبورد">
-          <span class="st-inst-art"><img src="instrument-photos/keyboard.webp" alt="" loading="lazy" decoding="async" width="200" height="200"></span>
+          <span class="st-inst-art"><img src="instrument-photos/keyboard.webp" alt="" loading="lazy" decoding="async"></span>
           <span class="st-inst-body"><small>کلاویه‌ای</small><b>کیبورد</b><span>چند رنگ صدا زیر انگشتان تو</span></span>
         </a><a class="st-inst" href="instruments/trumpet.html" style="--tone:#967026;--wash:#f6efd8" data-family="بادی" data-name="ترومپت">
-          <span class="st-inst-art"><img src="instrument-photos/trumpet.webp" alt="" loading="lazy" decoding="async" width="200" height="200"></span>
+          <span class="st-inst-art"><img src="instrument-photos/trumpet.webp" alt="" loading="lazy" decoding="async"></span>
           <span class="st-inst-body"><small>بادی</small><b>ترومپت</b><span>روشن، رسا و پرانرژی</span></span>
         </a><a class="st-inst" href="instruments/clarinet.html" style="--tone:#425b72;--wash:#eaf0f5" data-family="بادی" data-name="کلارینت">
-          <span class="st-inst-art"><img src="instrument-photos/clarinet.webp" alt="" loading="lazy" decoding="async" width="200" height="200"></span>
+          <span class="st-inst-art"><img src="instrument-photos/clarinet.webp" alt="" loading="lazy" decoding="async"></span>
           <span class="st-inst-body"><small>بادی</small><b>کلارینت</b><span>از نرمی نجوا تا بیان درخشان</span></span>
         </a><a class="st-inst" href="instruments/ney.html" style="--tone:#8b7443;--wash:#f4f0df" data-family="بادی" data-name="نی">
-          <span class="st-inst-art"><img src="instrument-photos/ney.webp" alt="" loading="lazy" decoding="async" width="200" height="200"></span>
+          <span class="st-inst-art"><img src="instrument-photos/ney.webp" alt="" loading="lazy" decoding="async"></span>
           <span class="st-inst-body"><small>بادی</small><b>نی</b><span>نفَسی از موسیقی ایرانی</span></span>
         </a><a class="st-inst" href="instruments/tar.html" style="--tone:#986637;--wash:#f5ebdc" data-family="زهی" data-name="تار">
-          <span class="st-inst-art"><img src="instrument-photos/tar.webp" alt="" loading="lazy" decoding="async" width="200" height="200"></span>
+          <span class="st-inst-art"><img src="instrument-photos/tar.webp" alt="" loading="lazy" decoding="async"></span>
           <span class="st-inst-body"><small>زهی</small><b>تار</b><span>طنین روشنِ ریشه‌ها</span></span>
         </a><a class="st-inst" href="instruments/setar.html" style="--tone:#827449;--wash:#f0efdf" data-family="زهی" data-name="سه‌تار">
-          <span class="st-inst-art"><img src="instrument-photos/setar.webp" alt="" loading="lazy" decoding="async" width="200" height="200"></span>
+          <span class="st-inst-art"><img src="instrument-photos/setar.webp" alt="" loading="lazy" decoding="async"></span>
           <span class="st-inst-body"><small>زهی</small><b>سه‌تار</b><span>صدایی نزدیک و صمیمی</span></span>
         </a><a class="st-inst" href="instruments/oud.html" style="--tone:#7b583b;--wash:#f2e9de" data-family="زهی" data-name="عود">
-          <span class="st-inst-art"><img src="instrument-photos/oud.webp" alt="" loading="lazy" decoding="async" width="200" height="200"></span>
+          <span class="st-inst-art"><img src="instrument-photos/oud.webp" alt="" loading="lazy" decoding="async"></span>
           <span class="st-inst-body"><small>زهی</small><b>عود</b><span>گرمای چوب و عمق صدا</span></span>
         </a><a class="st-inst" href="instruments/santoor.html" style="--tone:#997637;--wash:#f5efd9" data-family="زهی" data-name="سنتور">
-          <span class="st-inst-art"><img src="instrument-photos/santoor.webp" alt="" loading="lazy" decoding="async" width="200" height="200"></span>
+          <span class="st-inst-art"><img src="instrument-photos/santoor.webp" alt="" loading="lazy" decoding="async"></span>
           <span class="st-inst-body"><small>زهی</small><b>سنتور</b><span>بارانی از نت‌های روشن</span></span>
         </a><a class="st-inst" href="instruments/daf.html" style="--tone:#a47843;--wash:#f6ecdb" data-family="کوبه‌ای" data-name="دف">
-          <span class="st-inst-art"><img src="instrument-photos/daf.webp" alt="" loading="lazy" decoding="async" width="200" height="200"></span>
+          <span class="st-inst-art"><img src="instrument-photos/daf.webp" alt="" loading="lazy" decoding="async"></span>
           <span class="st-inst-body"><small>کوبه‌ای</small><b>دف</b><span>ریتمی که در جمع جان می‌گیرد</span></span>
         </a><a class="st-inst" href="instruments/tombak.html" style="--tone:#886346;--wash:#f3eade" data-family="کوبه‌ای" data-name="تنبک">
-          <span class="st-inst-art"><img src="instrument-photos/tombak.webp" alt="" loading="lazy" decoding="async" width="200" height="200"></span>
+          <span class="st-inst-art"><img src="instrument-photos/tombak.webp" alt="" loading="lazy" decoding="async"></span>
           <span class="st-inst-body"><small>کوبه‌ای</small><b>تنبک</b><span>زبان ظریفِ ضربه‌ها</span></span>
         </a><a class="st-inst" href="instruments/cajon.html" style="--tone:#a16c42;--wash:#f5eadc" data-family="کوبه‌ای" data-name="کاخن">
-          <span class="st-inst-art"><img src="instrument-photos/cajon.webp" alt="" loading="lazy" decoding="async" width="200" height="200"></span>
+          <span class="st-inst-art"><img src="instrument-photos/cajon.webp" alt="" loading="lazy" decoding="async"></span>
           <span class="st-inst-body"><small>کوبه‌ای</small><b>کاخن</b><span>ریتمی از دل یک جعبه</span></span>
         </a><a class="st-inst" href="instruments/djembe.html" style="--tone:#a46438;--wash:#f7e9db" data-family="کوبه‌ای" data-name="جیمبی">
-          <span class="st-inst-art"><img src="instrument-photos/djembe.webp" alt="" loading="lazy" decoding="async" width="200" height="200"></span>
+          <span class="st-inst-art"><img src="instrument-photos/djembe.webp" alt="" loading="lazy" decoding="async"></span>
           <span class="st-inst-body"><small>کوبه‌ای</small><b>جیمبی</b><span>گفت‌وگوی دست و ریتم</span></span>
         </a><a class="st-inst" href="instruments/handpan.html" style="--tone:#4c7d80;--wash:#e6f1ef" data-family="کوبه‌ای" data-name="هنگ‌درام / هندپن">
-          <span class="st-inst-art"><img src="instrument-photos/handpan.webp" alt="" loading="lazy" decoding="async" width="200" height="200"></span>
+          <span class="st-inst-art"><img src="instrument-photos/handpan.webp" alt="" loading="lazy" decoding="async"></span>
           <span class="st-inst-body"><small>کوبه‌ای</small><b>هنگ‌درام / هندپن</b><span>ملودی در امتداد ضربه</span></span>
         </a><a class="st-inst" href="instruments/drums.html" style="--tone:#6b587f;--wash:#f0eaf4" data-family="کوبه‌ای" data-name="درام">
-          <span class="st-inst-art"><img src="instrument-photos/drums.webp" alt="" loading="lazy" decoding="async" width="200" height="200"></span>
+          <span class="st-inst-art"><img src="instrument-photos/drums.webp" alt="" loading="lazy" decoding="async"></span>
           <span class="st-inst-body"><small>کوبه‌ای</small><b>درام</b><span>موتور ریتمِ یک گروه</span></span>
         </a><a class="st-inst" href="instruments/darbuka.html" style="--tone:#8c6a57;--wash:#f1e9e1" data-family="کوبه‌ای" data-name="داربوکا">
-          <span class="st-inst-art"><img src="instrument-photos/darbuka.webp" alt="" loading="lazy" decoding="async" width="200" height="200"></span>
+          <span class="st-inst-art"><img src="instrument-photos/darbuka.webp" alt="" loading="lazy" decoding="async"></span>
           <span class="st-inst-body"><small>کوبه‌ای</small><b>داربوکا</b><span>بم و تک، در یک گفت‌وگو</span></span>
         </a><a class="st-inst" href="instruments/kalimba.html" style="--tone:#7c7752;--wash:#f0efdf" data-family="ملودیک" data-name="کالیمبا">
-          <span class="st-inst-art"><img src="instrument-photos/kalimba.webp" alt="" loading="lazy" decoding="async" width="200" height="200"></span>
+          <span class="st-inst-art"><img src="instrument-photos/kalimba.webp" alt="" loading="lazy" decoding="async"></span>
           <span class="st-inst-body"><small>ملودیک</small><b>کالیمبا</b><span>ملودی‌های کوچک، لحظه‌های آرام</span></span>
         </a><a class="st-inst" href="instruments/melodica.html" style="--tone:#567c6b;--wash:#e9f2e8" data-family="بادی" data-name="ملودیکا">
-          <span class="st-inst-art"><img src="instrument-photos/melodica.webp" alt="" loading="lazy" decoding="async" width="200" height="200"></span>
+          <span class="st-inst-art"><img src="instrument-photos/melodica.webp" alt="" loading="lazy" decoding="async"></span>
           <span class="st-inst-body"><small>بادی</small><b>ملودیکا</b><span>نفس و کلاویه در کنار هم</span></span>
         </a>
   </div>
@@ -463,18 +472,15 @@
 </section>
 
 <section class="st-hava" id="discover" aria-labelledby="hava-title">
-  <div class="st-hava-bird" aria-hidden="true">
-    <svg viewBox="0 0 100 100"><path d="M19 65Q8 30 42 22Q72 7 79 39L94 47 78 52Q74 83 44 79L21 92 27 72Z" fill="currentColor"/><path d="M32 48Q44 73 65 53Q49 88 32 48" fill="#e2b46d"/><circle cx="66" cy="36" r="4" fill="#fff"/></svg>
-    <span class="ring r1"></span><span class="ring r2"></span><span class="ring r3"></span>
-  </div>
+  <div class="st-hava-emblem" aria-hidden="true"><svg class="st-glass"><use href="#i-hezarava"/></svg></div>
   <div class="st-hava-copy">
-    <p class="st-kicker"><i></i>هزارآوا</p>
+    <p class="st-kicker">هزارآوا</p>
     <h2 id="hava-title">از کجا <em>شروع کنم؟</em></h2>
     <p>هزارآوا چند پرسش ساده دربارهٔ علاقه، زمان تمرین و شرایطت می‌پرسد، صدای سازها را با انتخاب خودت پخش می‌کند و یک تمرین کوتاه ریتم و شنوایی پیشنهاد می‌دهد؛ بعد حداکثر سه مسیر و استاد مرتبط را برای شروع نشانت می‌دهد.</p>
-    <ol class="st-hava-steps"><li>علاقه و شرایط تو</li><li>شنیدن و ضرب گرفتن</li><li>چند مسیر پیشنهادی</li></ol>
+    <ol class="st-hava-steps"><li><span class="st-numeral">۱</span>علاقه و شرایط تو</li><li><span class="st-numeral">۲</span>شنیدن و ضرب گرفتن</li><li><span class="st-numeral">۳</span>چند مسیر پیشنهادی</li></ol>
     <div class="st-actions">
-      <button class="st-btn st-btn--solid discover-trigger" type="button">شروع کشف مسیر <span aria-hidden="true">✦</span></button>
-      <button class="st-btn st-btn--line" type="button" data-open-assistant>پرسش دربارهٔ آموزشگاه</button>
+      <button class="st-btn st-btn--brass discover-trigger" type="button">شروع کشف مسیر</button>
+      <button class="st-btn st-btn--ghost" type="button" data-open-assistant>پرسش دربارهٔ آموزشگاه</button>
     </div>
     <p class="st-fine">راهنماست، نه آزمون استعداد. بدون ثبت‌نام. انتخاب نهایی را با استاد و دفتر آموزشگاه انجام بده.</p>
   </div>
@@ -482,7 +488,7 @@
 
 <section class="st-week" id="week" aria-labelledby="week-title">
   <header class="st-section-head">
-    <p class="st-kicker"><i></i>هفتهٔ هزاردستان</p>
+    <p class="st-kicker">هفتهٔ هزاردستان</p>
     <h2 id="week-title">هر روز، <em>چه کلاس‌هایی؟</em></h2>
     <p>رشته‌هایی که در هر روز هفته برگزار می‌شوند. ساعت دقیق و ظرفیت را از دفتر بپرس.</p>
   </header>
@@ -493,24 +499,21 @@
 </section>
 
 <!-- 7 · A CLEAR NEXT STEP ------------------------------------------- -->
-<section class="st-final" id="contact" data-scene aria-labelledby="final-title">
-  <div class="st-final-arch" aria-hidden="true"></div>
+<section class="st-final" id="contact" aria-labelledby="final-title">
   <div class="st-final-copy">
-    <p class="st-kicker"><i></i>قدم بعدی</p>
-    <h2 id="final-title">صدای تو<br><em>از همین‌جا شروع می‌شود.</em></h2>
+    <p class="st-kicker">قدم بعدی</p>
+    <h2 id="final-title">صدای تو <em>از همین‌جا شروع می‌شود.</em></h2>
     <p>برای انتخاب رشته، اطلاع از ظرفیت و ثبت‌نام با دفتر آموزشگاه تماس بگیر. اگر هنرجوی هزاردستان هستی، تمرین این هفته‌ات در پرتال منتظر توست.</p>
   </div>
-  <div class="st-final-grid">
-    <div class="st-contact">
-      <span>نشانی آموزشگاه</span><b>دیزیچه، بلوار امید</b>
-    </div>
+  <div class="st-contacts">
+    <div class="st-contact"><span>نشانی آموزشگاه</span><b>دیزیچه، بلوار امید</b></div>
     <a class="st-contact" href="tel:03152452288"><span>تلفن دفتر</span><b dir="ltr">031 5245 2288</b></a>
     <a class="st-contact" href="tel:09103264887"><span>همراه آموزشگاه</span><b dir="ltr">0910 326 4887</b></a>
   </div>
   <div class="st-actions st-actions--center">
-    <a class="st-btn st-btn--solid" href="portal.html">ورود به پرتال <span aria-hidden="true">↖</span></a>
-    <button class="st-btn st-btn--line discover-trigger" type="button">کشف مسیر با هزارآوا</button>
-    <a class="st-btn st-btn--text" href="portal.html#register">ثبت‌نام آنلاین ←</a>
+    <a class="st-btn st-btn--primary" href="portal.html">ورود به پرتال <svg class="st-ico" aria-hidden="true"><use href="#l-out"/></svg></a>
+    <button class="st-btn st-btn--secondary discover-trigger" type="button">کشف مسیر با هزارآوا</button>
+    <a class="st-btn st-btn--link" href="portal.html#register">ثبت‌نام آنلاین <svg class="st-ico" aria-hidden="true"><use href="#l-arrow"/></svg></a>
   </div>
   <div class="st-faq">
     <details><summary>هنوز ساز یا رشته‌ام را انتخاب نکرده‌ام.</summary><p>با هزارآوا علاقه و شرایطت را مرور کن و صدای سازها را بشنو. برای انتخاب نهایی و هماهنگی با استاد، با دفتر آموزشگاه صحبت کن.</p></details>
@@ -528,16 +531,16 @@
 </footer>
 
 <nav class="st-dock" aria-label="منوی سریع">
-  <a href="#courses" data-dock="courses"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18V5l11-2v13M9 8l11-2"/><ellipse cx="6" cy="18" rx="3" ry="2"/><ellipse cx="17" cy="16" rx="3" ry="2"/></svg><span>کلاس‌ها</span></a>
-  <a href="#experience" data-dock="experience"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h2l2-6 3 12 3-9 2 5 2-2h4"/></svg><span>تمرین</span></a>
-  <button class="discover-trigger st-dock-main" type="button"><span aria-hidden="true">✦</span><span>کشف مسیر</span></button>
-  <a href="#masters" data-dock="masters"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-4 3.2-6 6.5-6s5.9 2 6.5 6M16 4.8a3.4 3.4 0 0 1 0 6.4M18 14c2 .7 3.2 2.6 3.5 6"/></svg><span>استادها</span></a>
-  <a href="portal.html"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1c0-5 16-5 16 0v1"/></svg><span>پرتال</span></a>
+  <a href="#courses" data-dock="courses"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18V5l11-2v13M9 8l11-2"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg><span>کلاس‌ها</span></a>
+  <a href="#experience" data-dock="experience"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11v2M8 8v8M12 5v14M16 9v6M20 11v2"/></svg><span>تمرین</span></a>
+  <button class="discover-trigger st-dock-main" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3c.6 4.6 2.4 6.4 7 7-4.6.6-6.4 2.4-7 7-.6-4.6-2.4-6.4-7-7 4.6-.6 6.4-2.4 7-7Z"/></svg><span>کشف مسیر</span></button>
+  <a href="#masters" data-dock="masters"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.6"/><path d="M5 20c.7-4 3.4-6 7-6s6.3 2 7 6"/></svg><span>استادها</span></a>
+  <a href="portal.html"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4M10 16l-4-4 4-4M6 12h10"/></svg><span>پرتال</span></a>
 </nav>
 
 <dialog id="instrument-guide" aria-labelledby="guide-title"><div class="guide-shell"><div class="guide-header"><a class="guide-brand" href="#discover">هزارآوا <span>/ همراه مسیر هنری تو</span></a><button type="button" id="guide-close" aria-label="بستن راهنمای انتخاب">×</button></div><div id="guide-content"></div></div></dialog>
 
-<script src="story.js?v=20261126" defer></script>
+<script src="story.js?v=20261126b" defer></script>
 <script src="guide-audio.js" defer></script>
 <script src="guide.js?v=20261112-assistant" defer></script>
 <script src="hezarava-assistant.js?v=20261112-journal" defer></script>
