@@ -35,18 +35,24 @@ const vlq = n => { const b = [n & 0x7f]; while ((n >>= 7)) b.unshift((n & 0x7f) 
  *   nearest MIDI key. Bend is sent before note-on and centred again after note-off. Up to 15 simultaneous
  *   microtonal pitches are exact; beyond that a note shares a channel and is rounded (counted in `rounded`).
  *   Playback is exact in synths that honour per-channel pitch bend and RPN 0 (most GM/DAW instruments; MPE-style).
- * mode 'rounded': one channel, nearest semitone, no bends — compatible everywhere, tuning lost.
+ * mode 'rounded': nearest semitone, no bends — compatible everywhere, tuning lost. Melody on channel 1, accompaniment
+ *   (events with bus 'accomp') on channel 2.
+ * Programs: melody uses `program`; accompaniment uses `padProgram` (GM 89, «Pad 2 (warm)»). In microtonal mode a
+ *   program change is sent whenever a channel switches between melody and accompaniment notes.
  */
-export function encodeMidi(events, { mode = 'microtonal', refA4 = 440, bpm = 120, ppq = 480, program = 0 } = {}) {
+export function encodeMidi(events, { mode = 'microtonal', refA4 = 440, bpm = 120, ppq = 480, program = 0, padProgram = 89 } = {}) {
   const sorted = [...events].sort((a, b) => a.time - b.time || (a.type === 'off' ? -1 : 1));
   const t0 = sorted.length ? sorted[0].time : 0;
   const tick = s => Math.round((s - t0) * (bpm / 60) * ppq);
   const out = []; let last = 0;
   const ev = (ticks, bytes) => { out.push(...vlq(Math.max(0, ticks - last)), ...bytes); last = Math.max(last, ticks); };
   ev(0, [0xff, 0x51, 0x03, ...[16, 8, 0].map(s => (Math.round(60e6 / bpm) >> s) & 0xff)]);
-  const channels = mode === 'rounded' ? [0] : [0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15];
+  const channels = mode === 'rounded' ? [0, 1] : [0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15];
+  const chProgram = new Map();
+  const progFor = e => (e.bus === 'accomp' ? padProgram : program) & 0x7f;
   for (const c of channels) {
-    ev(0, [0xc0 | c, program & 0x7f]);
+    const p = mode === 'rounded' && c === 1 ? padProgram & 0x7f : program & 0x7f;
+    ev(0, [0xc0 | c, p]); chProgram.set(c, p);
     if (mode !== 'rounded') for (const [cc, val] of [[101, 0], [100, 0], [6, 2], [38, 0], [101, 127], [100, 127]]) ev(0, [0xb0 | c, cc, val]);
   }
   const busy = new Map(), active = new Map(); let rr = 0, rounded = 0, notes = 0;
@@ -55,7 +61,7 @@ export function encodeMidi(events, { mode = 'microtonal', refA4 = 440, bpm = 120
     if (e.type === 'on') {
       const exact = 69 + 12 * Math.log2(e.freq / refA4), key = Math.max(0, Math.min(127, Math.round(exact)));
       let ch;
-      if (mode === 'rounded') ch = 0;
+      if (mode === 'rounded') ch = e.bus === 'accomp' ? 1 : 0;
       else {
         const freeIdx = channels.findIndex((_, i) => !busy.has(channels[(rr + i) % channels.length]));
         const shared = freeIdx < 0;
@@ -68,6 +74,7 @@ export function encodeMidi(events, { mode = 'microtonal', refA4 = 440, bpm = 120
         }
       }
       if (mode === 'rounded' && Math.abs(exact - key) > 0.01) rounded++;
+      if (mode !== 'rounded' && chProgram.get(ch) !== progFor(e) && !busy.has(ch)) { ev(tk, [0xc0 | ch, progFor(e)]); chProgram.set(ch, progFor(e)); }
       const vel = Math.max(1, Math.min(127, Math.round((e.velocity ?? 0.8) * 127)));
       ev(tk, [0x90 | ch, key, vel]);
       busy.set(ch, (busy.get(ch) || 0) + 1); active.set(e.id, { ch, key }); notes++;

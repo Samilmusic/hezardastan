@@ -14,6 +14,9 @@ export const DEFAULTS = {
   zoneHysteresis: 0.035,// fraction of the frame width/height a hand must cross beyond a boundary
   sustainPolicy: 'hold', // 'hold' keeps the latched degree; 'glide' retunes the sounding voice; 'retrigger' restarts it
   selection: 'zones',   // 'zones': horizontal column selects the degree; 'fingers': extended-finger count (+ half)
+  fingerHalves: true,   // 'fingers' selection: the right half of the frame adds 4 (8 degrees); false = 4 slots only
+  freezeMargin: 0,      // > 0: stop updating the selection once the pinch ratio falls below pinchOff + margin,
+                        // so the thumb closing on the index cannot change a finger-count selection (latched first)
 };
 
 const d2 = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
@@ -102,7 +105,7 @@ export class HandMachine {
     let degree = this.col;
     if (this.o.selection === 'fingers') {
       const count = Math.max(1, Math.min(4, f.extended));
-      degree = (count - 1) + (p.x >= 0.5 ? 4 : 0);
+      degree = (count - 1) + (this.o.fingerHalves && p.x >= 0.5 ? 4 : 0);
     }
     return { degree, octave: band };
   }
@@ -168,13 +171,17 @@ export class HandMachine {
     }
 
     // open hand: update the stable selection (geometry while pinching is never used for this)
-    const s = this._selection(sf);
-    if (!this.cand || this.cand.degree !== s.degree || this.cand.octave !== s.octave) { this.cand = s; this.candSince = t; }
-    const stable = t - this.candSince >= o.stableMs;
-    this.stability = stable ? 'stable' : 'settling';
-    if (stable && (!this.sel || this.sel.degree !== s.degree || this.sel.octave !== s.octave)) {
-      this.sel = { ...s };
-      out.push({ type: 'select', ...this.sel });
+    const approaching = o.freezeMargin > 0 && this.sel && this.sp < o.pinchOff + o.freezeMargin;
+    if (approaching) { this.cand = { ...this.sel }; this.candSince = t; this.stability = 'stable'; }
+    else {
+      const s = this._selection(sf);
+      if (!this.cand || this.cand.degree !== s.degree || this.cand.octave !== s.octave) { this.cand = s; this.candSince = t; }
+      const stable = t - this.candSince >= o.stableMs;
+      this.stability = stable ? 'stable' : 'settling';
+      if (stable && (!this.sel || this.sel.degree !== s.degree || this.sel.octave !== s.octave)) {
+        this.sel = { ...s };
+        out.push({ type: 'select', ...this.sel });
+      }
     }
     // pinch onset latches the last stable selection
     if (!this.needOpen && this.sp < o.pinchOn && this.sel && t - this.lastOn >= o.cooldownMs && !(f.curled >= 3 && !f.thumbOut && f.extended === 0)) {

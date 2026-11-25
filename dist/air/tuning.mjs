@@ -119,3 +119,93 @@ export function makeTuning({ system = 'persian', key = 'shur', rootPc = 7, octav
   const s = scaleDef(system, key);
   return { ...s, rootPc, octave, refA4, offsets: s.cents.map((_, i) => offsets[i] || 0) };
 }
+
+// ======================================================================= pad slots (four per scale, one per finger count)
+/**
+ * Explicit accompaniment rules, four slots per scale (1–4 extended fingers on the accompaniment hand):
+ *  • Heptatonic Western scales (major, minors, dorian, phrygian): triads stacked in thirds from the scale itself on
+ *    scale degrees 1, 4, 5 and 6. Quality and name are computed from the resulting intervals, so harmonic minor
+ *    gives a major V and phrygian a minor v without special cases.
+ *  • Major pentatonic: only chords whose tones all belong to the scale — I, the sus4 chords on degrees 5 and 2, and vi.
+ *  • Minor blues (six-note): the minor-blues convention i m7, iv m7, v m7 plus ♭VII; labelled as blues voicings.
+ *  • Chromatic: no key-derived harmony exists, so open power-fifth voicings on I, IV and V and a tonic octave.
+ *  • Persian presets: modal textures built from the preset's own (microtonal, user-edited) degrees — tonic drone,
+ *    tonic + 5th degree, tonic + 4th degree, and degrees 1–3–5. No Western function or chord names are implied.
+ * Cents are relative to the tonic; the caller chooses the register and voicing.
+ */
+const CHORD_TYPES = [
+  [[0, 4, 7, 10], '7'], [[0, 3, 7, 10], 'm7'], [[0, 4, 7], ''], [[0, 3, 7], 'm'], [[0, 3, 6], '°'], [[0, 4, 8], '+'],
+  [[0, 5, 7], 'sus4'], [[0, 2, 7], 'sus2'], [[0, 7], '5'], [[0, 7, 12], '5'], [[0, 12], ''],
+];
+/** Name of a 12-TET chord given its root pitch class and the intervals (semitones) above that root. */
+export function chordName(rootPc, semis) {
+  const set = [...new Set(semis.map(s => ((Math.round(s) % 12) + 12) % 12))].sort((a, b) => a - b);
+  for (const [iv, suffix] of CHORD_TYPES) {
+    const want = [...new Set(iv.map(x => x % 12))].sort((a, b) => a - b);
+    if (want.length === set.length && want.every((x, i) => x === set[i])) return { name: NOTE_NAMES[rootPc] + suffix, fa: NOTE_NAMES_FA[rootPc] + ({ '': ' ماژور', m: ' مینور', '°': ' کاسته', '+': ' افزوده', '7': ' هفت', m7: ' مینور هفت', sus4: ' ساس‌۴', sus2: ' ساس‌۲', 5: ' پنجم' }[suffix] ?? ''), suffix };
+  }
+  return { name: NOTE_NAMES[rootPc], fa: NOTE_NAMES_FA[rootPc], suffix: '?' };
+}
+const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII'];
+const MAJOR_CENTS = [0, 200, 400, 500, 700, 900, 1100];
+function roman(deg, suffix, rootCents) {
+  const flat = ((rootCents % 1200) + 1200) % 1200 < MAJOR_CENTS[deg] - 50 ? '♭' : '';
+  const r = flat + ROMAN[deg];
+  if (suffix === 'm' || suffix === 'm7' || suffix === '°') return r.toLowerCase() + (suffix === '°' ? '°' : suffix === 'm7' ? '7' : '');
+  return r + ({ '7': '7', '+': '+', sus4: 'sus4', sus2: 'sus2', 5: '5' }[suffix] || '');
+}
+
+export function padSlots(tuning) {
+  const cents = tuning.cents.map((c, i) => c + (tuning.offsets?.[i] || 0));
+  const pcOf = c => ((tuning.rootPc + Math.round(c / 100)) % 12 + 12) % 12;
+  const tertian = (d, size = 3) => Array.from({ length: size }, (_, k) => cents[(d + 2 * k) % cents.length] + 1200 * Math.floor((d + 2 * k) / cents.length));
+  const make = (deg, chord, extra = {}) => {
+    const root = chord[0], semis = chord.map(c => (c - root) / 100), n = chordName(pcOf(root), semis);
+    return { kind: 'chord', label: n.name, fa: n.fa, roman: deg == null ? '' : roman(deg, n.suffix, root), cents: chord, ...extra };
+  };
+  if (tuning.system === 'persian') {
+    const c = k => cents[k % cents.length];
+    return [
+      { kind: 'texture', short: 'واخوان', label: 'واخوان تونیک', fa: 'تونیک و اکتاو آن', roman: '', cents: [0, 1200] },
+      { kind: 'texture', short: 'با درجهٔ ۵', label: 'تونیک و درجهٔ ۵', fa: 'فاصلهٔ باز تونیک با درجهٔ پنجم همین مقام', roman: '', cents: [0, c(4), 1200] },
+      { kind: 'texture', short: 'با درجهٔ ۴', label: 'تونیک و درجهٔ ۴', fa: 'فاصلهٔ باز تونیک با درجهٔ چهارم همین مقام', roman: '', cents: [0, c(3), 1200] },
+      { kind: 'texture', short: '۱–۳–۵', label: 'بافت ۱–۳–۵', fa: 'درجه‌های ۱، ۳ و ۵ همین مقام با کوک خودش', roman: '', cents: [0, c(2), c(4)] },
+    ];
+  }
+  if (tuning.chords === 'diatonic' && cents.length === 7) return [0, 3, 4, 5].map(d => make(d, tertian(d)));
+  if (tuning.key === 'pentatonicMajor') return [
+    make(0, [cents[0], cents[2], cents[3]]),          // I: 1–3–5
+    make(4, [cents[3], cents[0] + 1200, cents[1] + 1200]), // sus4 on the 5th
+    make(5, [cents[4], cents[0] + 1200, cents[2] + 1200]), // vi: 6–1–3
+    make(1, [cents[1], cents[3], cents[4]]),          // sus4 on the 2nd
+  ];
+  if (tuning.key === 'bluesMinor') return [
+    make(0, [0, 300, 700, 1000], { blues: true }), make(3, [500, 800, 1200, 1500], { blues: true }),
+    make(4, [700, 1000, 1400, 1700], { blues: true }), make(6, [1000, 1400, 1700], { blues: true }),
+  ];
+  // chromatic: open fifths, no implied key
+  return [make(0, [0, 700, 1200]), make(3, [500, 1200, 1700]), make(4, [700, 1400, 1900]), { kind: 'chord', label: NOTE_NAMES[tuning.rootPc] + ' (اکتاو)', fa: 'تونیک و اکتاو', roman: '', cents: [0, 1200] }];
+}
+
+/**
+ * Voice leading. Places each chord tone (cents relative to `baseCents`) in the octave closest to the previous voicing,
+ * inside a comfortable pad range, and returns ascending cents. With no previous voicing, a close position above
+ * the base is used. Common tones therefore stay where they are and other voices move by the smallest step.
+ */
+export function voiceLead(tones, prev = null, { low = -300, high = 1900 } = {}) {
+  const pcs = [...new Set(tones.map(c => ((c % 1200) + 1200) % 1200))];
+  if (!prev || !prev.length) return tones.map(c => Math.max(low, Math.min(high, c))).sort((a, b) => a - b);
+  const used = new Set(), out = [];
+  for (const pc of pcs) {
+    let best = null;
+    for (let k = -2; k <= 2; k++) {
+      const c = pc + 1200 * k; if (c < low || c > high) continue;
+      const d = Math.min(...prev.map(p => Math.abs(p - c))) + (used.has(c) ? 1e6 : 0);
+      if (!best || d < best.d) best = { c, d };
+    }
+    if (best) { used.add(best.c); out.push(best.c); }
+  }
+  // keep an octave-doubled tonic texture (e.g. [0, 1200]) instead of collapsing it to one pitch
+  if (out.length < tones.length && pcs.length < tones.length) for (const c of tones) if (!out.includes(c) && c >= low && c <= high) out.push(c);
+  return out.sort((a, b) => a - b);
+}

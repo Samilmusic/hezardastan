@@ -49,3 +49,11 @@ Camera frames are passed to the model in the page and never stored or transmitte
 Settings (scale, instrument, calibration thresholds) are kept in `localStorage` on the device only.
 Site headers: `Permissions-Policy: camera=(self)` and `script-src … 'wasm-unsafe-eval'` (required to compile the
 MediaPipe WebAssembly runtime).
+
+
+## دستانِ نوا: پدِ همراهی و راهنمای تصویری (Round 6)
+
+- پدِ همراهی کاملاً در مرورگر سنتز می‌شود (دو اره‌ای با دیتیون ±۷ سنت + مثلثی برای هر نت، فیلتر پایین‌گذر، های‌پس ۷۰ هرتز، کُروس دوتایی، ریورب کوتاه با پاسخ ضربهٔ تولیدشده). هیچ نمونهٔ صوتی تازه‌ای اضافه نشده است.
+- تصویرهای دست در راهنمای تصویری و آیکون‌های شیشه‌ای ساز، SVGهای ساخته‌شده برای همین پروژه‌اند.
+- خروجی MIDI: ملودی با برنامهٔ 0 و پد با GM 89 (Pad 2 – warm)؛ در حالت «گردشده» ملودی کانال ۱ و پد کانال ۲.
+- سطح نمونه‌های FluidR3_GM هنگام بارگیری با ضریب محدود (حداکثر ۸ برابر) هم‌سطح می‌شود؛ فایل‌ها تغییر نمی‌کنند.

@@ -285,3 +285,107 @@ test('learning exercises judge only real note events', () => {
   sq.handle({ type: 'on', degree: 0, time: 10 }); sq.handle({ type: 'on', degree: 1, time: 11 });
   assert.equal(sq.handle({ type: 'on', degree: 2, time: 12 }).done, true);
 });
+
+// ======================================================================= دستانِ نوا: pad accompaniment
+import { tutorialSteps, PlayCheck } from '../dist/air/tutorial.mjs';
+
+test('pad slots follow explicit rules per scale family', () => {
+  const names = (system, key, rootPc) => T.padSlots(T.makeTuning({ system, key, rootPc })).map(s => s.label);
+  assert.deepEqual(names('western', 'major', 0), ['C', 'F', 'G', 'Am']);
+  assert.deepEqual(names('western', 'harmonicMinor', 9), ['Am', 'Dm', 'E', 'F'], 'harmonic minor derives a major V from its own raised 7th');
+  assert.deepEqual(names('western', 'phrygian', 4), ['Em', 'Am', 'B°', 'C']);
+  // pentatonic: every chord tone belongs to the scale
+  const pt = T.makeTuning({ system: 'western', key: 'pentatonicMajor', rootPc: 0 });
+  for (const s of T.padSlots(pt)) for (const c of s.cents) assert.ok(pt.cents.includes(((c % 1200) + 1200) % 1200), s.label + ' uses a tone outside the pentatonic scale');
+  assert.deepEqual(names('western', 'bluesMinor', 0), ['Cm7', 'Fm7', 'Gm7', 'B♭']);
+  assert.deepEqual(names('western', 'chromatic', 0).slice(0, 3), ['C5', 'F5', 'G5'], 'chromatic offers open fifths, no implied key');
+});
+
+test('Persian textures use the edited microtonal tuning and no Western chord names', () => {
+  const t = T.makeTuning({ system: 'persian', key: 'segah', rootPc: 9, offsets: [0, 0, 0, 0, 10] });
+  const slots = T.padSlots(t);
+  assert.equal(slots.length, 4);
+  assert.ok(slots.every(s => s.kind === 'texture' && !/^[A-G]/.test(s.label)));
+  assert.deepEqual(slots[1].cents, [0, 655, 1200], 'degree 5 of segah (645 c) plus the user offset (+10 c)');
+  assert.deepEqual(slots[3].cents, [0, 345, 655], 'neutral third kept');
+});
+
+test('voice leading keeps common tones and moves the rest by the smallest step', () => {
+  const C = [0, 400, 700], F = [500, 900, 1200], G = [700, 1100, 1400];
+  const v1 = T.voiceLead(C), v2 = T.voiceLead(F, v1), v3 = T.voiceLead(G, v2);
+  assert.deepEqual(v1, [0, 400, 700]);
+  assert.deepEqual(v2, [0, 500, 900], 'C stays, E→F, G→A');
+  assert.ok(v3.includes(700) || v3.includes(-100), 'G chord placed close to the previous voicing');
+  const move = (a, b) => a.reduce((n, c) => n + Math.min(...b.map(x => Math.abs(x - c))), 0);
+  assert.ok(move(v2, v3) <= 500);
+  assert.deepEqual(T.voiceLead([0, 1200], [0, 700]), [0, 1200], 'octave textures keep both octaves');
+});
+
+test('accompaniment hand: finger-count selection is latched before the pinch changes the fingers', () => {
+  const m = new HandMachine({ columns: 4, octaves: 1, selection: 'fingers', fingerHalves: false, freezeMargin: 0.15, sustainPolicy: 'hold' });
+  let r = run(m, 30, 500, { cx: 0.25, fingers: 3, pinch: 1.2 });
+  assert.equal(r.out.filter(e => e.type === 'select').pop().degree, 2);
+  // the thumb approaches the index; on the way the index stops counting as extended (2 fingers) before the pinch closes
+  const path = t => ({ cx: 0.25, fingers: t < 150 ? 3 : 2, pinch: t < 150 ? 0.9 - t / 300 : t < 450 ? 0.4 : 0.05 });
+  const t0 = r.t + 33; r = run(m, 30, 750, t => frame(path(t - t0)), t0);
+  const on = r.out.find(e => e.type === 'on');
+  assert.ok(on, 'pinch triggered');
+  assert.equal(on.degree, 2, 'the three-finger choice made before the pinch is the one that sounds');
+  assert.ok(!r.out.some(e => e.type === 'select' && e.degree === 1), 'no selection change while approaching the pinch');
+});
+
+test('accompaniment hand: release, fist and loss events', () => {
+  const m = new HandMachine({ columns: 4, octaves: 1, selection: 'fingers', fingerHalves: false, freezeMargin: 0.15, sustainPolicy: 'hold' });
+  let r = run(m, 30, 400, { cx: 0.25, fingers: 1 });
+  r = run(m, 30, 300, { cx: 0.25, fingers: 1, pinch: 0.05 }, r.t + 33);
+  assert.equal(r.out.filter(e => e.type === 'on').length, 1);
+  r = run(m, 30, 300, { cx: 0.25, fingers: 1, pinch: 1.2 }, r.t + 33);
+  assert.deepEqual(r.out.filter(e => e.type === 'off').map(e => e.reason), ['release']);
+  r = run(m, 30, 300, { cx: 0.25, fingers: 1, pinch: 0.05 }, r.t + 33);
+  r = run(m, 30, 400, { cx: 0.25, fist: true }, r.t + 33);
+  assert.ok(r.out.some(e => e.type === 'off' && e.reason === 'fist') && r.out.some(e => e.type === 'fist'));
+});
+
+test('practice check advances only on real melody and pad events, in order', () => {
+  const c = new PlayCheck({ needPad: true });
+  assert.equal(c.feed({ type: 'pad', on: true, source: 'camera' }, { melodySounding: false, padSounding: true }), false, 'pad before melody does not count');
+  assert.equal(c.feed({ type: 'on', bus: 'melody', demo: true }, {}), false, 'demo notes never count');
+  assert.equal(c.feed({ type: 'on', bus: 'accomp' }, { padSounding: true }), false, 'pad voices are not melody');
+  c.feed({ type: 'on', bus: 'melody' }, { melodySounding: true, padSounding: false }); assert.equal(c.stage, 'pad');
+  c.feed({ type: 'pad', on: false }, {}); assert.equal(c.stage, 'pad', 'releasing is not triggering');
+  c.feed({ type: 'pad', on: true, source: 'touch' }, { melodySounding: false, padSounding: true }); assert.equal(c.stage, 'both');
+  c.feed({ type: 'on', bus: 'melody' }, { melodySounding: true, padSounding: false }); assert.equal(c.stage, 'both', 'melody alone is not "together"');
+  c.feed({ type: 'on', bus: 'melody' }, { melodySounding: true, padSounding: true }); assert.equal(c.stage, 'done');
+  const single = new PlayCheck({ needPad: false }); single.feed({ type: 'on', bus: 'melody' }, {}); assert.equal(single.stage, 'done');
+});
+
+test('tutorial steps follow the settings (mirrored sides, left-handed, single hand, touch)', () => {
+  const base = { melodyHand: 'right', single: false, hold: false, input: 'camera', slots: [{ label: 'C' }, { label: 'F' }, { label: 'G' }, { label: 'Am' }] };
+  const s = tutorialSteps(base);
+  assert.deepEqual(s.map(x => x.id), ['place', 'melody', 'accomp', 'sustain', 'fist', 'both']);
+  assert.match(s[1].title, /راست/); assert.match(s[2].title, /چپ/);
+  assert.match(s[2].result, /۳ انگشت: G/);
+  assert.ok(s.every(x => x.frames.every(f => f.svg.startsWith('<svg'))));
+  const lefty = tutorialSteps({ ...base, melodyHand: 'left' });
+  assert.match(lefty[1].title, /چپ/); assert.match(lefty[2].title, /راست/);
+  assert.deepEqual(tutorialSteps({ ...base, single: true }).map(x => x.id), ['place', 'melody', 'sustain', 'fist']);
+  assert.equal(tutorialSteps({ ...base, input: 'touch' }).length, 3);
+  assert.match(tutorialSteps({ ...base, hold: true })[3].text, /نگه‌داشتن آکورد/);
+});
+
+test('MIDI keeps accompaniment notes on their own program/channel', () => {
+  const ev = [
+    { type: 'on', id: 1, time: 0, freq: 261.63, velocity: 0.8, bus: 'melody' },
+    { type: 'on', id: 2, time: 0, freq: 130.81, velocity: 0.3, bus: 'accomp' },
+    { type: 'on', id: 3, time: 0, freq: 164.81, velocity: 0.3, bus: 'accomp' },
+    { type: 'off', id: 1, time: 0.5 }, { type: 'off', id: 2, time: 1 }, { type: 'off', id: 3, time: 1 },
+  ];
+  const r = parseMidi(encodeMidi(ev, { mode: 'rounded' }).bytes).events;
+  const ons = r.filter(e => (e.status & 0xf0) === 0x90 && e.data[1] > 0);
+  assert.deepEqual(ons.map(e => e.status & 15).sort(), [0, 1, 1]);
+  assert.ok(r.some(e => e.status === 0xc1 && e.data[0] === 89), 'pad channel uses GM 89 (Warm Pad)');
+  const m = parseMidi(encodeMidi(ev, { mode: 'microtonal' }).bytes).events;
+  const progs = m.filter(e => (e.status & 0xf0) === 0xc0);
+  const padNoteChs = m.filter(e => (e.status & 0xf0) === 0x90 && e.data[1] > 0 && e.data[0] < 58).map(e => e.status & 15);
+  for (const ch of padNoteChs) { const last = progs.filter(p => (p.status & 15) === ch).pop(); assert.equal(last.data[0], 89, 'channel ' + ch + ' switched to the pad program'); }
+});
