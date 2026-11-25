@@ -58,19 +58,55 @@ $$('[data-open-assistant]').forEach(b=>on(b,'click',()=>{const l=$('.ha-launcher
   on(more,'click',()=>{const first=!expanded?cards.find(c=>c.classList.contains('is-folded')):null;expanded=!expanded;apply();if(first)first.focus();else root.scrollIntoView({block:'start',behavior:reduce.matches?'auto':'smooth'});});
   buttons.forEach(b=>on(b,'click',()=>{family=b.dataset.family;buttons.forEach(x=>x.setAttribute('aria-pressed',String(x===b)));apply();}));on(input,'input',apply);on(window,'resize',()=>apply(),{passive:true});apply();})();
 
-/* ---------------------------------------------------------- weekly board (existing published schedule) */
-(()=>{const days=$('.st-days'),panel=$('#st-day-panel');if(!days||!panel)return;
-  const week=[['شنبه',['هنگ درام','داربوکا','جیمبی','دف','ارف','ویولن','نقاشی','عکاسی و فیلم‌برداری']],['یکشنبه',['دف','کاخن','کالیمبا','موسیقی کودک','سازشناسی کودکان']],['دوشنبه',['گیتار فلامنکو','ویولن','ترومپت','آهنگسازی','تنظیم','صدابرداری','فن بیان','نقاشی','دف','دی جی']],['سه‌شنبه',['گیتار','سلفژ','آواز','کلارینت','ترومپت','نی','ویولن','تئوری موسیقی']],['چهارشنبه',['تنبک','پیانو','درام','ملودیکا','کیبورد','ویولن','ترومپت','نقاشی']],['پنجشنبه',['سنتور','تار','سه‌تار','عود','دف','تنبک','ویولن','موسیقی کودک']]];
-  const icons={'گیتار فلامنکو':'guitar','گیتار':'guitar','ویولن':'violin','نی':'ney','کلارینت':'clarinet','ترومپت':'trumpet','پیانو':'piano','کیبورد':'keyboard','ملودیکا':'keyboard','دف':'daf','هنگ درام':'handpan','جیمبی':'djembe','داربوکا':'darbuka','تنبک':'tombak','کاخن':'cajon','سنتور':'santoor','عود':'oud','تار':'tar','سه‌تار':'setar','آواز':'voice','فن بیان':'voice','صدابرداری':'voice','نقاشی':'art','عکاسی و فیلم‌برداری':'camera','درام':'drums','سلفژ':'book','تئوری موسیقی':'book','آهنگسازی':'book','تنظیم':'dj','دی جی':'dj','کالیمبا':'kalimba','ارف':'child','موسیقی کودک':'child','سازشناسی کودکان':'child'};
-  const pages={'گیتار فلامنکو':'flamenco-guitar','گیتار':'guitar','ویولن':'violin','نی':'ney','کلارینت':'clarinet','ترومپت':'trumpet','پیانو':'piano','کیبورد':'keyboard','ملودیکا':'melodica','دف':'daf','هنگ درام':'handpan','جیمبی':'djembe','داربوکا':'darbuka','تنبک':'tombak','کاخن':'cajon','سنتور':'santoor','عود':'oud','تار':'tar','سه‌تار':'setar','درام':'drums','کالیمبا':'kalimba'};
-  const esc=s=>s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-  days.innerHTML=week.map(([d],i)=>`<button type="button" role="tab" id="st-day-${i}" aria-controls="st-day-panel" aria-selected="false" tabindex="-1">${d}<small>${faDigits(week[i][1].length)} رشته</small></button>`).join('');
-  const tabs=$$('button',days);
-  function select(i,focus){tabs.forEach((t,k)=>{t.setAttribute('aria-selected',String(k===i));t.tabIndex=k===i?0:-1;});panel.setAttribute('aria-labelledby','st-day-'+i);const [d,list]=week[i];
-    panel.innerHTML=`<h3>${d}‌ها</h3><ul class="st-day-list">${list.map(n=>`<li>${pages[n]?`<a href="instruments/${pages[n]}.html">${esc(n)}</a>`:`<span>${esc(n)}</span>`}</li>`).join('')}</ul><p class="st-day-note">ساعت دقیق، ظرفیت و شهریهٔ هر کلاس را از دفتر آموزشگاه بپرس. زمان کلاس هنرجویان ثبت‌نام‌شده در پرتال نمایش داده می‌شود.</p>`;
-    if(focus)tabs[i].focus();}
-  tabs.forEach((t,i)=>{on(t,'click',()=>select(i));on(t,'keydown',e=>{const k={ArrowLeft:1,ArrowRight:-1,ArrowDown:1,ArrowUp:-1}[e.key];if(k){e.preventDefault();select((i+k+tabs.length)%tabs.length,true);}else if(e.key==='Home'){e.preventDefault();select(0,true);}else if(e.key==='End'){e.preventDefault();select(tabs.length-1,true);}});});
-  const today=(new Date().getDay()+1)%7;select(today<6?today:0);})();
+/* ---------------------------------------------------------- weekly schedule
+   Source: the public registration endpoint (teachers + subject_days), the same data the online registration uses.
+   Fallback: the academy's published weekly poster. Only teaching days are shown; no times, students or bookings. */
+(()=>{const root=$('#week');if(!root)return;const dayBar=$('.wk-days',root),panel=$('#wk-panel'),status=$('#wk-status'),search=$('#wk-search');
+  const ENDPOINT='https://azastzjxnzjaloxmnbfd.supabase.co/functions/v1/student-enrollment',KEY='sb_publishable_BPYP79Lh70nWiwxExhRBvw_dRgVsed7';
+  // weekday index as used by the server: 0 = یکشنبه … 6 = شنبه
+  const NAMES=['یکشنبه','دوشنبه','سه‌شنبه','چهارشنبه','پنجشنبه','جمعه','شنبه'],ORDER=[6,0,1,2,3,4];
+  const POSTER=[[6,['هنگ درام','داربوکا','جیمبی','دف','ارف','ویولن','نقاشی','عکاسی و فیلم‌برداری']],[0,['دف','کاخن','کالیمبا','موسیقی کودک','سازشناسی کودکان']],[1,['گیتار فلامنکو','ویولن','ترومپت','آهنگسازی','تنظیم','صدابرداری','فن بیان','نقاشی','دف','دی جی']],[2,['گیتار','سلفژ','آواز','کلارینت','ترومپت','نی','ویولن','تئوری موسیقی']],[3,['تنبک','پیانو','درام','ملودیکا','کیبورد','ویولن','ترومپت','نقاشی']],[4,['سنتور','تار','سه‌تار','عود','دف','تنبک','ویولن','موسیقی کودک']]];
+  const PAGES={'گیتار فلامنکو':'flamenco-guitar','گیتار':'guitar','ویولن':'violin','نی':'ney','کلارینت':'clarinet','ترومپت':'trumpet','پیانو':'piano','کیبورد':'keyboard','ملودیکا':'melodica','دف':'daf','هنگ درام':'handpan','جیمبی':'djembe','داربوکا':'darbuka','تنبک':'tombak','کاخن':'cajon','سنتور':'santoor','عود':'oud','تار':'tar','سه‌تار':'setar','درام':'drums','کالیمبا':'kalimba'};
+  const key=s=>normalize(s);const words=s=>String(s||'').replace(/ي/g,'ی').replace(/ك/g,'ک').replace(/[\u200c\u200f\s]+/g,' ').trim().split(' ').filter(w=>w&&w!=='و');const same=(a,b)=>{const A=words(a),B=words(b);return key(a)===key(b)||A.length>0&&A.every(w=>B.includes(w))||B.length>0&&B.every(w=>A.includes(w))&&B.length>1;};const pageFor=s=>{const k=key(s);const hit=Object.keys(PAGES).find(n=>key(n)===k);return hit?PAGES[hit]:null;};
+  const faces={};$$('.st-teacher').forEach(c=>{faces[$('h3',c).textContent.replace(/^استاد\s+/,'').trim()]=$('img',c).getAttribute('src');});
+  // static teacher ↔ subject list from the published teacher cards (fallback only)
+  const staticTeachers=$$('.st-teacher').map(c=>({name:$('h3',c).textContent.replace(/^استاد\s+/,'').trim(),subjects:$('p',c).textContent.split('،').map(x=>x.trim())}));
+  let rows=[],source='',day=null,loaded=false;
+  function fromPoster(){const out=[];for(const [d,subs] of POSTER)for(const sub of subs){const teachers=staticTeachers.filter(t=>t.subjects.some(x=>same(sub,x))).map(t=>t.name);out.push({day:d,subject:sub,teachers});}return out;}
+  function fromLive(list){const map=new Map();for(const t of list){if(!t||typeof t.name!=='string')continue;for(const sub of (Array.isArray(t.subjects)?t.subjects:[])){for(const d of (t.subject_days?.[sub]||[])){if(!Number.isInteger(d)||d<0||d>6)continue;const k=d+'|'+key(sub);if(!map.has(k))map.set(k,{day:d,subject:String(sub).slice(0,60),teachers:[]});const r=map.get(k);if(!r.teachers.includes(t.name))r.teachers.push(String(t.name).slice(0,40));}}}
+    // keep poster subjects that no teacher record covers, so the published day list stays complete
+    for(const p of fromPoster()){const k=p.day+'|'+key(p.subject);if(![...map.values()].some(r=>r.day===p.day&&same(p.subject,r.subject)))map.set(k,{...p,teachers:[]});}
+    return [...map.values()];}
+  const el=(t,c,x)=>{const e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e;};
+  function tabs(){dayBar.replaceChildren();const opts=[['all','همهٔ روزها'],...ORDER.map(d=>[String(d),NAMES[d]])];opts.forEach(([v,label])=>{const b=el('button','',label);b.type='button';b.setAttribute('role','tab');b.id='wk-tab-'+v;b.dataset.day=v;b.setAttribute('aria-controls','wk-panel');const n=v==='all'?rows.length:rows.filter(r=>String(r.day)===v).length;b.append(el('small','',faDigits(n)));dayBar.append(b);});
+    $$('button',dayBar).forEach((b,i,all)=>{on(b,'click',()=>select(b.dataset.day));on(b,'keydown',e=>{const k={ArrowLeft:1,ArrowRight:-1}[e.key];let j=null;if(k)j=(i+k+all.length)%all.length;else if(e.key==='Home')j=0;else if(e.key==='End')j=all.length-1;if(j!=null){e.preventDefault();select(all[j].dataset.day);all[j].focus();}});});}
+  function select(v){day=v;$$('button',dayBar).forEach(b=>{const on_=b.dataset.day===v;b.setAttribute('aria-selected',String(on_));b.tabIndex=on_?0:-1;});panel.setAttribute('aria-labelledby','wk-tab-'+v);draw();}
+  function draw(){if(!loaded)return;const q=key(search.value);const list=rows.filter(r=>(day==='all'||String(r.day)===day)&&(!q||key(r.subject).includes(q)||r.teachers.some(t=>key(t).includes(q))));
+    panel.replaceChildren();if(!list.length){const e=el('div','wk-empty');e.append(el('b','',q?'موردی با این نام پیدا نشد.':'برای این روز کلاسی منتشر نشده است.'),el('p','',q?'نام ساز یا استاد را کوتاه‌تر بنویس یا «همهٔ روزها» را انتخاب کن.':'روز دیگری را انتخاب کن یا با دفتر تماس بگیر.'));panel.append(e);status.textContent=q?'نتیجه‌ای پیدا نشد':'';return;}
+    const groups=day==='all'?ORDER.map(d=>[d,list.filter(r=>r.day===d)]).filter(g=>g[1].length):[[Number(day),list]];
+    for(const [d,items] of groups){const sec=el('section','wk-group');if(day==='all')sec.append(el('h3','wk-day-title',NAMES[d]));const ul=el('ul','wk-rows');items.sort((a,b)=>a.subject.localeCompare(b.subject,'fa'));
+      for(const r of items){const li=el('li','wk-row');const s=el('div','wk-subject');const page=pageFor(r.subject);if(page){const a=el('a','',r.subject);a.href='instruments/'+page+'.html';s.append(a);}else s.append(el('span','',r.subject));li.append(s);
+        const t=el('div','wk-teachers');if(r.teachers.length){for(const n of r.teachers){const p=el('span','wk-person');if(faces[n]){const im=el('img');im.src=faces[n];im.alt='';im.loading='lazy';im.width=32;im.height=32;p.append(im);}p.append(el('span','','استاد '+n));t.append(p);}}else t.append(el('span','wk-ask','استاد: از دفتر بپرس'));li.append(t);
+        li.append(el('div','wk-when',NAMES[r.day]+' · ساعت با هماهنگی'));ul.append(li);}
+      sec.append(ul);panel.append(sec);}
+    status.textContent=faDigits(list.length)+' کلاس'+(q?' برای «'+search.value.trim().slice(0,40)+'»':'')+(source==='poster'?' · برنامهٔ منتشرشده':'');}
+  async function load(){status.textContent='در حال دریافت برنامه…';panel.setAttribute('aria-busy','true');panel.replaceChildren(el('div','wk-loading','در حال دریافت برنامهٔ روزها…'));
+    try{const ctl=new AbortController(),tm=setTimeout(()=>ctl.abort(),9000);const r=await fetch(ENDPOINT,{method:'POST',signal:ctl.signal,headers:{apikey:KEY,'Content-Type':'application/json'},body:JSON.stringify({action:'teachers'})});clearTimeout(tm);if(!r.ok)throw Error('status');const data=await r.json();if(!Array.isArray(data)||!data.length)throw Error('empty');rows=fromLive(data);source='live';}
+    catch{rows=fromPoster();source='poster';}
+    loaded=true;panel.setAttribute('aria-busy','false');tabs();const today=new Date().getDay();select(ORDER.includes(today)?String(today):'all');
+    if(source==='poster'){const n=el('p','wk-fallback','فهرست زندهٔ استادها در دسترس نبود؛ برنامهٔ منتشرشدهٔ آموزشگاه نمایش داده شد. برای اطمینان با دفتر تماس بگیر.');panel.before(n);}}
+  on(search,'input',draw);
+  if('IntersectionObserver'in window){const io=new IntersectionObserver(es=>{if(es.some(e=>e.isIntersecting)){io.disconnect();load();}},{rootMargin:'400px 0px'});io.observe(root);cleanups.push(()=>io.disconnect());}else load();
+})();
+
+/* ---------------------------------------------------------- HezarAva bird: one arrival flight, then a quiet idle */
+(()=>{const sec=$('#discover'),bird=$('.hv-bird');if(!sec||!bird)return;let seen=false;try{seen=sessionStorage.getItem('hv-landed')==='1';}catch{}
+  if(reduce.matches||seen||!('IntersectionObserver'in window)){bird.classList.add('is-perched');return;}
+  bird.classList.add('is-waiting');
+  const io=new IntersectionObserver(es=>{if(!es.some(e=>e.isIntersecting))return;io.disconnect();bird.classList.remove('is-waiting');bird.classList.add('is-arriving');
+    const done=()=>{bird.classList.remove('is-arriving');bird.classList.add('is-perched');try{sessionStorage.setItem('hv-landed','1');}catch{}};
+    bird.addEventListener('animationend',e=>{if(e.animationName==='hv-fly')done();});setTimeout(()=>{if(!bird.classList.contains('is-perched'))done();},3200);},{threshold:.35});
+  io.observe(sec);cleanups.push(()=>io.disconnect());})();
 
 /* ---------------------------------------------------------- HezarAva results: teacher avatars */
 (()=>{const box=$('#guide-content');if(!box||!('MutationObserver'in window))return;const map={};$$('.st-teacher').forEach(c=>{const img=$('img',c),name=$('h3',c).textContent.replace(/^استاد\s+/,'').trim();map[name]=img.getAttribute('src');});
@@ -106,7 +142,7 @@ try{
 
   /* dock + nav state */
   const dockLinks=$$('[data-dock]'),navLinks=$$('#st-nav a'),progressBar=$('.st-progress');
-  const sectionIds=['courses','experience','portal','masters','discover','contact'];
+  const sectionIds=['discover','notyab','courses','experience','portal','masters','week','contact'];
 
   const entrance=$('#home'),finalSec=$('#contact'),pathSec=$('#progress');let ticking=false,vh=innerHeight;
   function frame(){ticking=false;const y=scrollY,max=doc.scrollHeight-vh;progressBar?.style.setProperty('--doc',String(max>0?Math.min(1,y/max):0));
@@ -121,7 +157,7 @@ try{
     /* active chapter */
     let active='';for(const id of sectionIds){const el=document.getElementById(id);if(el&&el.getBoundingClientRect().top<vh*.45)active=id;}
     navLinks.forEach(a=>{if(a.getAttribute('href')==='#'+active)a.setAttribute('aria-current','true');else a.removeAttribute('aria-current');});
-    dockLinks.forEach(a=>a.classList.toggle('is-active',a.dataset.dock===active||(a.dataset.dock==='masters'&&['instruments','discover'].includes(active))));}
+    dockLinks.forEach(a=>a.classList.toggle('is-active',a.dataset.dock===active||(a.dataset.dock==='masters'&&['instruments','week'].includes(active))));}
   function request(){if(!ticking){ticking=true;requestAnimationFrame(frame);}}
   function measure(){vh=innerHeight;activeWorld=-1;request();}
   on(window,'scroll',request,{passive:true});on(window,'resize',measure,{passive:true});on(window,'orientationchange',()=>setTimeout(measure,250));
