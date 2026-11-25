@@ -2,7 +2,7 @@
 Persian public music/art academy website with authenticated management portal, Supabase backend, and walnut/cream/gold glass styling.
 
 ## Frontend
-Serve dist/ as static files. index.html is public; portal.html requests email OTP. No guest demo records are rendered. Supabase publishable key may be public; service/secret keys must never be included. Sessions are in memory and require sign-in after reload.
+Serve dist/ as static files. index.html is the public scroll story; it loads only story.css/story.js (plus hezarava-guide.css, extracted guide-dialog styles, and the existing guide/assistant scripts) and never touches portal styles, sessions or data. Practice-room scenes on the homepage are labelled demonstrations; audio starts only on click and no microphone is requested. portal.html requests email OTP. No guest demo records are rendered. Supabase publishable key may be public; service/secret keys must never be included. Sessions are in memory and require sign-in after reload.
 
 ## Roles
 Admin: all academy operations and staff assignment. Secretary: students, tuition, schedule, absence requests and notices; no expenses, salary or staff-role management. Teacher: only own schedule, minimal student names/subjects, attendance and own wage information. Students: only linked profile, payments, schedule and requests. RLS and checked RPCs enforce access.
