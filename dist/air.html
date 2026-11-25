@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#14302d">
+<title>هزارآوا | نوازندگی در هوا — آوای هزاردستان</title>
+<meta name="description" content="با حرکت دستانت جلوی دوربین یا با لمس صفحه موسیقی بساز؛ مقام‌های ایرانی و گام‌های غربی، همراهی، ضبط و خروجی WAV و MIDI. پردازش تصویر فقط روی دستگاه خودت انجام می‌شود.">
+<link rel="canonical" href="https://avayehezardastan.com/air.html">
+<link rel="icon" href="logo.png">
+<link rel="stylesheet" href="fonts.css">
+<link rel="stylesheet" href="air/air.css?v=20261126">
+</head>
+<body class="air">
+<a class="air-skip" href="#air-main">رفتن به محتوای اصلی</a>
+<header class="air-top">
+  <a class="air-home" href="index.html" aria-label="بازگشت به صفحهٔ اصلی آوای هزاردستان"><img src="logo.png" alt="" width="36" height="36"><span>هزارآوا <small>نوازندگی در هوا</small></span></a>
+  <div class="air-top-actions">
+    <button type="button" class="air-panic" id="air-panic">قطع همهٔ صداها</button>
+    <button type="button" class="air-btn air-btn--ghost" id="air-exit" hidden>پایان</button>
+  </div>
+</header>
+
+<main id="air-main">
+  <!-- intro ----------------------------------------------------------- -->
+  <section class="air-intro" id="air-intro" aria-labelledby="air-title">
+    <div class="air-intro-copy">
+      <p class="air-kicker">هزارآوا · نوازندگی در هوا</p>
+      <h1 id="air-title">با دستانت <em>موسیقی بساز.</em></h1>
+      <p class="air-lead">دستت را جلوی دوربین باز کن تا نت انتخاب شود؛ شست و اشاره را به هم برسان تا بنوازد. دست چپ می‌تواند همراهی کند. اگر دوربین نداری یا نمی‌خواهی، با لمس صفحه یا صفحه‌کلید بنواز.</p>
+      <fieldset class="air-choose">
+        <legend>روش نواختن</legend>
+        <label class="air-option"><input type="radio" name="air-input" value="camera" checked><span><b>با دوربین</b><small>تشخیص دست روی همین دستگاه</small></span></label>
+        <label class="air-option"><input type="radio" name="air-input" value="touch"><span><b>لمسی و صفحه‌کلید</b><small>بدون دوربین</small></span></label>
+      </fieldset>
+      <button type="button" class="air-btn air-btn--primary air-start" id="air-start">شروع نوازندگی</button>
+      <ul class="air-assure">
+        <li><b>حریم خصوصی:</b> تصویر دوربین فقط روی دستگاه خودت پردازش می‌شود؛ هیچ تصویری ضبط، ذخیره یا ارسال نمی‌شود. میکروفون درخواست نمی‌شود.</li>
+        <li><b>صدا:</b> پیش از شروع، صدای دستگاه را کم کن و آرام زیادش کن.</li>
+        <li><b>حجم:</b> حالت دوربین یک بار حدود ۱۷ مگابایت فایل تشخیص دست دریافت می‌کند.</li>
+      </ul>
+    </div>
+    <div class="air-intro-art" aria-hidden="true">
+      <svg viewBox="0 0 320 320" class="air-hand-art"><defs><linearGradient id="ag" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stop-color="#e9d6a6"/><stop offset="1" stop-color="#a98245"/></linearGradient></defs>
+        <circle cx="160" cy="160" r="150" fill="none" stroke="#e9d6a633" stroke-width="1"/><circle cx="160" cy="160" r="112" fill="none" stroke="#e9d6a622" stroke-dasharray="3 6"/>
+        <g stroke="url(#ag)" stroke-width="3" stroke-linecap="round" fill="none"><path d="M160 250 150 190 120 140 100 110M150 190 150 120 150 80M150 190 172 125 182 88M150 190 190 140 205 112M150 190 205 165 228 150"/></g>
+        <g fill="#f4e7c6"><circle cx="100" cy="110" r="6"/><circle cx="150" cy="80" r="6"/><circle cx="182" cy="88" r="6"/><circle cx="205" cy="112" r="6"/><circle cx="228" cy="150" r="6"/></g>
+        <circle cx="114" cy="96" r="22" fill="none" stroke="#7fc0b3" stroke-width="1.5" opacity=".7"/></svg>
+    </div>
+  </section>
+
+  <!-- performance surface ---------------------------------------------- -->
+  <section class="air-play" id="air-play" hidden aria-label="صحنهٔ نوازندگی">
+    <div class="air-stagewrap">
+      <div class="air-guide" id="air-guide" hidden>
+        <svg class="air-bird" viewBox="0 0 160 124" aria-hidden="true"><path d="M46 74 8 96l5 5 10-3-6 8 36-21Z" fill="#1f524d"/><path d="M40 72c0-19 19-32 41-32 17 0 29 7 35 17 4 8 2 19-7 27-12 11-37 13-53 7-10-4-16-10-16-19Z" fill="#1f524d"/><path d="M70 93c17 2 34-4 42-15-3 11-16 20-33 21-4 0-7-2-9-6Z" fill="#f3ead8"/><circle cx="112" cy="47" r="17" fill="#1f524d"/><path d="m127 44 18 3.5-18 4.5Z" fill="#c7a46a"/><circle cx="117" cy="43" r="3" fill="#0d211f"/><path d="M54 58c15-12 39-11 51 3-12 6-29 12-49 15-6-5-7-13-2-18Z" fill="#c7a46a"/></svg>
+        <div class="air-guide-text"><b id="air-guide-title"></b><p id="air-guide-body"></p><div class="air-guide-actions" id="air-guide-actions"></div></div>
+        <button type="button" class="air-guide-close" id="air-guide-close" aria-label="بستن راهنما">×</button>
+      </div>
+    <div class="air-surface" id="air-surface">
+      <video id="air-video" playsinline muted aria-hidden="true"></video>
+      <canvas id="air-canvas" aria-hidden="true"></canvas>
+      <div class="air-pads" id="air-pads" hidden></div>
+      <div class="air-status" id="air-status" aria-live="polite"></div>
+      <div class="air-overlay" id="air-overlay" hidden><div class="air-overlay-card"><b id="air-overlay-title"></b><p id="air-overlay-body"></p><div class="air-overlay-actions" id="air-overlay-actions"></div></div></div>
+      <div class="air-scale" id="air-scale" aria-label="درجه‌های گام"></div>
+    </div>
+    </div>
+
+    <aside class="air-panel" id="air-panel" aria-label="تنظیمات نوازندگی">
+      <div class="air-modes" role="tablist" aria-label="حالت">
+        <button role="tab" type="button" data-mode="free" aria-selected="true">نوازندگی آزاد</button>
+        <button role="tab" type="button" data-mode="learn" aria-selected="false">یادگیری</button>
+        <button role="tab" type="button" data-mode="perform" aria-selected="false">اجرا</button>
+      </div>
+
+      <div class="air-learn" id="air-learn" hidden></div>
+
+      <div class="air-group">
+        <label class="air-field"><span>ساز</span><select id="air-instrument"></select></label>
+        <p class="air-sound-note" id="air-sound-note"></p>
+        <div class="air-row">
+          <label class="air-field"><span>نوع گام</span><select id="air-system"><option value="persian">مقام‌های ایرانی</option><option value="western">گام‌های غربی</option></select></label>
+          <label class="air-field"><span>گام / مقام</span><select id="air-scale-key"></select></label>
+        </div>
+        <div class="air-row">
+          <label class="air-field"><span>تونیک</span><select id="air-root"></select></label>
+          <label class="air-check"><input type="checkbox" id="air-accomp" checked><span>همراهی</span></label>
+          <label class="air-check"><input type="checkbox" id="air-rhythm"><span>ضرب</span></label>
+        </div>
+        <div class="air-accomp-pads" id="air-accomp-pads" aria-label="همراهی"></div>
+      </div>
+
+      <div class="air-record">
+        <button type="button" class="air-btn air-btn--rec" id="air-rec" aria-pressed="false"><i aria-hidden="true"></i><span>ضبط</span></button>
+        <span class="air-rec-time" id="air-rec-time" aria-live="off">۰:۰۰</span>
+        <small>حداکثر ۵ دقیقه؛ فقط صدای ساخته‌شده، نه میکروفون</small>
+      </div>
+      <div class="air-takes" id="air-takes" hidden></div>
+
+      <details class="air-more">
+        <summary>تنظیمات بیشتر</summary>
+        <div class="air-more-body">
+          <div class="air-row">
+            <label class="air-field"><span>اکتاو پایه</span><select id="air-octave"><option value="3">۳</option><option value="4" selected>۴</option><option value="5">۵</option></select></label>
+            <label class="air-field"><span>لای مرجع (هرتز)</span><input id="air-ref" type="number" min="415" max="466" step="1" value="440" inputmode="numeric"></label>
+          </div>
+          <div class="air-tuning" id="air-tuning"></div>
+          <p class="air-fine" id="air-persian-note"></p>
+          <div class="air-row">
+            <label class="air-field"><span>اندازهٔ کرن/سری (سنت)</span><input id="air-koron" type="number" min="20" max="90" step="5" value="60" inputmode="numeric"></label>
+            <button type="button" class="air-btn air-btn--ghost" id="air-reset-tuning">بازگشت به پیش‌تنظیم</button>
+          </div>
+          <label class="air-field"><span>تغییر درجه هنگام نگه داشتن نت</span><select id="air-policy"><option value="hold">نت ثابت می‌ماند (پیش‌فرض)</option><option value="glide">نت آرام به درجهٔ تازه می‌لغزد</option><option value="retrigger">نت تازه دوباره نواخته می‌شود</option></select></label>
+          <label class="air-field"><span>انتخاب درجه با</span><select id="air-selection"><option value="zones">ستون افقی دست</option><option value="fingers">تعداد انگشت‌های باز (+ نیمهٔ تصویر)</option></select></label>
+          <div class="air-row air-row--checks">
+            <label class="air-check"><input type="checkbox" id="air-swap"><span>جابه‌جایی دست‌ها</span></label>
+            <label class="air-check"><input type="checkbox" id="air-lefty"><span>ملودی با دست چپ</span></label>
+            <label class="air-check"><input type="checkbox" id="air-single"><span>فقط یک دست (ملودی)</span></label>
+          </div>
+          <div class="air-row">
+            <label class="air-field"><span>تمپوی ضرب</span><input id="air-bpm" type="number" min="50" max="160" step="2" value="84" inputmode="numeric"></label>
+            <button type="button" class="air-btn air-btn--ghost" id="air-recalibrate">کالیبره دوباره</button>
+          </div>
+          <label class="air-check"><input type="checkbox" id="air-diag"><span>نمایش اطلاعات فنی</span></label>
+          <pre class="air-diag" id="air-diag-out" hidden></pre>
+        </div>
+      </details>
+
+      <div class="air-next" id="air-next" hidden>
+        <b>دوست داری نواختن یک ساز واقعی را یاد بگیری؟</b>
+        <p>با هزارآوا سازی که به علاقه و شرایطت نزدیک‌تر است پیدا کن، یا صفحهٔ ساز و استادش را ببین.</p>
+        <div class="air-next-links"><a class="air-btn air-btn--light" href="index.html#discover">کشف ساز با هزارآوا</a><a class="air-link" id="air-next-inst" href="index.html#instruments">سازها و استادها</a></div>
+      </div>
+      <p class="air-credit">صدای پیانو، گیتار، پیانوی الکتریک و ویولن: FluidR3_GM (CC BY 3.0). تشخیص دست: MediaPipe Hand Landmarker (Apache 2.0). <a href="air/ASSETS.md">منابع و مجوزها</a></p>
+    </aside>
+  </section>
+</main>
+<noscript><p class="air-noscript">این تجربه برای پخش صدا به جاوااسکریپت نیاز دارد.</p></noscript>
+<script type="module" src="air/app.mjs?v=20261126"></script>
+</body>
+</html>

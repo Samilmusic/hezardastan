@@ -799,3 +799,18 @@ a.st-tile:hover .st-ico{color:var(--champagne);transform:translateX(-3px)}
   .hv-bird.is-waiting{opacity:1}
   .hv-bird .hv-legs{opacity:1!important}
 }
+
+/* ----------------------------------------------------------- Air Studio entry */
+.st-air{position:relative;display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);align-items:center;gap:clamp(24px,5vw,80px);margin:clamp(24px,4vw,56px) var(--gut);padding:clamp(40px,6vw,84px) clamp(24px,5vw,80px);border-radius:6px;background:radial-gradient(60% 80% at 20% 30%,#2b625c,transparent 70%),linear-gradient(160deg,#173d39,#0f2b28);color:#efe8db;overflow:hidden}
+.st-air::after{content:'';position:absolute;inset:14px;border:1px solid #e2cfa52e;border-radius:3px;pointer-events:none}
+.st-air-art{justify-self:center;width:min(300px,60vw);aspect-ratio:1}
+.st-air-art svg{width:100%;height:100%}
+.st-air h2{color:#faf3e6}.st-air h2 em{color:var(--champagne);display:block}
+.st-air .st-kicker{color:var(--champagne)}
+.st-air-copy{position:relative;z-index:1}
+.st-air-copy>p{color:#d5e0d9;margin-top:14px;max-width:560px}
+.st-air .st-actions{margin-top:26px}
+.st-air .st-fine{color:#a9bfb6}
+@media (prefers-reduced-motion:no-preference){.st-air-wave{animation:st-air-wave 6s ease-in-out infinite;transform-origin:center}}
+@keyframes st-air-wave{50%{transform:translateY(-6px)}}
+@media (max-width:767px){.st-air{grid-template-columns:1fr;margin-inline:12px}.st-air-art{width:170px;justify-self:start}.st-air .st-btn{width:100%}}
