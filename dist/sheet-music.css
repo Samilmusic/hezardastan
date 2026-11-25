@@ -1,0 +1,65 @@
+/* Sheet-music page. */
+/* ----------------------------------------------------------- نت‌یاب */
+.st-notyab{padding:clamp(8px,2vw,24px) var(--gut) clamp(48px,6vw,90px);background:linear-gradient(180deg,var(--ivory),var(--parchment) 60%,var(--ivory))}
+.ny-form{max-width:980px;margin:0 auto;padding:clamp(20px,3vw,36px);background:#fffdf8;border-radius:8px;box-shadow:0 0 0 1px #dccdb0,0 30px 60px -40px #4a321d55}
+.ny-fields{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:16px}
+.ny-field{display:flex;flex-direction:column;gap:6px;font-size:14px;font-weight:700;color:var(--walnut)}
+.ny-field small{font-weight:500;color:var(--muted)}
+.ny-field input{min-height:52px;padding:0 16px;border-radius:3px;border:1px solid #d6c6a8;background:var(--paper);font:inherit;font-size:16px;font-weight:500;color:var(--ink);transition:border-color .3s,box-shadow .3s}
+.ny-field input:focus{outline:none;border-color:var(--teal-m);box-shadow:0 0 0 3px #1d4a461f}
+.ny-instruments{border:0;padding:0;margin:22px 0 0}
+.ny-instruments legend{font-size:14px;font-weight:700;color:var(--walnut);margin-bottom:10px;padding:0}
+.ny-inst-grid{display:flex;flex-wrap:wrap;gap:8px}
+.ny-chip{position:relative;cursor:pointer}
+.ny-chip input{position:absolute;opacity:0;inset:0;margin:0;cursor:pointer}
+.ny-chip span{display:flex;align-items:center;min-height:44px;padding:0 16px;border-radius:3px;box-shadow:0 0 0 1px #d6c6a8;background:var(--paper);font-size:15px;color:var(--body);transition:background-color .25s,color .25s,box-shadow .25s}
+.ny-chip input:checked+span{background:var(--teal);color:#f7f1e5;box-shadow:0 0 0 1px var(--teal);font-weight:700}
+.ny-chip input:focus-visible+span{outline:2px solid var(--teal-m);outline-offset:2px}
+.ny-submit{display:flex;flex-wrap:wrap;align-items:center;gap:12px 24px;margin-top:24px;padding-top:20px;border-top:1px solid var(--hair)}
+.ny-hint{font-size:13px;color:var(--muted)}
+.ny-out{max-width:980px;margin:28px auto 0}
+.ny-state{padding:26px;border-radius:6px;background:#fffdf8;box-shadow:0 0 0 1px var(--hair);text-align:center}
+.ny-state b{display:block;font-size:17px}
+.ny-state p{color:var(--muted);font-size:14px;margin-top:4px}
+.ny-state .st-btn{margin-top:14px}
+.ny-state--loading b::before{content:'';display:inline-block;width:14px;height:14px;margin-inline-end:10px;vertical-align:-2px;border-radius:50%;border:2px solid #d6c6a8;border-top-color:var(--teal);animation:ny-spin .9s linear infinite}
+@keyframes ny-spin{to{transform:rotate(360deg)}}
+.ny-state--error{box-shadow:0 0 0 1px #e3b9a5;background:#fdf6f1}
+.ny-summary{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;font-size:16px}
+.ny-notice{font-size:13.5px;color:#6a5026;background:#f7ecd4;border-radius:4px;padding:10px 14px;margin-bottom:14px;line-height:1.9}
+.ny-results{display:grid;gap:12px}
+.ny-result{padding:18px 20px;background:#fffdf8;border-radius:6px;box-shadow:0 0 0 1px var(--hair);border-inline-start:3px solid transparent}
+.ny-result--exact,.ny-result--arrangement{border-inline-start-color:var(--teal)}
+.ny-result--uncertain,.ny-result--unknown{border-inline-start-color:var(--brass-l)}
+.ny-r-head{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:6px 14px}
+.ny-r-head h3{font-family:Georgia,'Times New Roman',var(--display);font-weight:400;font-size:21px;line-height:1.5;unicode-bidi:plaintext}
+.ny-badge{font-size:12px;font-weight:700;padding:2px 10px;border-radius:2px;background:#e9e1d1;color:var(--walnut);white-space:nowrap}
+.ny-badge--exact,.ny-badge--arrangement{background:#dbe8e2;color:var(--teal)}
+.ny-badge--uncertain,.ny-badge--unknown{background:#f5e8cc;color:#7a5a1e}
+.ny-meta{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:4px 20px;margin:10px 0 14px;font-size:13.5px}
+.ny-meta div{display:flex;gap:8px;min-width:0}
+.ny-meta dt{color:var(--muted);flex:none}
+.ny-meta dd{color:var(--ink);overflow-wrap:anywhere;unicode-bidi:plaintext}
+.ny-actions{display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px}
+.ny-actions .st-btn{min-height:44px}
+.ny-when{flex-basis:100%;font-size:12px;color:var(--muted)}
+.ny-foot{font-size:12.5px;color:var(--muted);margin-top:14px}
+.ny-tips{margin-top:16px;padding:16px 18px;border-radius:6px;background:#f3ecdf}
+.ny-tips b{font-size:14px}
+.ny-tips ul{margin-top:6px;display:grid;gap:4px;font-size:14px;color:var(--body)}
+.ny-tips li::before{content:'';display:inline-block;width:5px;height:5px;margin-inline-end:10px;transform:rotate(45deg);background:var(--brass-l);vertical-align:2px}
+
+
+.ny-form{margin:0 auto}
+.ny-chip span{min-height:46px}
+@media (max-width:767px){
+  .ny-fields{grid-template-columns:1fr}
+  .ny-form{padding:18px 14px;margin-inline:calc(-1 * var(--gut) + 8px)}
+  .ny-inst-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr))}
+  .ny-chip span{justify-content:center;padding:0 8px;text-align:center;line-height:1.5}
+  .ny-submit .st-btn{flex:1 1 100%}
+  .ny-result{padding:16px 14px}
+  .ny-meta{grid-template-columns:1fr}
+  .ny-r-head h3{font-size:19px;overflow-wrap:anywhere}
+  .ny-actions .st-btn{flex:1 1 100%}
+}

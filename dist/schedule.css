@@ -1,0 +1,56 @@
+/* Schedule page: readable class rows on every width. */
+/* ----------------------------------------------------------- weekly schedule */
+.st-week{padding:clamp(18px,3vw,36px) 0 clamp(48px,6vw,90px)}
+.wk{max-width:1100px;margin:0 auto;padding-inline:var(--gut)}
+.wk-controls{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px 28px;border-bottom:1px solid var(--hair);padding-bottom:4px}
+.wk-days{display:flex;gap:4px 22px;flex-wrap:wrap}
+.wk-days button{display:flex;align-items:baseline;gap:6px;min-height:46px;padding:8px 0;border:0;border-bottom:1.5px solid transparent;margin-bottom:-5px;background:none;font-size:15px;color:var(--muted);transition:color .3s,border-color .3s}
+.wk-days button small{font-size:12px;color:var(--brass-l)}
+.wk-days button[aria-selected="true"]{color:var(--walnut);border-color:var(--walnut);font-weight:700}
+.wk-days button:hover{color:var(--ink)}
+.wk-search{margin-bottom:8px}
+.wk-status{min-height:1.9em;margin:14px 0 6px;font-size:13px;color:var(--muted)}
+.wk-fallback{font-size:13px;color:#6a5026;background:#f7ecd4;border-radius:4px;padding:8px 12px;margin:8px 0}
+.wk-panel{min-height:200px}
+.wk-panel:focus-visible{outline-offset:6px}
+.wk-day-title{font-size:24px;margin:22px 0 6px}
+.wk-rows{border-top:1px solid var(--hair)}
+.wk-row{display:grid;grid-template-columns:minmax(120px,.8fr) minmax(0,1.6fr) minmax(130px,.7fr);align-items:center;gap:10px 24px;padding:12px 4px;border-bottom:1px solid var(--hair)}
+.wk-subject{font-size:17px;font-weight:700}
+.wk-subject a{color:var(--teal);background:linear-gradient(#1d4a4640,#1d4a4640) 0 100%/100% 1px no-repeat;padding:4px 0}
+.wk-teachers{display:flex;flex-wrap:wrap;gap:6px 18px}
+.wk-person{display:inline-flex;align-items:center;gap:8px;font-size:14.5px}
+.wk-person img{width:32px;height:32px;border-radius:50%;object-fit:cover;box-shadow:0 0 0 1px #cbb185}
+.wk-ask{font-size:14px;color:var(--muted)}
+.wk-when{font-size:13px;color:var(--muted);text-align:end}
+.wk-empty,.wk-loading{padding:36px 8px;text-align:center;color:var(--muted)}
+.wk-empty b{display:block;color:var(--ink);font-size:16px}
+.wk-loading::before{content:'';display:inline-block;width:14px;height:14px;margin-inline-end:10px;vertical-align:-2px;border-radius:50%;border:2px solid #d6c6a8;border-top-color:var(--teal);animation:ny-spin .9s linear infinite}
+.wk-note{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:14px 28px;margin-top:28px;padding:20px 22px;border-radius:6px;background:#f3ecdf;font-size:14.5px;color:var(--body)}
+.wk-note p{max-width:560px}
+
+
+@keyframes ny-spin{to{transform:rotate(360deg)}}
+.wk-filters{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:8px}
+.wk-filters .wk-search{margin-bottom:0;width:260px}
+.wk-select select{min-height:48px;padding:0 14px 0 36px;border-radius:3px;border:1px solid #d6c6a8;background:#fffdf8 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='m7 10 5 5 5-5' fill='none' stroke='%239a7a48' stroke-width='1.8' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat left 10px center/18px;font:inherit;font-size:16px;color:var(--ink);-webkit-appearance:none;appearance:none;min-width:190px}
+.wk-select select:focus{outline:none;border-color:var(--teal-m);box-shadow:0 0 0 3px #1d4a461f}
+.wk-row{grid-template-columns:minmax(150px,.8fr) minmax(0,1.6fr) minmax(150px,.7fr);padding:14px 4px}
+.wk-person img{width:36px;height:36px}
+.wk-subject a{display:inline-flex;align-items:center;min-height:42px;padding:0;background-position:0 calc(100% - 8px)}
+.wk-empty .st-btn{margin-top:14px}
+.wk-days button{min-height:48px}
+@media (max-width:767px){
+  .wk-controls{flex-direction:column;flex-wrap:nowrap;align-items:stretch;border-bottom:0}
+  .wk-controls>*{min-width:0}
+  .wk-days{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin-inline:calc(-1 * var(--gut));padding-inline:var(--gut);border-bottom:1px solid var(--hair);gap:4px 20px}
+  .wk-days::-webkit-scrollbar{display:none}
+  .wk-days button{flex:none;margin-bottom:-1px}
+  .wk-filters{display:grid;grid-template-columns:1fr;margin-top:12px}
+  .wk-filters .wk-search,.wk-select select{width:100%}
+  .wk-row{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"s w" "t t";gap:8px 12px;padding:14px 2px}
+  .wk-subject{grid-area:s;font-size:17px}.wk-when{grid-area:w;font-size:12.5px;white-space:nowrap}.wk-teachers{grid-area:t}
+  .wk-day-title{font-size:21px;margin-top:18px;position:sticky;top:calc(var(--hh) + env(safe-area-inset-top));z-index:2;background:var(--ivory);padding:6px 0}
+  .wk-note{padding:18px 16px}
+  .wk-note .st-actions{width:100%}.wk-note .st-btn--secondary{flex:1 1 100%}
+}

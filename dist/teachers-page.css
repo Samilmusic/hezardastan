@@ -1,0 +1,27 @@
+/* Teachers page: cards on wide screens, portrait/name/subject rows on narrow screens. */
+.st-teachers{padding:clamp(18px,3vw,36px) 0 0}
+.st-results{padding-inline:var(--gut);font-size:13px;color:var(--muted);margin-bottom:18px;min-height:1.9em}
+.st-teacher-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:18px;padding-inline:var(--gut)}
+.st-teacher{display:flex;flex-direction:column;align-items:center;text-align:center;padding:22px 16px 18px;border-radius:12px;background:#fffdf8;box-shadow:0 0 0 1px #e3d6bd,0 24px 40px -36px #4a321d88;scroll-margin-top:calc(var(--hh) + 20px);transition:box-shadow .4s}
+.st-teacher.is-target{box-shadow:0 0 0 2px var(--teal),0 24px 40px -30px #12322f88}
+.st-portrait{width:128px;height:128px;border-radius:50%;padding:4px;border:1px solid #c5a874;margin-bottom:12px;flex:none}
+.st-portrait img{width:100%;height:100%;border-radius:50%;object-fit:cover;object-position:50% 35%;background:#e5d8c0}
+.st-teacher-body{display:flex;flex-direction:column;align-items:center;min-width:0}
+.st-teacher h2{font-size:21px;line-height:1.5;overflow-wrap:anywhere}
+.st-badge{display:block;margin:1px 0 2px;font-size:12.5px;font-weight:700;color:var(--brass)}
+.st-teacher p{font-size:14.5px;color:var(--body);line-height:1.9}
+.st-teacher-links{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin-top:10px}
+.st-teacher-links a{display:inline-flex;align-items:center;min-height:40px;padding:0 12px;border-radius:18px;background:#eef3ef;color:var(--teal);font-size:13.5px;font-weight:700}
+.st-teacher-links a:hover{background:var(--teal);color:#f7f1e5}
+.st-teachers .st-note{margin-top:24px}
+@media (max-width:639px){
+  .st-teacher-grid{grid-template-columns:1fr;gap:0;padding-inline:0;border-top:1px solid var(--hair)}
+  .st-teacher{flex-direction:row;align-items:flex-start;text-align:start;gap:14px;padding:14px var(--gut);border-radius:0;background:none;box-shadow:none;border-bottom:1px solid var(--hair)}
+  .st-teacher.is-target{background:#eef3ef;box-shadow:inset -3px 0 0 var(--teal)}
+  .st-portrait{width:68px;height:68px;padding:3px;margin:2px 0 0}
+  .st-teacher-body{align-items:flex-start}
+  .st-teacher h2{font-size:18.5px}
+  .st-teacher p{font-size:14.5px;line-height:1.8}
+  .st-teacher-links{justify-content:flex-start;margin-top:6px}
+  .st-teacher-links a{min-height:40px;font-size:13.5px}
+}

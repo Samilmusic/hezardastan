@@ -1,0 +1,24 @@
+/* Contact & registration page. */
+
+.ct-main{padding:clamp(8px,2vw,20px) var(--gut) 0}
+.ct-main .st-contacts{max-width:980px;margin:0;border-radius:10px;background:#fffdf8;box-shadow:0 0 0 1px #e3d6bd;border:0}
+.ct-steps,.ct-faq{padding:clamp(36px,5vw,64px) var(--gut) 0;max-width:980px}
+.ct-faq{padding-bottom:clamp(40px,6vw,80px)}
+.ct-steps h2,.ct-faq h2{font-size:clamp(24px,2.6vw,34px);margin-bottom:18px}
+.ct-steps ol{display:grid;gap:12px}
+.ct-steps li{display:flex;gap:16px;padding:18px 20px;border-radius:10px;background:#fffdf8;box-shadow:0 0 0 1px var(--hair)}
+.ct-steps .st-numeral{font-size:34px;line-height:1.1;flex:none;width:28px;text-align:center}
+.ct-steps h3{font-size:20px;line-height:1.6}
+.ct-steps p{color:var(--body);font-size:15px}
+.ct-links{display:flex;flex-wrap:wrap;gap:4px 18px;margin-top:8px}
+.ct-links a,.ct-links button{display:inline-flex;align-items:center;min-height:44px;padding:0;border:0;background:none;font:inherit;font-weight:700;font-size:14.5px;color:var(--teal);cursor:pointer;text-decoration:underline;text-decoration-color:#1d4a4650;text-underline-offset:6px}
+.st-faq{position:relative;max-width:none;margin:0;text-align:start}
+.st-faq details{border-bottom:1px solid var(--hair)}
+.st-faq details:first-child{border-top:1px solid var(--hair)}
+.st-faq summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:16px;padding:18px 2px;font-weight:700;min-height:56px}
+.st-faq summary::-webkit-details-marker{display:none}
+.st-faq summary::after{content:'';width:9px;height:9px;flex:none;border-inline-start:1.5px solid var(--brass);border-bottom:1.5px solid var(--brass);transform:rotate(-45deg) translateY(-3px);transition:transform .35s var(--ease)}
+.st-faq details[open] summary::after{transform:rotate(135deg) translateY(-3px)}
+.st-faq details p{padding:0 2px 20px;color:var(--body)}
+
+@media (max-width:767px){.ct-steps li{padding:16px 14px;gap:12px}.ct-steps h3{font-size:18px}}

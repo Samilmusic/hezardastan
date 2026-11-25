@@ -262,7 +262,7 @@ function renderSettings() {
   els.soundNote.textContent = (d.kind === 'sampled' ? 'نمونهٔ ضبط‌شده: ' : 'صدای ساخته‌شده در مرورگر: ') + d.source + '. نی، تار، سه‌تار و سنتور هنوز نمونهٔ ضبط‌شدهٔ مجاز ندارند و در فهرست نیستند.';
   renderTuningEditor(); renderScaleStrip(); renderAccompPads(); buildPads();
   const inst = { piano: 'piano', guitar: 'guitar', violin: 'violin', epiano: 'keyboard' }[S.instrument];
-  els.nextInst.href = inst ? 'instruments/' + inst + '.html' : 'index.html#instruments';
+  els.nextInst.href = inst ? 'instruments/' + inst + '.html' : 'courses.html#instruments';
   els.nextInst.textContent = inst ? 'صفحهٔ ' + ({ piano: 'پیانو', guitar: 'گیتار', violin: 'ویولن', keyboard: 'کیبورد' })[inst] + ' و استادش' : 'سازها و استادها';
 }
 function renderTuningEditor() {
