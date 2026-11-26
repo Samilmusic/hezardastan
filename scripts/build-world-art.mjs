@@ -19,13 +19,13 @@ class Svg {
   glow(cx, cy, rx, ry, color, alpha) { this.flush(); const id = 'w' + (this.n++); this.defs.push(`<radialGradient id="${id}"><stop offset="0" stop-color="${color}" stop-opacity="${r1(alpha * 10) / 10}"/><stop offset="1" stop-color="${color}" stop-opacity="0"/></radialGradient>`);
     this.out.push(`<ellipse cx="${r1(cx)}" cy="${r1(cy)}" rx="${r1(rx)}" ry="${r1(ry)}" fill="url(#${id})" stroke="none"/>`); }
   line(pts, color, w, o = {}) { this.flush(); let s = ''; for (let i = 0; i < pts.length; i += 2) s += (i ? 'L' : 'M') + r1(pts[i]) + ' ' + r1(pts[i + 1]);
-    this.out.push(`<path fill="none" stroke="${color}" stroke-width="${r1(w)}"${o.alpha != null ? ` opacity="${o.alpha}"` : ''}${o.cap ? ' stroke-linecap="round"' : ''}${o.dash ? ` stroke-dasharray="${o.dash.map(r1).join(' ')}"` : ''} d="${s}"/>`); }
+    this.out.push(`<path class="${o.cap ? 'r' : 'l'}" stroke="${color}" stroke-width="${r1(w)}"${o.alpha != null ? ` opacity="${o.alpha}"` : ''}${o.dash ? ` stroke-dasharray="${o.dash.map(r1).join(' ')}"` : ''} d="${s}"/>`); }
   stops(st) { return st.map(([o, c]) => { const m = /^rgba\((\d+),(\d+),(\d+),([\d.]+)\)$/.exec(c); return m ? `<stop offset="${o}" stop-color="rgb(${m[1]},${m[2]},${m[3]})" stop-opacity="${m[4]}"/>` : `<stop offset="${o}" stop-color="${c}"/>`; }).join(''); }
   lin(x0, y0, x1, y1, st) { const id = 'w' + (this.n++); this.defs.push(`<linearGradient id="${id}" gradientUnits="userSpaceOnUse" x1="${r1(x0)}" y1="${r1(y0)}" x2="${r1(x1)}" y2="${r1(y1)}">${this.stops(st)}</linearGradient>`); return `url(#${id})`; }
   rad(cx, cy, r, st) { const id = 'w' + (this.n++); this.defs.push(`<radialGradient id="${id}" gradientUnits="userSpaceOnUse" cx="${r1(cx)}" cy="${r1(cy)}" r="${r1(r)}">${this.stops(st)}</radialGradient>`); return `url(#${id})`; }
   rect(x, y, w, h, fill) { this.flush(); this.out.push(`<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${fill}" stroke="none"/>`); }
   raw(s) { this.flush(); this.out.push(s); }
-  toString(title) { this.flush(); return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${this.W} ${this.H}" width="${this.W}" height="${this.H}" role="img"><title>${title}</title><defs>${this.defs.join('')}</defs><g stroke-width=".7" stroke-linejoin="round">${this.out.join('')}</g></svg>`; }
+  toString(title) { this.flush(); return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${this.W} ${this.H}" width="${this.W}" height="${this.H}" role="img"><title>${title}</title><style>.l,.r{fill:none}.r{stroke-linecap:round}</style><defs>${this.defs.join('')}</defs><g stroke-width=".7" stroke-linejoin="round">${this.out.join('')}</g></svg>`; }
 }
 
 // the existing HezarAva bird (same drawing as the homepage), feet at (86, 111) in a 160 × 124 box
@@ -44,12 +44,12 @@ export function still(p, W, H, title, o = {}) {
 }
 const out = new URL('../dist/world/', import.meta.url);
 const CH = [
-  [0.5, 'تصویرسازی خیالی از آموزشگاهی کوچک با حیاط و حوض'], [1.45, 'اتاق مدیریت و پذیرش، با مسیری روشن میان آن‌ها'], [2.2, 'کلاس: استاد و هنرجو با گیتار'],
+  [0.5, 'حیاط آموزشگاه با حوض، کافه و میزها'], [1.45, 'سالن و میز منشی، با مسیری روشن برای درخواست'], [2, 'کلاس: استاد و هنرجو با گیتار'],
   [3.25, 'گوشهٔ تمرین در خانه'], [4.15, 'کمانی از صدا که خانه را به کلاس استاد وصل می‌کند'], [5, 'آموزشگاه و خانه از بالا؛ رشته‌های نور، هزارآوا را به همه‌جا وصل می‌کند'],
 ];
 if (process.argv[1] && import.meta.url.endsWith(process.argv[1].split('/').pop())) {
   CH.forEach(([p, t], i) => { const svg = still(p, 1200, 800, t); writeFileSync(new URL(`ch${i + 1}.svg`, out), svg); console.log(`ch${i + 1}.svg`, svg.length); });
   if (process.argv.includes('--test')) { writeFileSync('/tmp/top.svg', still(0, 1200, 800, 'top')); writeFileSync('/tmp/mid.svg', still(0.18, 1200, 800, 'mid')); writeFileSync('/tmp/walk.svg', still(2.75, 1200, 800, 'walk')); }
-  const t = still(0.5, 1200, 620, 'تصویرسازی خیالی از آموزشگاهی کوچک با حیاط و حوض', { cam: { tx: 12.2, ty: 6.9, w: 26.5, h: 15.5 }, fit: 1, cy: 0.5 });
+  const t = still(0.5, 1200, 620, 'آموزشگاه از بالا: حیاط با کافه و حوض، ایوان، کلاس‌ها و استودیو', { cam: { tx: 15.2, ty: 8.2, w: 31, h: 18 }, fit: 1, cy: 0.5 });
   writeFileSync(new URL('teaser.svg', out), t); console.log('teaser.svg', t.length);
 }

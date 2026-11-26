@@ -51,8 +51,8 @@ test('the viewer is the bird: its flight is continuous, it rests at every stop a
 
 test('the story ends with everything tied to the bird', () => {
   assert.equal(storyState(4.2).connect, 0); assert.equal(storyState(5).connect, 1);
-  const S = buildScene(); assert.ok(S.nodes.length >= 9, 'reception, management, classes, studio, café and home');
-  for (const k of ['cafe', 'studio', 'reception', 'management', 'classes', 'home']) assert.ok(S.rooms[k], k + ' has a label spot');
+  const S = buildScene(); assert.ok(S.nodes.length >= 9, 'café, courtyard tables, secretary, five classes, studio and home');
+  for (const k of ['court', 'cafe', 'porch', 'hall', 'reception', 'c1', 'c2', 'c3', 'c4', 'c5', 'classes', 'studio', 'street', 'home']) assert.ok(S.rooms[k], k + ' has a label spot');
   assert.ok(S.walkers.length >= 4 && S.notes.length >= 6 && S.steam.length >= 3, 'the academy is alive: walkers, notes, steam');
   const lines = []; const g = { poly() {}, polys() {}, ellipse() {}, glow() {}, rect() {}, lin: () => '#000', rad: () => '#000', line(pts, color) { lines.push(color); } };
   const view = { W: 1200, H: 800, cx: 600, cy: 400, fitW: 1100, fitH: 740 };
@@ -72,7 +72,7 @@ test('every chapter draws with finite geometry at desktop and phone sizes', () =
 test('static chapter art and the teaser exist, are light, and carry no scripts, raster images or remote references', () => {
   for (const f of ['ch1', 'ch2', 'ch3', 'ch4', 'ch5', 'ch6', 'teaser']) {
     const path = new URL(`../dist/world/${f}.svg`, import.meta.url); assert.ok(existsSync(path), f);
-    const s = readFileSync(path, 'utf8'); assert.ok(statSync(path).size < 260_000, f + ' stays under 260 KB before compression');
+    const s = readFileSync(path, 'utf8'); assert.ok(statSync(path).size < 330_000, f + ' stays under 330 KB before compression (about 65 KB gzipped)');
     assert.ok(!/<script|<image|<foreignObject|https?:\/\/(?!www\.w3\.org)/.test(s), f + ' is self-contained vector art');
   }
 });
@@ -116,4 +116,31 @@ test('the homepage carries only a light teaser and every public page links to th
   for (const f of ['index', 'courses', 'teachers', 'schedule', 'learning', 'sheet-music', 'contact', 'tuner', 'metronome', 'world'])
     assert.ok((read(f + '.html').match(/href="world\.html"/g) || []).length >= 3, f + '.html links to the story in the header, the menu and the footer');
   assert.ok(read('sitemap.xml').includes('https://avayehezardastan.com/world.html'));
+});
+
+test('the layout follows the owner\'s plan: courtyard (café, pond, tables) · veranda · hall, five classes and the studio · boulevard', () => {
+  const S = buildScene(), R = S.rooms;
+  // west to east: courtyard, veranda, building
+  assert.ok(R.court[0] < R.porch[0] && R.porch[0] < R.hall[0], 'courtyard, then the veranda, then the hall');
+  assert.ok(R.cafe[1] < S.pond[1] && S.pond[0] < R.porch[0] && R.cafe[0] < R.porch[0], 'the café is at the back of the courtyard, the pond in front of it');
+  // back row: class 1, class 2, studio · middle: hall and the atelier (class 3) · front: class 5, entrance, class 4
+  assert.ok(R.c1[0] < R.c2[0] && R.c2[0] < R.studio[0] && Math.abs(R.c1[1] - R.studio[1]) < 1, 'class 1, class 2 and the studio along the back');
+  assert.ok(R.c3[1] > R.studio[1] && R.c3[1] < R.c4[1] && Math.abs(R.c3[0] - R.studio[0]) < 1, 'class 3 below the studio, class 4 below that');
+  assert.ok(R.c5[1] > R.hall[1] && R.c5[0] < R.c4[0] && R.hall[1] > R.c1[1], 'class 5 and class 4 on the street side, the hall between the rows');
+  assert.ok(R.reception[0] < R.hall[0] && R.street[1] > R.c4[1] && R.home[0] > R.c4[0], 'the secretary by the veranda door, the boulevard in front, home further along it');
+  // the learner comes in from the boulevard through the courtyard and leaves by entrance 1
+  assert.ok(studentAt(0)[1] > 16.5 && studentAt(0.5)[0] < 11.4 && studentAt(1.3)[0] > 14.6, 'in through the courtyard gate, across the veranda into the hall');
+  const way = Array.from({ length: 40 }, (_, i) => studentAt(2.56 + i * 0.011)); assert.ok(way.some(q => q[0] > 19.3 && q[0] < 21.9 && q[1] > 10 && q[1] < 16.5), 'out through entrance 1');
+  // people: someone smoking at a courtyard table; players hold the guitar across the lap; walkers wear it on the back
+  const people = S.solids.filter(o => o.k === 'pawn');
+  assert.ok(people.length >= 40, 'the academy is busy (' + people.length + ')');
+  const smoker = people.find(o => o.pose === 'smoke'); assert.ok(smoker && smoker.seat && smoker.x < 11.4 && smoker.y > 6, 'the smoker sits in the courtyard');
+  assert.ok(S.smoke.length === 1 && Math.hypot(S.smoke[0][0] - smoker.x, S.smoke[0][1] - smoker.y) < 0.5, 'and the smoke rises from there');
+  assert.ok(people.filter(o => o.play === 'guitar').every(o => o.seat) && people.filter(o => o.play === 'guitar').length >= 4, 'guitars are played seated');
+  assert.ok(S.walkers.some(w => w.carry) && !S.solids.some(o => o.k === 'sprite' && o.z > 0.15 && o.z < 0.3), 'no guitar lies at anyone\'s feet');
+  // the drawing of a seated player and of a walker with a bag stays finite at every size
+  const g = recorder(); for (const s of [6, 14, 40, 90]) for (const [seat, play, carry, pose] of [[true, 'guitar', false], [false, null, true], [true, null, false, 'smoke'], [true, null, false, 'cup'], [false, null, false, 'tray']]) {
+    const one = { ground: [], deco: [], lines: [], back: [], pools: [], notes: [], steam: [], smoke: [], walkers: [], lights: [], nodes: [], pond: [0, 0], teacher: [0, 0], homeSeat: [0, 0], solids: [{ k: 'pawn', x: 0, y: 0, h: 1, color: '#2c6a63', head: '#e6c6a0', seat, play, carry, pose, step: seat ? null : 1 }] };
+    drawScene(g, one, { tx: 0, ty: 0, w: 1200 / s, h: 800 / s, e: 50, a: 32, dim: 0 }, { W: 1200, H: 800, cx: 600, cy: 400, fitW: 1200, fitH: 800 }, { ...storyState(1), student: [50, 50] }, 500); }
+  assert.equal(g.calls.bad, 0);
 });

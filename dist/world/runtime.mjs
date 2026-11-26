@@ -18,6 +18,7 @@ class CanvasG {
 }
 
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const START_ONLY = new Set(['c1', 'c2', 'c3', 'c4', 'c5', 'porch', 'reception', 'street', 'hall']);
 
 /**
  * Start the live scene.
@@ -113,7 +114,8 @@ export function start(opts) {
     if (opts.labels) for (const key in opts.labels) { const el = opts.labels[key];
       if (key === 'bird') { el.style.transform = `translate(${bq[0].toFixed(1)}px,${(bq[1] + birdW * 0.2).toFixed(1)}px) translate(-50%,0)`; el.style.opacity = st.connect.toFixed(2); continue; }
       const w = S.rooms[key], q = api.P(w[0], w[1], 0); el.style.transform = `translate(${q[0].toFixed(1)}px,${q[1].toFixed(1)}px) translate(-50%,-50%)`;
-      el.style.opacity = (key === 'court' ? st.labels * (1 - st.connect) : key === 'home' ? Math.min(st.labels, ps > 4.6 ? 1 : 0) : st.labels).toFixed(2); }
+      const early = ps < 2 ? st.labels : 0, late = ps > 4 ? st.labels : 0;                           // room-by-room names only on the opening plan
+      el.style.opacity = (key === 'court' ? st.labels * (1 - st.connect) : key === 'home' || key === 'classes' ? late : START_ONLY.has(key) ? early : st.labels).toFixed(2); }
     // stay light on slower devices: lower the canvas resolution first, then hand over to the simple view
     if (frames > 24 && drawMs > 26) { if (dpr > 1) { dpr = Math.max(1, dpr - 0.5); frames = 0; drawMs = 12; measure(); } else if (drawMs > 45) { opts.onSlow?.(); return; } }
     if (p !== ps || !reduced) schedule();   // the scene is alive (people, water, notes), so it keeps drawing while it is on screen
