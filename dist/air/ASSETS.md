@@ -45,7 +45,9 @@ measurement-based literature on Persian intonation (neutral seconds of roughly 1
 performer's intonation, and koron/sori sizes are editable per degree.
 
 ## Privacy and permissions
-Camera frames are passed to the model in the page and never stored or transmitted. The microphone is never requested.
+Camera frames are passed to the model in the page and are never transmitted. Hand tracking itself stores nothing and never asks for the microphone.
+
+**Filming (added later, on the owner's request):** when the player presses «ویدئو» and then «شروع ضبط», the page films the performance surface (camera picture with the overlay, plus a title and the chords drawn into the film) together with the engine's sound. If the player leaves «صدای میکروفون» on, the browser asks for microphone permission at that moment; the voice goes through a high-pass, a gentle compressor and an optional generated reverb **into the film only**, never to the speakers. The film is assembled in memory with `MediaRecorder` and handed to the player as a file to save or share; it is not uploaded, and it is gone when the page closes. The microphone is released when the take ends. Maximum length 3 minutes. Audio-only recording (WAV/MIDI) is unchanged and contains neither picture nor microphone.
 Settings (scale, instrument, calibration thresholds) are kept in `localStorage` on the device only.
 Site headers: `Permissions-Policy: camera=(self)` and `script-src … 'wasm-unsafe-eval'` (required to compile the
 MediaPipe WebAssembly runtime).
@@ -67,3 +69,6 @@ MediaPipe WebAssembly runtime).
 - Pad sounds: «پد گرم», «زهی نرم», «آوای کُر», «ارگ ملایم», «پیانو برقی», «شیشه‌ای». All six are synthesized in the browser (oscillators, formant filters, slow modulation); none is a recording or claims to be a real instrument. The MIDI export uses the same pad program for all of them.
 - Melody zone: when both hands play, the note columns occupy the part of the screen beside the chord list (70% of the width) and, like the octave bands, always lie inside the visible part of the camera picture. A ring between thumb and index shows how close the pinch is, and one hint line says what the melody hand should do next.
 - **Limits of what was tested:** all of this was exercised with automated tests on simulated landmarks and in headless Chrome with a fake camera. Finger and thumb thresholds, the dwell time, sound quality and latency have not been checked with real hands, a real camera or real speakers.
+
+## Filming — limits of what was tested
+Tested in headless Chrome with a fake camera and a fake microphone: an MP4 with a video track and an audio track is produced, the microphone is requested only after «شروع ضبط», a refused permission falls back to filming without it, and pausing or leaving ends the take. **Not tested:** iPhone/Android behaviour (Safari's `MediaRecorder` and `canvas.captureStream`, what happens to the playback route and quality when the microphone opens, whether a second permission request disturbs the camera), sync between voice and pad on real devices, sound of the voice reverb, and the share sheet. Without headphones the microphone also hears the pad from the speaker.

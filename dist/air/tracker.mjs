@@ -1,5 +1,6 @@
 // HezarAva Air Studio — camera acquisition and MediaPipe Hand Landmarker inference.
-// Frames are processed in this tab only. Nothing is uploaded, recorded or stored. No microphone is requested.
+// Frames are processed in this tab only and nothing is uploaded. This module never records and never asks for the
+// microphone; filming (video.mjs) is a separate, explicit action of the player.
 //
 // Worker path evaluated: tasks-vision 0.10.18 can run in a module worker, but each frame then has to be copied
 // with createImageBitmap and GPU delegation inside workers is unavailable or unreliable in Safari. We therefore run

@@ -9,6 +9,7 @@ import { Lifecycle } from './lifecycle.mjs';
 import { PointerVoices } from './touch.mjs';
 import { EXERCISES, Exercise } from './learn.mjs';
 import { tutorialSteps, PlayCheck } from './tutorial.mjs';
+import { VideoTake, videoSupport } from './video.mjs';
 
 const $ = s => document.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -22,7 +23,7 @@ const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls)
 const SAVED = store.get('settings', {});
 const S = Object.assign({
   input: 'camera', system: 'persian', key: 'shur', rootPc: 7, octave: 4, refA4: 440, offsets: {}, instrument: 'soft', volume: 0.8,
-  accomp: true, chordSrc: 'auto', chords: DEFAULT_CHORDS.map(c => [...c]), trans: 350, dwell: CHORD_DEFAULTS.dwellMs, quant: false, melVol: 1, padVol: 0.45, padSound: 'warm', bright: 'warm', rhythm: false, bpm: 84,
+  accomp: true, chordSrc: 'auto', chords: DEFAULT_CHORDS.map(c => [...c]), trans: 350, dwell: CHORD_DEFAULTS.dwellMs, quant: false, melVol: 1, padVol: 0.45, padSound: 'warm', filmMic: true, filmReverb: 15, bright: 'warm', rhythm: false, bpm: 84,
   policy: 'hold', selection: 'zones', swap: false, lefty: false, single: false,
   koron: 60, diag: false, labelForRight: 'Right', v: 3, pinchOn: DEFAULTS.pinchOn, pinchOff: DEFAULTS.pinchOff, calibrated: false, practiced: false,
 }, SAVED);
@@ -53,6 +54,9 @@ let started = false, playing = false, paused = false, perform = false, events = 
 const els = {
   intro: $('#air-intro'), play: $('#air-play'), start: $('#air-start'), exit: $('#air-exit'), panic: $('#air-panic'), full: $('#air-full'), help: $('#air-help'),
   video: $('#air-video'), canvas: $('#air-canvas'), pads: $('#air-pads'), status: $('#air-status'), surface: $('#air-surface'),
+  filmBtn: $('#air-film-btn'), filmDlg: $('#air-film'), filmMicOn: $('#air-film-mic-on'), filmReverb: $('#air-film-reverb'), filmReverbOut: $('#air-film-reverb-out'), filmFormat: $('#air-film-format'), filmError: $('#air-film-error'), filmStart: $('#air-film-start'),
+  filmBar: $('#air-filmbar'), filmTime: $('#air-film-time'), filmMic: $('#air-film-mic'), filmStop: $('#air-film-stop'), filmCount: $('#air-film-count'),
+  filmDone: $('#air-film-done'), filmVideo: $('#air-film-video'), filmMeta: $('#air-film-meta'), filmNote: $('#air-film-note'), filmSave: $('#air-film-save'), filmShare: $('#air-film-share'), filmAgain: $('#air-film-again'),
   hint: $('#air-hint'), padSound: $('#air-padsound'), padSoundPanel: $('#air-padsound-panel'),
   ring: $('#air-ring'), ringSlots: $('#air-ring-slots'), ringHl: $('#air-ring-hl'), ringCore: $('#air-ring-core'), ringNow: $('#air-ring-now'), ringState: $('#air-ring-state'),
   coach: $('#air-coach'), coachTitle: $('#air-coach-title'), coachBody: $('#air-coach-body'), coachChecks: $('#air-coach-checks'), coachActions: $('#air-coach-actions'),
@@ -369,6 +373,7 @@ function keyToPad(e) {
   return null;
 }
 document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && film) { stopFilm(); return; }
   if (e.key === 'Escape' && !els.panel.hidden) { closePanel(true); return; }
   if (!playing || paused || e.ctrlKey || e.metaKey || e.altKey) return;
   if (e.target.closest?.('input,select,textarea,dialog,.air-panel')) return;
@@ -753,6 +758,84 @@ els.takeAudio.onpause = els.takeAudio.onended = () => { els.takePlay.querySelect
 els.takeClose.onclick = () => { els.takeAudio.pause(); els.take.hidden = true; els.takeMidi.open = false; };
 document.addEventListener('click', e => { if (els.takeMidi.open && !e.target.closest('#air-take-midi')) els.takeMidi.open = false; });
 
+// ---------------------------------------------------------------- filming (picture of the performance + sound; optional microphone)
+// Only on the player's explicit action. The film is made in this tab and handed to the player; nothing is uploaded.
+let film = null, filmUrl = null, filmTimer = null, filmResult = null;
+const filmSup = videoSupport();
+function filmMsg(text) { els.filmError.textContent = text || ''; els.filmError.hidden = !text; }
+function openFilm() {
+  if (!playing || paused || film) return;
+  els.filmMicOn.checked = S.filmMic; els.filmReverb.value = S.filmReverb; els.filmReverbOut.textContent = fa(S.filmReverb) + '٪'; els.filmReverb.disabled = !S.filmMic;
+  const cam = S.input === 'camera' && camera?.active;
+  els.filmFormat.textContent = !filmSup.ok ? '' : filmSup.ext === 'mp4' ? 'فایل MP4 ساخته می‌شود.' : 'این مرورگر فایل WebM می‌سازد؛ بعضی برنامه‌ها (مثل اینستاگرام) فقط MP4 می‌پذیرند.';
+  filmMsg(!filmSup.ok ? 'این مرورگر ضبط ویدئو را پشتیبانی نمی‌کند. ضبط صدا همچنان کار می‌کند.' : !cam ? 'فیلم از تصویر دوربین گرفته می‌شود؛ اول با حالت «دوربین» شروع کن.' : '');
+  els.filmStart.disabled = !filmSup.ok || !cam;
+  if (!els.filmDlg.open) els.filmDlg.showModal();
+}
+els.filmBtn.onclick = openFilm;
+els.filmMicOn.onchange = () => { S.filmMic = els.filmMicOn.checked; els.filmReverb.disabled = !S.filmMic; save(); };
+els.filmReverb.oninput = () => { S.filmReverb = Number(els.filmReverb.value); els.filmReverbOut.textContent = fa(S.filmReverb) + '٪'; }; els.filmReverb.onchange = save;
+for (const d of [els.filmDlg, els.filmDone]) { d.addEventListener('click', e => { if (e.target === d || e.target.closest('[data-close]')) d.close(); }); }
+els.filmDone.addEventListener('close', () => { els.filmVideo.pause(); });
+const countdown = async () => { for (const n of [3, 2, 1]) { els.filmCount.hidden = false; els.filmCount.textContent = fa(n); await new Promise(r => setTimeout(r, reduceMotion.matches ? 350 : 800)); } els.filmCount.hidden = true; };
+/** A title and the chords, drawn only into the film (the on-screen chord list is a control and is not filmed). */
+function drawFilmExtras(c, W, H) {
+  const k = Math.min(W, H) / 390, left = !S.lefty, pad0 = 14 * k;
+  c.textBaseline = 'middle';
+  if (S.accomp && slots.length) {
+    const cw = 92 * k, ch = 34 * k, gap = 6 * k, x = left ? pad0 : W - pad0 - cw, y0 = H * 0.34;
+    const now = pad.slot != null ? slots[pad.slot] : null;
+    c.textAlign = left ? 'left' : 'right'; c.font = `700 ${46 * k}px Vazir, Tahoma`; c.fillStyle = 'rgba(0,0,0,.35)'; c.fillText(now ? (now.short || now.label) : '', (left ? pad0 : W - pad0) + 2 * k, y0 - 34 * k + 2 * k);
+    c.fillStyle = '#fff6dc'; c.fillText(now ? (now.short || now.label) : '', left ? pad0 : W - pad0, y0 - 34 * k);
+    slots.forEach((s, i) => { const y = y0 + i * (ch + gap), on = pad.slot === i;
+      c.fillStyle = on ? 'rgba(246,226,176,.96)' : 'rgba(11,36,34,.62)'; c.beginPath(); c.roundRect ? c.roundRect(x, y, cw, ch, ch / 2) : c.rect(x, y, cw, ch); c.fill();
+      c.fillStyle = on ? '#33240f' : '#e9d6a6'; c.beginPath(); c.arc(x + ch / 2, y + ch / 2, ch * 0.32, 0, 7); c.fill();
+      c.textAlign = 'center'; c.font = `700 ${12.5 * k}px Vazir, Tahoma`; c.fillStyle = on ? '#f6e2b0' : '#33240f'; c.fillText(fa(i + 1), x + ch / 2, y + ch / 2 + k);
+      const name = s.short || s.label; c.textAlign = 'left'; c.font = `700 ${(name.length > 5 ? 11.5 : 15) * k}px Vazir, Tahoma`; c.fillStyle = on ? '#33240f' : '#fdf7ea'; c.fillText(name, x + ch + 2 * k, y + ch / 2 + k, cw - ch - 8 * k); });
+  }
+  const top = c.createLinearGradient(0, 0, 0, 70 * k); top.addColorStop(0, 'rgba(6,24,22,.55)'); top.addColorStop(1, 'rgba(6,24,22,0)'); c.fillStyle = top; c.fillRect(0, 0, W, 70 * k);
+  c.textAlign = 'center'; c.font = `600 ${13 * k}px Vazir, Tahoma`; c.fillStyle = 'rgba(255,248,230,.92)'; c.fillText('دستانِ نوا · آوای هزاردستان', W / 2, 24 * k);
+  c.textBaseline = 'alphabetic';
+}
+async function startFilm() {
+  if (film || !engine) return;
+  els.filmStart.disabled = true; filmMsg('');
+  const take = new VideoTake({ engine, source: els.canvas, draw: drawFilmExtras, maxSec: 180, onLimit: () => stopFilm(true) });
+  try {
+    await take.start({ mic: S.filmMic, reverb: S.filmReverb / 100, long: (navigator.hardwareConcurrency || 4) <= 2 ? 960 : 1280,
+      before: async () => { els.filmDlg.close(); closePanel(false); coach(null); document.body.classList.add('is-film'); film = take; resizeCanvas(); await countdown(); } });
+  } catch (e) {
+    film = null; document.body.classList.remove('is-film'); els.filmCount.hidden = true; els.filmStart.disabled = false;
+    const kind = e?.kind;
+    if (kind === 'mic-denied' || kind === 'mic-missing') { S.filmMic = false; els.filmMicOn.checked = false; els.filmReverb.disabled = true; save(); filmMsg(kind === 'mic-denied' ? 'اجازهٔ میکروفون داده نشد. می‌توانی بدون میکروفون ضبط کنی: دوباره «شروع ضبط» را بزن.' : 'میکروفونی پیدا نشد. می‌توانی بدون میکروفون ضبط کنی.'); }
+    else filmMsg('ضبط ویدئو در این مرورگر شروع نشد.');
+    if (!els.filmDlg.open) els.filmDlg.showModal();
+    return;
+  }
+  els.filmStart.disabled = false; els.filmBar.hidden = false; els.filmMic.textContent = take.usedMic ? 'میکروفون روشن' : 'بدون میکروفون'; els.filmTime.textContent = fmtTime(0);
+  filmTimer = setInterval(() => { if (film) els.filmTime.textContent = fmtTime(film.seconds); }, 500);
+  els.filmBtn.setAttribute('aria-pressed', 'true');
+}
+async function stopFilm(limit = false) {
+  const take = film; if (!take) return; film = null;
+  clearInterval(filmTimer); els.filmBar.hidden = true; els.filmCount.hidden = true; document.body.classList.remove('is-film'); els.filmBtn.setAttribute('aria-pressed', 'false');
+  const r = await take.stop(); resizeCanvas();
+  if (!r || !r.blob.size) { if (playing && !paused) { openFilm(); filmMsg('فیلمی ساخته نشد. دوباره امتحان کن.'); } return; }
+  if (filmUrl) URL.revokeObjectURL(filmUrl);
+  filmResult = r; filmUrl = URL.createObjectURL(r.blob);
+  const name = 'dastan-nava-' + new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-') + '.' + r.ext;
+  els.filmVideo.src = filmUrl; els.filmSave.href = filmUrl; els.filmSave.download = name;
+  els.filmMeta.textContent = fmtTime(r.seconds) + ' · ' + fa((r.blob.size / 1048576).toFixed(1)) + ' مگابایت · ' + r.ext.toUpperCase();
+  els.filmNote.textContent = (limit ? 'به سقف ۳ دقیقه رسید. ' : '') + (r.mic ? 'صدای میکروفون در فیلم هست. ' : '') + 'فیلم فقط روی همین دستگاه است؛ تا ذخیره یا هم‌رسانی نکنی، با بستن صفحه از بین می‌رود.';
+  const file = typeof File === 'function' ? new File([r.blob], name, { type: r.mime }) : null;
+  els.filmShare.hidden = !(file && navigator.canShare?.({ files: [file] }));
+  els.filmShare.onclick = async () => { try { await navigator.share({ files: [file], title: 'دستانِ نوا' }); } catch {} };
+  if (!els.filmDone.open) els.filmDone.showModal();
+}
+els.filmStart.onclick = startFilm;
+els.filmStop.onclick = () => stopFilm();
+els.filmAgain.onclick = () => { els.filmDone.close(); openFilm(); };
+
 // ---------------------------------------------------------------- canvas (decoupled from inference and audio)
 const g = els.canvas.getContext('2d');
 let particles = [], frameAvg = 16, lastFrame = performance.now(), raf = 0;
@@ -772,6 +855,10 @@ function draw(now) {
   const cols = scaleLen(), dpr = W / (els.canvas.clientWidth || 1);
   const vw = els.video.videoWidth || 4, vh = els.video.videoHeight || 3, sc = Math.max(W / vw, H / vh), ox = (W - vw * sc) / 2, oy = (H - vh * sc) / 2;
   const X = x => ox + x * vw * sc, Y = y => oy + y * vh * sc;
+  if (els.video.readyState >= 2 && els.video.videoWidth) {                 // the mirrored camera picture, cropped to fill; a soft tint keeps the overlay readable
+    g.save(); g.translate(W, 0); g.scale(-1, 1); g.drawImage(els.video, ox, oy, vw * sc, vh * sc); g.restore();
+    g.fillStyle = film ? 'rgba(9,34,31,.2)' : 'rgba(11,40,36,.4)'; g.fillRect(0, 0, W, H);
+  }
   // the melody zone: note columns beside the chord list; height picks the octave band
   const [z0, z1] = melodyZone(), ZX = u => (z0 + u * (z1 - z0)) * W, BY = v => v * H, zl = ZX(0), zr = ZX(1), zoned = z0 > 0 || z1 < 1;
   const font = (px, w = 600) => `${w} ${px * dpr}px Vazir, Tahoma`;
@@ -897,6 +984,7 @@ async function startCamera() {
 }
 async function stopPlaying() {
   if (!started) return;
+  if (film) await stopFilm();
   panic(); playing = false;
   if (engine?.recording) await stopRecording();
   onboarding.step = 'idle'; coach(null); overlay(null); setPerform(false); closePanel(false); learnMode = false; practice = null; exercise = null;
@@ -913,6 +1001,7 @@ els.start.onclick = startPlaying;
 function setToggle() { const p = paused; els.toggle.querySelector('use').setAttribute('href', p ? '#i-play' : '#i-pause'); els.toggle.querySelector('span').textContent = p ? 'شروع' : 'توقف'; els.toggle.setAttribute('aria-label', p ? 'ادامهٔ نوازندگی' : 'توقف نوازندگی'); }
 async function pauseAll(reasonTitle) {
   if (!playing || paused) return;
+  if (film) await stopFilm();
   paused = true; panic(); tracker?.stop(); if (camera?.active) camera.stop();
   if (engine?.recording) await stopRecording();
   await engine?.suspend(); setToggle();
@@ -930,7 +1019,7 @@ async function resumeAll() {
 }
 els.toggle.onclick = () => paused ? resumeAll() : pauseAll();
 document.addEventListener('visibilitychange', () => { if (playing && document.hidden) pauseAll('ادامهٔ نوازندگی'); });
-window.addEventListener('pagehide', () => { if (started) { panic(); life.stop(); } });
+window.addEventListener('pagehide', () => { film?.cancel(); film = null; if (started) { panic(); life.stop(); } });
 
 // immersive presentation (layout only; audio and tracking keep running)
 function setPerform(on) {
@@ -969,6 +1058,6 @@ if (!canCam) $('input[name="air-input"][value="camera"]').disabled = true;
 // test hook for automated browser checks (no effect on normal use)
 window.__air = {
   feed: (t, hands) => router && handleHands(t, hands), pauseTracking: () => tracker?.stop(), get step() { return onboarding.step; },
-  get engine() { return engine; }, get life() { return life; }, get pad() { return { ...pad }; }, get practice() { return practice && practice.stage; }, get slots() { return slots; }, get chordHand() { return chordHand; }, select: chordSelect, get settings() { return S; },
+  get engine() { return engine; }, get life() { return life; }, get pad() { return { ...pad }; }, get practice() { return practice && practice.stage; }, get slots() { return slots; }, get film() { return film; }, get filmResult() { return filmResult; }, openFilm, startFilm, stopFilm, get chordHand() { return chordHand; }, select: chordSelect, get settings() { return S; },
   get tracker() { return tracker; }, get camera() { return camera; }, panic, stopPlaying, startPlaying, get events() { return events; },
 };

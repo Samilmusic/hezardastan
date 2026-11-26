@@ -652,6 +652,40 @@ test('pad sounds: several synthesized sounds; changing the sound re-voices the s
   engine.panic(); await new Promise(r => setTimeout(r, 900)); await engine.dispose();
 });
 
+test('filming: sizes, support detection, voice reverb and the sound tap', async () => {
+  const { filmSize, videoSupport, voiceImpulse, VideoTake, FilmError } = await import('../dist/air/video.mjs');
+  assert.deepEqual(filmSize(786, 1688), { width: 596, height: 1280 }, 'a phone surface keeps its shape, long side 1280');
+  assert.deepEqual(filmSize(390, 844), { width: 390, height: 844 }, 'never upscaled');
+  assert.deepEqual(filmSize(1851, 1011, 960), { width: 960, height: 524 }, 'landscape, weaker device');
+  for (const [w, h] of [[787, 1689], [333, 517], [1281, 721]]) { const s = filmSize(w, h); assert.ok(s.width % 2 === 0 && s.height % 2 === 0, 'even sides for the encoder'); }
+  assert.deepEqual(videoSupport(), { ok: false, mime: '', ext: '' }, 'no MediaRecorder here: reported as unsupported, not an exception');
+  globalThis.MediaRecorder = { isTypeSupported: t => t.startsWith('video/webm') }; globalThis.HTMLCanvasElement = function () {}; globalThis.HTMLCanvasElement.prototype.captureStream = () => ({});
+  assert.deepEqual(videoSupport(), { ok: true, mime: 'video/webm;codecs=vp9,opus', ext: 'webm' });
+  globalThis.MediaRecorder = { isTypeSupported: () => true }; assert.equal(videoSupport().ext, 'mp4', 'mp4 is preferred when the browser can make it');
+  delete globalThis.MediaRecorder; delete globalThis.HTMLCanvasElement;
+  const { engine, ctx } = await startEngine();
+  const ir = voiceImpulse(ctx, 1.6); assert.equal(ir.numberOfChannels, 2); assert.equal(ir.length, Math.floor(22050 * 1.6));
+  const tap = engine.createOutputStream({ delay: 0.05 }); assert.ok(tap.dest && tap.stream !== undefined && typeof tap.close === 'function', 'the mix can be tapped for a film'); tap.close();
+  const take = new VideoTake({ engine, source: { width: 390, height: 844 } });
+  await assert.rejects(() => take.start({ mic: false }), e => e instanceof FilmError && e.kind === 'unsupported', 'starting without browser support fails cleanly');
+  assert.equal(take.active, false); assert.equal(await take.stop(), null);
+  await engine.dispose();
+});
+
+test('privacy: camera tracking never records or asks for the microphone; only the film module does, and nothing is sent', async () => {
+  const fs = await import('node:fs'); const read = f => fs.readFileSync(new URL('../dist/air/' + f, import.meta.url), 'utf8');
+  const tracker = read('tracker.mjs'), video = read('video.mjs'), app = read('app.mjs'), engine = read('engine.mjs');
+  assert.match(tracker, /getUserMedia\(\{ audio: false/); assert.ok(!/MediaRecorder|captureStream/.test(tracker));
+  assert.equal((video.match(/getUserMedia/g) || []).length, 1, 'one microphone request, inside the film module');
+  assert.match(video, /if \(mic\) \{\s*try \{ micStream = await navigator\.mediaDevices\.getUserMedia/, 'only when the player turned the microphone on');
+  assert.ok(!/getUserMedia\(/.test(app) && !/getUserMedia/.test(engine), 'no other code asks for a device (the app only checks that the API exists)');
+  for (const [name, src] of [['video', video], ['app', app]]) assert.ok(!/fetch\(|XMLHttpRequest|WebSocket|sendBeacon|RTCPeerConnection/.test(src), name + ' does not send anything anywhere');
+  assert.match(video, /this\.mic\?\.getTracks\(\)\.forEach\(t => t\.stop\(\)\)/, 'the microphone is released when the take ends');
+  assert.ok(!/destination/.test(video.replace(/createMediaStreamDestination/g, '')), 'the microphone is never connected to the speakers');
+  const html = fs.readFileSync(new URL('../dist/air.html', import.meta.url), 'utf8');
+  assert.match(html, /فقط اگر خودت «ضبط ویدئو» را بزنی/); assert.ok(!/میکروفون درخواست نمی‌شود/.test(html), 'the page no longer claims the microphone is never requested');
+});
+
 test('recording data: the event stream carries both parts, and the MIDI export keeps them on separate channels', async () => {
   const { engine, ctx, log } = await startEngine();
   const id = engine.noteOn(hz(72)[0], { bus: 'melody', velocity: 0.8 }); ctx.currentTime = 0.5;
