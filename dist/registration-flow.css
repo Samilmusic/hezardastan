@@ -1,0 +1,11 @@
+#form:has(.enroll-flow){width:100%;max-width:760px;margin:auto}
+#fields:has(.enroll-flow){display:block}
+.enroll-flow{padding:0 0 16px;border-bottom:1px solid #dfd2bb;margin-bottom:18px}
+.enroll-flow p{font-size:13px;line-height:2;color:#675a49;margin:12px 0 0}
+.enroll-steps{display:flex;gap:8px}.enroll-steps b{flex:1;border-radius:10px;background:#eee8da;padding:12px;font-size:13px;color:#736653}.enroll-steps [aria-current=step]{background:#20584f;color:#fff}
+.enroll-personal-step{display:grid;grid-template-columns:1fr 1fr;gap:14px}.enroll-personal-step>p,.enroll-personal-step>.enroll-back,.enroll-personal-step>.rules-check,.enroll-personal-step>a{grid-column:1/-1}
+.enroll-personal-step[hidden],.enroll-course-step[hidden],#form button[hidden]{display:none!important}
+.enroll-course-step select,.enroll-personal-step input,.enroll-personal-step select{font-size:16px!important;min-height:46px;width:100%;min-width:0}
+.enroll-course-step fieldset{display:grid;grid-template-columns:1fr 1fr;gap:14px;min-width:0;margin:0!important;padding:18px!important;background:#faf7ef}
+.enroll-course-step fieldset>label:last-of-type{grid-column:1/-1}.enroll-next{width:100%;margin-top:18px}.enroll-back{justify-self:start;min-height:44px}
+@media(max-width:600px){.enroll-personal-step,.enroll-course-step fieldset{grid-template-columns:1fr}.enroll-steps b{font-size:11px;padding:10px 8px}.enroll-course-step .time-picker-grid{grid-template-columns:repeat(4,minmax(0,1fr))!important}.enroll-course-step .time-picker-grid button{min-width:0;padding:8px 2px!important}.enroll-flow p{font-size:12px}}
