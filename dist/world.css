@@ -25,6 +25,8 @@
 /* ---- stage (cinema only) */
 .wd-stage{display:none;overflow:hidden;background:#efe5d0;direction:ltr}
 .wd-stage canvas{display:block;width:100%;height:100%}
+.wd-stage .wd-gl,.wd-stage .wd-fx{position:absolute;inset:0;pointer-events:none}
+.wd-stage.is-3d{background:#ece2cd}
 .wd-bird{position:absolute;left:0;top:0;width:160px;height:124px;transform-origin:0 0;pointer-events:none;opacity:0;will-change:transform}
 .wd-bird svg{display:block;width:160px;height:124px;overflow:visible}
 .wd-bird .hv-wing{transform-box:fill-box;transform-origin:28% 62%}

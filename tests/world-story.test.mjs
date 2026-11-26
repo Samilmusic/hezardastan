@@ -144,3 +144,22 @@ test('the layout follows the owner\'s plan: courtyard (café, pond, tables) · v
     drawScene(g, one, { tx: 0, ty: 0, w: 1200 / s, h: 800 / s, e: 50, a: 32, dim: 0 }, { W: 1200, H: 800, cx: 600, cy: 400, fitW: 1200, fitH: 800 }, { ...storyState(1), student: [50, 50] }, 500); }
   assert.equal(g.calls.bad, 0);
 });
+
+test('3D view: bundled locally, loaded on demand, with the flat drawing as the fallback; the overlay draws only the story\'s light and life', async () => {
+  const dir = new URL('../dist/world/', import.meta.url), bundle = readFileSync(new URL('view3d.mjs', dir), 'utf8'), rt = readFileSync(new URL('runtime.mjs', dir), 'utf8'), src = readFileSync(new URL('../scripts/world-3d.src.mjs', import.meta.url), 'utf8');
+  assert.ok(bundle.length > 200_000 && bundle.length < 750_000, 'the bundle carries three.js and stays under 750 KB (' + bundle.length + ')');
+  assert.match(bundle, /three\.js authors, MIT licence/); assert.deepEqual([...new Set(bundle.match(/from"[^"]+"/g))], ['from"./scene.mjs"'], 'its only import is the shared scene model');
+  assert.ok(!/https?:\/\/(?!www\.w3\.org|github\.com\/mrdoob|threejs\.org)[a-z0-9.-]+\.[a-z]{2,}\/[^"'\s]*\.(js|mjs|glb|gltf|png|jpg|hdr)/i.test(bundle), 'no remote scripts, models or images');
+  assert.ok(!/fetch\(|XMLHttpRequest|WebSocket|sendBeacon|localStorage|getUserMedia/.test(src), 'the view itself asks for nothing and stores nothing');
+  assert.match(rt, /await import\('\.\/view3d\.mjs'\)/, 'loaded only when the live story starts'); assert.match(rt, /reduced \|\| glMode === 'off'/, 'not with reduced motion; can be switched off');
+  assert.match(rt, /else stop3d\(true\)/, 'a slow device ends up on the flat drawing'); assert.match(rt, /v3\.view\.lost\) stop3d/, 'so does a lost WebGL context');
+  // overlay mode: with a projection handed in, the 2D code draws no ground, walls or people
+  const S = buildScene(), g = recorder(), view = { W: 1200, H: 800, cx: 600, cy: 400, fitW: 1100, fitH: 740 };
+  drawScene(g, S, cameraAt(2, false), view, storyState(2), 1000, { P: (x, y, z = 0) => [x * 10, y * 10 - z * 5], s: 40 });
+  assert.ok(g.calls.poly < 20, 'no world polygons in overlay mode (' + g.calls.poly + ')'); assert.equal(g.calls.bad, 0);
+  const full = recorder(); drawScene(full, S, cameraAt(2, false), view, storyState(2), 1000); assert.ok(full.calls.poly > 500);
+  // people know which way they look, for the 3D figures
+  const people = S.solids.filter(o => o.k === 'pawn'); assert.ok(people.filter(o => typeof o.face === 'number').length >= 30, 'most seated people face a table, a desk or each other');
+  const { walkersAt, dress } = await import('../dist/world/scene.mjs'); const w0 = walkersAt(S, 0), w1 = walkersAt(S, 4000);
+  assert.equal(w0.length, S.walkers.length); assert.ok(w0.some((w, i) => Math.hypot(w.x - w1[i].x, w.y - w1[i].y) > 0.5), 'strollers move with time'); assert.ok(dress({ color: '#2c6a63', h: 1 }).hair);
+});

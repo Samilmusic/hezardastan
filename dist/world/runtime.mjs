@@ -1,5 +1,7 @@
 // جهانِ هزارآوا — live canvas runtime. Scroll position chooses the story position; nothing here hijacks scrolling.
 // No network, no storage of personal data, no camera, microphone or audio.
+// Where WebGL is available the world is drawn in 3D (view3d.mjs, loaded on demand) and this canvas code only adds the
+// story's light and life on top; otherwise, or if the device proves too slow, the flat drawing is used.
 import { buildScene, drawScene, cameraAt, storyState, birdAt, birdFaces } from './scene.mjs';
 
 class CanvasG {
@@ -36,11 +38,27 @@ export function start(opts) {
   let W = 0, H = 0, dpr = Math.min(window.devicePixelRatio || 1, 2), anchors = [], phone = null, vw = { W: 1, H: 1, cx: 0, cy: 0, fitW: 1, fitH: 1 };
   let p = 0, ps = 0, raf = 0, running = false, visible = true, destroyed = false, lastT = 0, chapter = -1, api = null;
   let drawMs = 8, frames = 0, dir = 1, faceLeft = false, flying = null, shown = false, birdW = 80, vel = 0, tilt = 0, skip = false, flap = '';
+  // ---- 3D view (optional): a WebGL canvas for the world, a transparent canvas above it for the story's light and life
+  let v3 = null, v3dpr = 1, v3frames = 0, v3dt = 16, v3off = false; const glMode = /[?&]gl=(off|keep)/.exec(location.search)?.[1];
+  function stop3d(note) { if (!v3) return; const o = v3; v3 = null; v3off = true; try { o.view.dispose(); } catch {} o.gl.remove(); o.fx.remove(); canvas.style.visibility = ''; stage.classList.remove('is-3d'); if (note) opts.on3d?.(false); schedule(); }
+  async function start3d() {
+    if (reduced || glMode === 'off' || v3off || destroyed || navigator.connection?.saveData) return;
+    try {
+      const mod = await import('./view3d.mjs'); if (destroyed || !mod.supported()) return;
+      await new Promise(r => ('requestIdleCallback' in window ? requestIdleCallback(r, { timeout: 1200 }) : setTimeout(r, 60)));
+      const gl = document.createElement('canvas'), fx = document.createElement('canvas'); gl.className = 'wd-gl'; fx.className = 'wd-fx';
+      const view = mod.create({ canvas: gl, S, phone: !opts.wide.matches });
+      canvas.after(gl, fx); v3dpr = Math.min(dpr, opts.wide.matches ? 2 : 1.6);
+      v3 = { view, gl, fx, ctx: fx.getContext('2d'), g: null }; v3.g = new CanvasG(v3.ctx); v3frames = 0; v3dt = 16;
+      canvas.style.visibility = 'hidden'; stage.classList.add('is-3d'); measure(); opts.on3d?.(true); schedule();
+    } catch (e) { stop3d(); }
+  }
   const probe = document.createElement('div'); probe.style.cssText = 'position:fixed;top:0;left:0;width:0;height:100vh;height:100svh;visibility:hidden;pointer-events:none'; stage.appendChild(probe);
 
   function measure() {
     const r = stage.getBoundingClientRect(), w = Math.max(1, Math.round(r.width)), h = Math.max(1, Math.round(r.height));
     if (w !== W || h !== H || canvas.width !== Math.round(w * dpr)) { W = w; H = h; canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr); }
+    if (v3 && (v3.fx.width !== Math.round(W * v3dpr) || v3.fx.height !== Math.round(H * v3dpr))) { v3.fx.width = Math.round(W * v3dpr); v3.fx.height = Math.round(H * v3dpr); }
     const T = stickyTop(), small = (probe.offsetHeight || innerHeight) - T, wide = opts.wide.matches;   // small: the part of the stage that is always visible
     const tops = cards.map(c => c.parentElement.getBoundingClientRect().top + scrollY), hs = cards.map(c => c.parentElement.offsetHeight), ch = cards.map(c => c.offsetHeight);
     if (wide) {
@@ -107,8 +125,19 @@ export function start(opts) {
     const st = storyState(ps), t0 = performance.now(), bsNow = birdAt(ps);
     vel += ((ps - before) / Math.max(dt, 1) * 1000 - vel) * 0.18;                         // story units per second, smoothed
     if (!reduced && bsNow.fly > 0.05) { st.trail = []; for (let k = 1; k <= 9; k++) { const q = ps - dir * k * 0.011; if (q < 0 || q > 5) break; const b = birdAt(q); if (b.fly < 0.05) break; st.trail.push([b.pos[0], b.pos[1], b.pos[2] + 0.35, (1 - k / 10) * Math.min(1, Math.abs(vel) * 4 + 0.25) * bsNow.fly]); } }
+    const camNow = cameraAt(ps, !!phone);
+    if (v3 && v3.view.lost) stop3d(true);
+    if (v3) {
+      const a3 = v3.view.render(camNow, vw, st, now, v3dpr); v3.ctx.setTransform(v3dpr, 0, 0, v3dpr, 0, 0); v3.ctx.clearRect(0, 0, W, H);
+      api = drawScene(v3.g, S, camNow, vw, st, now, a3);
+      // keep it smooth: while the story is moving, a slow device first loses resolution, then shadows, then goes back to the flat drawing
+      if (Math.abs(ps - before) > 0.0005) { v3dt += (dt - v3dt) * 0.12; v3frames++; }
+      if (glMode !== 'keep' && v3frames > 36 && v3dt > 36) { v3frames = 0; v3dt = 20;
+        if (v3dpr > 1.05) { v3dpr = Math.max(1, v3dpr - 0.5); measure(); } else if (v3.view.quality > 1) v3.view.setQuality(1); else stop3d(true); }
+    } else {
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    api = drawScene(g, S, cameraAt(ps, !!phone), vw, st, reduced ? 0 : now);
+    api = drawScene(g, S, camNow, vw, st, reduced ? 0 : now);
+    }
     drawMs += (performance.now() - t0 - drawMs) * 0.12; frames++;
     const bq = placeBird(st, now);
     if (opts.labels) for (const key in opts.labels) { const el = opts.labels[key];
@@ -117,7 +146,7 @@ export function start(opts) {
       const early = ps < 2 ? st.labels : 0, late = ps > 4 ? st.labels : 0;                           // room-by-room names only on the opening plan
       el.style.opacity = (key === 'court' ? st.labels * (1 - st.connect) : key === 'home' || key === 'classes' ? late : START_ONLY.has(key) ? early : st.labels).toFixed(2); }
     // stay light on slower devices: lower the canvas resolution first, then hand over to the simple view
-    if (frames > 24 && drawMs > 26) { if (dpr > 1) { dpr = Math.max(1, dpr - 0.5); frames = 0; drawMs = 12; measure(); } else if (drawMs > 45) { opts.onSlow?.(); return; } }
+    if (!v3 && frames > 24 && drawMs > 26) { if (dpr > 1) { dpr = Math.max(1, dpr - 0.5); frames = 0; drawMs = 12; measure(); } else if (drawMs > 45) { opts.onSlow?.(); return; } }
     if (p !== ps || !reduced) schedule();   // the scene is alive (people, water, notes), so it keeps drawing while it is on screen
   }
   function schedule() { if (!raf && running && visible && !document.hidden && !destroyed) raf = requestAnimationFrame(frame); }
@@ -141,11 +170,12 @@ export function start(opts) {
 
   measure(); p = ps = readP(); running = true;
   frame(performance.now()); // first frame synchronously, so a failure is caught by the caller before the layout switches
+  start3d();
 
   return {
     chapterIndex: () => Math.round(p), goTo, remeasure: () => { measure(); schedule(); },
-    stats: () => ({ drawMs, dpr, frames, p, ps, running: !!raf, bird: birdAt(ps).pos, phone: !!phone, view: vw, anchors: anchors.slice() }),
-    destroy() { destroyed = true; running = false; if (raf) cancelAnimationFrame(raf); raf = 0; ro?.disconnect(); io?.disconnect();
+    stats: () => ({ three: v3 ? { dpr: v3dpr, dt: v3dt, quality: v3.view.quality, info: v3.view.info() } : null, drawMs, dpr, frames, p, ps, running: !!raf, bird: birdAt(ps).pos, phone: !!phone, view: vw, anchors: anchors.slice() }),
+    destroy() { stop3d(); destroyed = true; running = false; if (raf) cancelAnimationFrame(raf); raf = 0; ro?.disconnect(); io?.disconnect();
       removeEventListener('scroll', onScroll); removeEventListener('resize', onResize); removeEventListener('orientationchange', onResize);
       document.removeEventListener('visibilitychange', onVis); opts.wide.removeEventListener?.('change', onResize); canvas.width = canvas.height = 1; probe.remove();
       for (const c of cards) { c.style.opacity = ''; c.style.pointerEvents = ''; } },

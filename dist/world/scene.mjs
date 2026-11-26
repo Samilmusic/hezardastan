@@ -102,7 +102,9 @@ export function buildScene() {
   S.GUITAR = GUITAR; S.STAND = STAND;
   const table = (x, y, r = 0.36, top = PAL.ivory) => { prism(ngon(x, y, 0.07, 6), 0, 0.5, PAL.walnutD); prism(ngon(x, y, r, 10), 0.5, 0.56, PAL.walnutL, { top, bias: 0.03 }); };
   const stool = (x, y, c = PAL.walnutL) => prism(ngon(x, y, 0.17, 8), 0, 0.3, c, { top: mix(c, '#ffffff', 0.25) });
-  const chair = (x, y, c = PAL.walnutL) => { box(x - 0.19, y - 0.17, x + 0.19, y + 0.17, 0, 0.3, c, { top: mix(c, '#ffffff', 0.22) }); box(x - 0.19, y - 0.25, x + 0.19, y - 0.18, 0.3, 0.78, shade(c, 0.9), { shadow: false, top: c }); };
+  const chair = (x, y, c = PAL.walnutL, dir = 's') => { box(x - 0.19, y - 0.19, x + 0.19, y + 0.19, 0, 0.3, c, { top: mix(c, '#ffffff', 0.22) }); const o = { shadow: false, top: c }, k = shade(c, 0.9);   // dir: the side the sitter faces
+    if (dir === 's') box(x - 0.19, y - 0.26, x + 0.19, y - 0.19, 0.3, 0.78, k, o); else if (dir === 'n') box(x - 0.19, y + 0.19, x + 0.19, y + 0.26, 0.3, 0.78, k, o);
+    else if (dir === 'e') box(x - 0.26, y - 0.19, x - 0.19, y + 0.19, 0.3, 0.78, k, o); else box(x + 0.19, y - 0.19, x + 0.26, y + 0.19, 0.3, 0.78, k, o); };
   const cup = (x, y, z) => { prism(ngon(x, y, 0.055, 6), z, z + 0.09, PAL.ivory, { bias: 0.08, shadow: false }); };
   const sit = (x, y, color, head, o = {}) => pawn(x, y, { color, head, h: 0.92, seat: true, ...o });
   const pot = (x, y, r = 0.26, leaf = 0.48, o = {}) => { prism(ngon(x, y, r, 8), 0, r * 1.7, PAL.terra); ball(x, y, r * 1.7 + leaf, leaf, PAL.leaf, o); };
@@ -198,13 +200,13 @@ export function buildScene() {
   for (const [i, sx] of [6.4, 7.6, 8.8, 9.9].entries()) { stool(sx, 3.85, PAL.terra); if (i !== 2) sit(sx, 3.85, [PAL.tealL, PAL.brass, 0, PAL.terraD][i], SK[i + 2], i === 0 ? { collar: PAL.ivory } : {}); }
   steam(5.76, 3.0, 1.48); steam(6.85, 3.05, 1.05); glowAt(7.8, 2.6, 3, 'cafe');
   // tables and chairs (صندلی‌ها) on the west side of the courtyard
-  table(2.2, 7.0); chair(1.62, 6.95, PAL.terra); chair(2.78, 7.1, PAL.terra); cup(2.1, 6.92, 0.56); cup(2.32, 7.08, 0.56);
+  table(2.2, 7.0); chair(1.62, 6.95, PAL.terra, 'e'); chair(2.78, 7.1, PAL.terra, 'w'); cup(2.1, 6.92, 0.56); cup(2.32, 7.08, 0.56);
   sit(1.62, 6.95, PAL.tealL, SK[1], { pose: 'cup' }); sit(2.78, 7.1, PAL.brass, SK[2]);
-  table(3.75, 9.0); chair(3.15, 9.05, PAL.terra); chair(4.35, 8.95, PAL.terra); cup(3.65, 9.05, 0.56); sit(3.15, 9.05, PAL.terraD, SK[0]); sit(4.35, 8.95, PAL.cypress, SK[1], { collar: PAL.brassL });
-  table(3.7, 11.6, 0.34); chair(3.1, 11.6, PAL.terra); chair(4.3, 11.65, PAL.terra);                       // a free table: the bird lands here
-  table(1.95, 10.5, 0.32); chair(1.4, 10.5, PAL.terra); cup(1.95, 10.42, 0.56); sit(1.4, 10.5, PAL.walnutL, SK[3], { pose: 'cup' });
+  table(3.75, 9.0); chair(3.15, 9.05, PAL.terra, 'e'); chair(4.35, 8.95, PAL.terra, 'w'); cup(3.65, 9.05, 0.56); sit(3.15, 9.05, PAL.terraD, SK[0]); sit(4.35, 8.95, PAL.cypress, SK[1], { collar: PAL.brassL });
+  table(3.7, 11.6, 0.34); chair(3.1, 11.6, PAL.terra, 'e'); chair(4.3, 11.65, PAL.terra, 'w');                       // a free table: the bird lands here
+  table(1.95, 10.5, 0.32); chair(1.4, 10.5, PAL.terra, 'e'); cup(1.95, 10.42, 0.56); sit(1.4, 10.5, PAL.walnutL, SK[3], { pose: 'cup' });
   // someone alone at the last table, with a glass of tea, smoking
-  table(2.15, 13.7, 0.34); chair(1.55, 13.7, PAL.terra); chair(2.75, 13.75, PAL.terra); cup(2.28, 13.62, 0.56); prism(ngon(2.02, 13.82, 0.075, 8), 0.56, 0.6, PAL.ink, { bias: 0.08, shadow: false });
+  table(2.15, 13.7, 0.34); chair(1.55, 13.7, PAL.terra, 'e'); chair(2.75, 13.75, PAL.terra, 'w'); cup(2.28, 13.62, 0.56); prism(ngon(2.02, 13.82, 0.075, 8), 0.56, 0.6, PAL.ink, { bias: 0.08, shadow: false });
   sit(1.55, 13.7, PAL.walnut, SK[4], { pose: 'smoke', collar: PAL.ivory, h: 1.0, seed: 11, id: 'smoker' });
   S.smoke.push([1.55, 13.7, 1.18, -0.2]);
   steam(2.2, 7.0, 0.7); steam(3.67, 9.04, 0.7); steam(1.95, 10.44, 0.7); steam(2.28, 13.64, 0.7);
@@ -288,7 +290,7 @@ export function buildScene() {
     flat(ngon(8.8, 14.8, 1.9, 24), PAL.rug); flat(ngon(8.8, 14.8, 1.62, 24), PAL.rugB); flat(ngon(8.8, 14.8, 0.7, 12), PAL.rug);
     const who = [PAL.teal, PAL.terra, PAL.brass, PAL.tealL, PAL.walnutL, PAL.cypress];
     for (const [i, c] of who.entries()) { const t = -0.5 + i * 1.047, x = 8.8 + Math.cos(t) * 1.5, y = 14.8 + Math.sin(t) * 1.2;
-      stool(x, y, PAL.walnut); sit(x, y, c, SK[i], { ...(i === 0 ? { h: 0.98, collar: PAL.brassL } : i === 3 ? { h: 0.7, kid: true } : {}), pose: 'fwd' });
+      stool(x, y, PAL.walnut); sit(x, y, c, SK[i], { face: Math.atan2(14.8 - y, 8.8 - x), ...(i === 0 ? { h: 0.98, collar: PAL.brassL } : i === 3 ? { h: 0.7, kid: true } : {}), pose: 'fwd' });
       const dx = 8.8 + Math.cos(t) * 0.92, dy = 14.8 + Math.sin(t) * 0.74;
       if (i % 2) sprite(dx, dy, 0.42, DRUM(i === 1 ? PAL.ivory : PAL.rugB), { bias: 0.25 }); else prism(ngon(dx, dy, 0.17, 8), 0, 0.5, PAL.walnutL, { top: PAL.ivory }); }
     box(11.9, 12.0, 12.45, 14.0, 0, 1.0, PAL.walnut, { top: PAL.walnutL }); for (const [j, c] of [PAL.rugB, PAL.ivory, PAL.brassL].entries()) prism(ngon(12.17, 12.4 + j * 0.6, 0.2, 10), 1.0, 1.16, PAL.walnutD, { top: c, bias: 0.04 });
@@ -341,6 +343,11 @@ export function buildScene() {
     { pts: [[6.3, 4.3], [4.7, 6.4], [3.3, 7.9], [4.6, 10.3]], speed: 0.5, phase: 0.3, pawn: { color: PAL.ivory, head: SK[3], collar: PAL.terra, h: 0.95, pose: 'tray' } },
     { pts: [[31, PAVE], [9.4, PAVE], [8.5, 16.5], [9.6, 12.6], [12.6, 7.6]], speed: 0.6, phase: 0.75, pawn: { color: PAL.terraD, head: SK[1], h: 0.8 }, carry: true },
     { pts: [[16.6, 8.5], [22.3, 8.3], [20.6, 12.6]], speed: 0.4, phase: 0.2, pawn: { color: PAL.brass, head: SK[4], h: 0.8 } });
+  const look = (x, y, tx, ty) => { const o = S.solids.find(q => q.k === 'pawn' && Math.abs(q.x - x) < 0.03 && Math.abs(q.y - y) < 0.03); if (o) o.face = Math.atan2(ty - y, tx - x); };
+  for (const [x, y, tx, ty] of [[16.4, 2.9, 18.45, 3.35], [18.8, 1.9, 17.2, 3.1], [21.7, 3.95, 21.7, 2.9], [24.9, 2.95, 24.9, 1.9], [25.3, 4.3, 25, 2], [27.3, 2, 26.9, 1.55], [29.2, 2.7, 29.2, 1.9],
+    [25.7, 8.3, 25.5, 7.3], [27.1, 9.2, 26.9, 8.3], [24.8, 9, 26, 8.2], [28.6, 8.45, 28.4, 7.4], [16.32, 13, 15, 13], [17.7, 12.5, 16, 13.1], [18.35, 13.35, 16, 13.1], [17.65, 14.2, 16, 13.1],
+    [6.4, 3.85, 6.4, 3], [7.6, 3.85, 7.6, 3], [9.9, 3.85, 9.9, 3], [1.62, 6.95, 2.2, 7], [2.78, 7.1, 2.2, 7], [3.15, 9.05, 3.75, 9], [4.35, 8.95, 3.75, 9], [1.4, 10.5, 1.95, 10.5], [1.55, 13.7, 2.15, 13.7],
+    [7.4, 13.5, 7.6, 11], [8.3, 13.5, 8.1, 11], [14.12, 11.3, 12, 11.5], [14.12, 12.7, 12, 12.6], [16, 9.5, 16.2, 8], [16.75, 9.5, 16.9, 8], [21.4, 7.6, 18, 6.6]]) look(x, y, tx, ty);
   // warm light that comes up room by room at the start: [x, y, radius, when]
   S.lights = [[6, 10, 6.4, 0], [7.8, 2.8, 3.6, 0.1], [19, 7.6, 4.2, 0.2], [17.3, 2.6, 3.6, 0.35], [21.7, 2.6, 2.6, 0.4], [26.7, 2.6, 3.6, 0.45], [26.7, 7.4, 3.4, 0.5], [26, 13.1, 3.8, 0.55], [17, 13.2, 3.4, 0.6]];
   // everything the bird is tied to at the end: café, courtyard tables, secretary, the five classes, studio, home
@@ -406,7 +413,7 @@ export function birdFaces(p, P, dir = 1) {
 /** Camera keys. w/h: world units that must fit; e elevation, a azimuth (degrees); dim: spotlight strength. m: phone overrides.
  *  tx, ty say how the stop is framed; between stops the camera keeps its place relative to the bird (rel: explicit offset). */
 const KEYS = [
-  { p: 0, tx: 15.2, ty: 10.4, w: 39.5, h: 27.5, e: 90, a: 0, dim: 0, m: { tx: 15, ty: 10.2, w: 34.6, h: 27 } },
+  { p: 0, tx: 15.2, ty: 10.4, w: 39.5, h: 27.5, e: 90, a: 0, dim: 0, m: { tx: 15, ty: 10.2, w: 37.5, h: 27 } },
   { p: 0.4, tx: 6.2, ty: 9.4, w: 17.5, h: 14.5, e: 55, a: 32, dim: 0, m: { tx: 4.6, ty: 10.4, w: 11.5, h: 11 } },
   { p: 0.6, tx: 6.2, ty: 9.4, w: 17.5, h: 14.5, e: 55, a: 32, dim: 0, m: { tx: 4.6, ty: 10.4, w: 11.5, h: 11 } },
   { p: 0.86, tx: 17.6, ty: 7.4, w: 12, h: 9, e: 50, a: 34, dim: 0.3, m: { tx: 17, ty: 7.2, w: 9.5, h: 7.4 } },
@@ -452,15 +459,24 @@ export function storyState(p) {
   };
 }
 
+/** The people who stroll (there and back, or round a loop) at a given time: pawns with x, y and a walking phase. */
+export function walkersAt(S, time = 0) {
+  const sec = time / 1000;
+  return S.walkers.map(w => { const pts = w.loop ? w.pts.concat([w.pts[0]]) : w.pts; let L = 0; for (let i = 1; i < pts.length; i++) L += Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]);
+    let u = (sec * w.speed / L + w.phase) % (w.loop ? 1 : 2); if (u > 1) u = 2 - u; const q = along(pts, w.loop ? u : ss(u));
+    return { k: 'pawn', x: q[0], y: q[1], ...w.pawn, seed: w.phase, step: time ? sec * 6.5 * w.speed / 0.5 + w.phase * 9 : 0.6, carry: w.carry }; });
+}
+
 // ======================================================================= drawing
 /**
  * Draw one frame. g: backend (poly, polys, ellipse, line, lin, rad, rect). view: {W, H, cx, cy} — cx, cy is the
  * screen point the camera target lands on, and W × H the area the framing must fit into.
  */
-export function drawScene(g, S, cam, view, st, time = 0) {
+export function drawScene(g, S, cam, view, st, time = 0, fx = null) {
   const a = cam.a * Math.PI / 180, e = cam.e * Math.PI / 180, ca = Math.cos(a), sa = Math.sin(a), se = Math.sin(e), ce = Math.cos(e);
-  const s = Math.min(view.fitW / cam.w, view.fitH / cam.h);
-  const P = (x, y, z = 0) => { const dx = x - cam.tx, dy = y - cam.ty, xr = dx * ca - dy * sa, yr = dx * sa + dy * ca; return [view.cx + s * xr, view.cy + s * (yr * se - z * ce)]; };
+  // fx: the world itself is drawn elsewhere (the 3D view); only the story's light and life are drawn here, with its projection
+  const s = fx ? fx.s : Math.min(view.fitW / cam.w, view.fitH / cam.h);
+  const P = fx ? fx.P : (x, y, z = 0) => { const dx = x - cam.tx, dy = y - cam.ty, xr = dx * ca - dy * sa, yr = dx * sa + dy * ca; return [view.cx + s * xr, view.cy + s * (yr * se - z * ce)]; };
   const D = (x, y, z = 0) => { const dx = x - cam.tx, dy = y - cam.ty; return (dx * sa + dy * ca) * ce + z * se; };
   const flatPts = (pts, z) => { const o = []; for (const p of pts) { const q = P(p[0], p[1], z); o.push(q[0], q[1]); } return o; };
   const api = { P, D, s, ce, se };
@@ -469,6 +485,8 @@ export function drawScene(g, S, cam, view, st, time = 0) {
   const ref = o => o.x != null ? [o.x, o.y] : o.pts[0], size = o => o.rad ?? (o.rad = o.pts ? Math.max(...o.pts.map(q => Math.hypot(q[0] - o.pts[0][0], q[1] - o.pts[0][1]))) : 0);
   const seen = o => { const c = ref(o); return near(c[0], c[1], size(o)); };
 
+  const stu = st.student, sec = time / 1000, walk = [];
+  if (!fx) {
   g.rect(0, 0, view.W, view.H, g.lin(0, 0, 0, view.H, [[0, '#f4ecdb'], [1, '#eadfc8']]));
   for (const f of S.ground) if (seen(f)) g.poly(flatPts(f.pts, f.z), f.color);
   // warm light pools: rooms being revealed, lanterns, the home lamp
@@ -486,18 +504,14 @@ export function drawScene(g, S, cam, view, st, time = 0) {
     else if (o.k === 'pawn') sh.push(flatPts(shadowOf(ngon(o.x, o.y, 0.2 * dress(o).f, 8), dress(o).tall * 0.92), 0));
     else if (o.k === 'ball' && !o.back) sh.push(flatPts(ngon(o.x + SHADOW[0] * o.z, o.y + SHADOW[1] * o.z, o.r * 0.9, 10), 0));
   }
-  const stu = st.student, sec = time / 1000, walk = [];
-  for (const w of S.walkers) { // people who stroll: there and back, or round a loop
-    const pts = w.loop ? w.pts.concat([w.pts[0]]) : w.pts; let L = 0; for (let i = 1; i < pts.length; i++) L += Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]);
-    let u = (sec * w.speed / L + w.phase) % (w.loop ? 1 : 2); if (u > 1) u = 2 - u; const q = along(pts, w.loop ? u : ss(u));
-    walk.push({ k: 'pawn', x: q[0], y: q[1], ...w.pawn, seed: w.phase, step: time ? sec * 6.5 * w.speed / 0.5 + w.phase * 9 : 0.6, carry: w.carry });
-    sh.push(flatPts(shadowOf(ngon(q[0], q[1], 0.2, 8), 1.4), 0)); }
+  for (const w of walkersAt(S, time)) { walk.push(w); sh.push(flatPts(shadowOf(ngon(w.x, w.y, 0.2, 8), 1.4), 0)); }
   sh.push(flatPts(shadowOf(ngon(stu[0], stu[1], 0.2, 8), 1.25), 0));
   if (st.bird && st.bird.shadow) { const b = st.bird, r = 0.42 * b.shadow; sh.push(flatPts(ngon(b.gx, b.gy, r, 10), b.gz)); }
   g.polys(sh, 'rgba(74,48,26,0.16)');
   for (const f of S.deco) if (seen(f)) g.poly(flatPts(f.pts, f.z), f.color, f.a);
   for (const l of S.lines) g.line(flatPts(l.pts, l.z), l.color, Math.max(0.6, l.w * s), { alpha: l.a });
 
+  }
   // light paths on the floor
   const pathLine = (pts, amount, o = {}) => {
     if (amount <= 0.005) return; const n = Math.max(2, Math.round(60 * (o.len || 1))), q = [];
@@ -512,6 +526,7 @@ export function drawScene(g, S, cam, view, st, time = 0) {
   pathLine(ROUTES.admin, st.admin, { dash: true, color: '#fff1c9', len: 0.5 });
   pathLine(ROUTES.toHome, st.way, { wave: 0.13, freq: 150, len: 2.6, alpha: st.wayFade });
 
+  if (!fx) {
   // solids: back layer first, then depth-sorted
   const dyn = [];
   dyn.push({ k: 'pawn', x: stu[0], y: stu[1], h: 0.86, color: PAL.terra, head: '#f0d2ad', collar: PAL.ivory, seed: 3, step: st.moving ? st.stride : null, seat: st.seated, play: st.seated && st.withGuitar ? 'guitar' : null, carry: !st.seated && st.withGuitar });
@@ -522,6 +537,7 @@ export function drawScene(g, S, cam, view, st, time = 0) {
   const backs = S.back.filter(seen).map(o => [keyOf(o), o]).sort((u, v) => u[0] - v[0]); for (const b of backs) draw(b[1]);
   const all = S.solids.filter(seen).concat(dyn).map(o => [keyOf(o) + (o.bias || 0), o]).sort((u, v) => u[0] - v[0]); for (const b of all) draw(b[1]);
 
+  }
   // ---- ambient life (time-driven; frozen at time 0 in the static pictures)
   for (let i = 0; i < 2; i++) { const u = (sec * 0.22 + i * 0.5) % 1, ring = ngon(S.pond[0], S.pond[1], 0.22 + u * 0.9, 18); ring.push(ring[0]);   // ripples on the pool
     g.line(flatPts(ring, 0.32), '#e8fbf6', Math.max(1, 0.03 * s), { alpha: 0.6 * (1 - u) }); }
@@ -532,7 +548,7 @@ export function drawScene(g, S, cam, view, st, time = 0) {
   for (const [i, c] of S.steam.entries()) { const u = (sec * 0.3 + i * 0.37) % 1, q = [];   // steam over the coffee
     for (let k = 0; k <= 6; k++) { const v = k / 6, w = P(c[0], c[1], c[2] + (u * 0.5 + v * 0.42)); q.push(w[0] + Math.sin(v * 5 + sec * 2 + i) * 0.05 * s, w[1]); }
     g.line(q, '#ffffff', Math.max(1, 0.035 * s), { alpha: 0.5 * Math.sin(Math.PI * u), cap: 'round' }); }
-  for (const [i, c] of S.smoke.entries()) for (let j = 0; j < 2; j++) { const u = (sec * 0.2 + i * 0.3 + j * 0.5) % 1, q = [];        // a thin thread of smoke
+  for (const [i, c] of (fx?.smoke || S.smoke).entries()) for (let j = 0; j < 2; j++) { const u = (sec * 0.2 + i * 0.3 + j * 0.5) % 1, q = [];        // a thin thread of smoke
     for (let k = 0; k <= 7; k++) { const v = k / 7, w = P(c[0], c[1], c[2] + (u * 0.7 + v * 0.5)); q.push(w[0] + (c[3] + Math.sin(v * 4 + sec * 1.4 + j * 2) * (0.03 + 0.09 * (u + v * 0.4))) * s, w[1]); }
     g.line(q, '#f3f0ea', Math.max(1, (0.03 + 0.03 * u) * s), { alpha: 0.55 * Math.sin(Math.PI * u), cap: 'round' }); }
   if (S.rec) { const q = P(S.rec[0], S.rec[1], S.rec[2]), on = time ? 0.5 + 0.5 * Math.sin(sec * 4) : 1; g.glow(q[0], q[1], 0.45 * s, 0.45 * s, '#ff5a48', 0.25 + 0.5 * on); }
@@ -557,12 +573,12 @@ export function drawScene(g, S, cam, view, st, time = 0) {
         if (time) { const c = at((time * 0.00032 + i * 0.19) % 1), d = Math.max(2.4, 0.13 * s); g.ellipse(c[0], c[1], d, d, '#fffaf0'); } }
     }); }
   // spotlight
-  if (cam.dim > 0.01) { const r = Math.max(view.fitW, view.fitH) * 0.62; g.rect(0, 0, view.W, view.H, g.rad(view.cx, view.cy, r * 1.5, [[0, 'rgba(58,38,20,0)'], [0.46, 'rgba(58,38,20,0)'], [1, `rgba(58,38,20,${(cam.dim * 0.8).toFixed(3)})`]])); }
+  if (cam.dim > 0.01) { const r = Math.max(view.fitW, view.fitH) * (fx ? 0.72 : 0.62); g.rect(0, 0, view.W, view.H, g.rad(view.cx, view.cy, r * 1.5, [[0, 'rgba(58,38,20,0)'], [0.46, 'rgba(58,38,20,0)'], [1, `rgba(58,38,20,${(cam.dim * 0.8).toFixed(3)})`]])); }
   return api;
 }
 
 const HAIR = ['#2b211c', '#3a2a1e', '#5a3b28', '#1f1a18', '#4a3426', '#2f2622'], LEGS = ['#3a3f4a', '#4f3122', '#2c3f3c', '#5b5248', '#33302c'], SCARF = ['#e8dcc8', '#7c9a92', '#c98f6b', '#5c7d8c'];
-function dress(o) {
+export function dress(o) {
   if (o._d) return o._d;
   let h = 7; for (const c of (o.color + (o.head || '') + (o.seed ?? Math.round((o.x || 0) * 31 + (o.y || 0) * 17)))) h = (h * 31 + c.charCodeAt(0)) >>> 0;
   const style = h % 7, f = (o.kid ? 0.74 : o.h < 0.75 ? 0.78 : o.h < 0.9 ? 0.92 : 1) * 1.12;   // 0,3,4: short hair · 1: long · 2: bun · 5,6: headscarf
