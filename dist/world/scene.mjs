@@ -142,7 +142,7 @@ export function buildScene() {
   box(2.3, 2.45, 3, 2.9, 0.78, 0.81, PAL.ivory, { bias: 0.04 }); box(3.7, 2.42, 3.86, 2.58, 0.78, 1.08, PAL.brass, { bias: 0.04 }); ball(3.78, 2.5, 1.16, 0.13, PAL.glow);
   box(0.7, 0, 2.7, 0.5, 0, 1.5, PAL.walnut, { top: PAL.walnutL, decals: [0.25, 0.68, 1.1].flatMap((z, r) => [0.12, 0.44, 0.76, 1.08, 1.4, 1.7].map((u, c) => ({ edge: 2, pts: [[u, z], [u + 0.2, z], [u + 0.2, z + 0.3], [u, z + 0.3]], color: [PAL.terra, PAL.teal, PAL.ivory, PAL.brassL, PAL.rug, PAL.tealL][(r + c) % 6] }))) });
   box(2.3, 3.6, 2.8, 4.1, 0, 0.45, PAL.terra); box(3.5, 3.6, 4, 4.1, 0, 0.45, PAL.terra);
-  pawn(3.1, 1.75, { color: PAL.tealD, head: '#e2bf98', collar: PAL.brass, h: 1.05 });
+  pawn(3.1, 1.75, { color: PAL.tealD, head: '#e2bf98', collar: PAL.brass, h: 1.05, seat: true });
   // ---- class A: guitar lesson (x 6..11, y 0..5)
   flat(rect(7, 1.3, 10.4, 4.3), PAL.terraD); flat(rect(7.2, 1.5, 10.2, 4.1), PAL.rugB); flat(rect(7.4, 1.7, 10, 3.9), PAL.terra); flat(ngon(8.7, 2.8, 0.55, 8), PAL.rugB);
   box(9.3, 0, 10.7, 0.5, 0, 0.95, PAL.walnut, { top: PAL.walnutL, decals: [{ edge: 2, pts: [[0.1, 0.12], [0.65, 0.12], [0.65, 0.85], [0.1, 0.85]], color: PAL.walnutD }, { edge: 2, pts: [[0.75, 0.12], [1.3, 0.12], [1.3, 0.85], [0.75, 0.85]], color: PAL.walnutD }] });
@@ -157,14 +157,14 @@ export function buildScene() {
     { pts: [[-0.3, 0.92], [0.3, 0.92], [0.3, 1.36], [-0.3, 1.36]], color: PAL.walnutD }, { pts: [[-0.25, 0.97], [0.25, 0.97], [0.25, 1.32], [-0.25, 1.32]], color: PAL.ivory },
     { pts: [[-0.2, 1.24], [0.2, 1.24], [0.2, 1.26], [-0.2, 1.26]], color: PAL.ink }, { pts: [[-0.2, 1.16], [0.2, 1.16], [0.2, 1.18], [-0.2, 1.18]], color: PAL.ink }, { pts: [[-0.2, 1.08], [0.12, 1.08], [0.12, 1.1], [-0.2, 1.1]], color: PAL.ink }];
   S.GUITAR = GUITAR; S.STAND = STAND;
-  pawn(7.5, 2.9, { color: PAL.teal, head: '#e6c6a0', collar: PAL.brassL, h: 1.08, id: 'teacher' });
+  pawn(7.5, 2.9, { color: PAL.teal, head: '#e6c6a0', collar: PAL.brassL, h: 1.08, id: 'teacher', seat: true });
   sprite(7.78, 3.05, 0.25, GUITAR(-0.9, 0.95), { bias: 0.3 });
   sprite(8.55, 3.75, 0, STAND);
   // ---- class B: santoor (x 11..16)
   flat(rect(12, 1.4, 15, 4.2), PAL.tealD); flat(rect(12.2, 1.6, 14.8, 4), PAL.tealL); flat(rect(12.4, 1.8, 14.6, 3.8), PAL.teal);
   box(12.9, 2.5, 14.1, 3.2, 0, 0.42, PAL.walnutD); prism([[12.95, 2.5], [14.05, 2.5], [14.3, 3.2], [12.7, 3.2]], 0.42, 0.56, PAL.walnutL, { bias: 0.03, top: PAL.wood });
   for (let i = 0; i < 5; i++) S.solids.push({ k: 'flat', pts: rect(12.85 + i * 0.05, 2.62 + i * 0.12, 14.15 - i * 0.05, 2.65 + i * 0.12), z: 0.565, color: PAL.brassL, x: 13.5, y: 2.9, bias: 0.06 });
-  pawn(13.5, 1.95, { color: PAL.tealD, head: '#dcb88f', collar: PAL.brass, h: 1.04 }); pawn(13.5, 3.9, { color: PAL.terraD, head: '#edd0ac', h: 0.8, rb: 0.25, rh: 0.16 });
+  pawn(13.5, 1.95, { color: PAL.tealD, head: '#dcb88f', collar: PAL.brass, h: 1.04, seat: true }); pawn(13.5, 3.9, { color: PAL.terraD, head: '#edd0ac', h: 0.8, seat: true });
   box(11.14, 0.4, 11.6, 1.9, 0, 1.1, PAL.walnut, { top: PAL.walnutL }); ball(11.37, 0.8, 1.26, 0.16, PAL.terra); ball(11.37, 1.45, 1.24, 0.14, PAL.brass);
   // ---- class C: atelier (x 16..21)
   flat(rect(17, 1.5, 20, 4.1), PAL.rugB); flat(rect(17.2, 1.7, 19.8, 3.9), PAL.ivory);
@@ -202,7 +202,7 @@ export function buildScene() {
   const table = (x, y, r = 0.36, top = PAL.ivory) => { prism(ngon(x, y, 0.07, 6), 0, 0.5, PAL.walnutD); prism(ngon(x, y, r, 10), 0.5, 0.56, PAL.walnutL, { top, bias: 0.03 }); };
   const stool = (x, y, c = PAL.walnutL) => prism(ngon(x, y, 0.17, 8), 0, 0.3, c, { top: mix(c, '#ffffff', 0.25) });
   const cup = (x, y, z) => { prism(ngon(x, y, 0.055, 6), z, z + 0.09, PAL.ivory, { bias: 0.08, shadow: false }); };
-  const sit = (x, y, color, head, o = {}) => pawn(x, y, { color, head, h: 0.78, rb: 0.25, rh: 0.165, ...o });
+  const sit = (x, y, color, head, o = {}) => pawn(x, y, { color, head, h: 0.92, seat: true, ...o });
   const DRUM = (c = PAL.rugB) => [{ ell: [0, 0.3, 0.3, 0.3], color: PAL.walnut }, { ell: [0, 0.3, 0.25, 0.25], color: c }];
   const MIC = [{ pts: [[-0.02, 0], [0.02, 0], [0.02, 1.05], [-0.02, 1.05]], color: PAL.ink }, { pts: [[-0.2, 0], [0, 0.1], [0.2, 0], [0.18, -0.02], [0, 0.06], [-0.18, -0.02]], color: PAL.ink },
     { ell: [0, 1.12, 0.07, 0.1], color: PAL.brass }, { ell: [0.16, 1.12, 0.1, 0.13], color: PAL.ink }, { ell: [0.16, 1.12, 0.075, 0.105], color: '#6f6a62' }];
@@ -387,6 +387,7 @@ export function storyState(p) {
     lesson: ss((p - 1.86) / 0.14) * (1 - ss((p - 2.56) / 0.08)),
     way: ss((p - 2.56) / 0.46), wayFade: 1 - 0.45 * ss((p - 3.1) / 0.3) + 0.45 * ss((p - 4.6) / 0.3),
     back: ss((p - 3.85) / 0.45), home: ss((p - 2.8) / 0.25), student: studentAt(p), withGuitar: p > 1.76,
+    moving: Math.hypot(studentAt(p + 0.004)[0] - studentAt(p - 0.004)[0], studentAt(p + 0.004)[1] - studentAt(p - 0.004)[1]) > 0.004, stride: p * 150, seated: (p > 1.8 && p < 2.56) || p > 3,
     connect: ss((p - 4.5) / 0.42),
     bird: { gx: b.pos[0], gy: b.pos[1], gz: b.fly > 0.05 ? 0.02 : b.pos[2], x: b.pos[0], y: b.pos[1], z: b.pos[2], shadow: Math.max(0.3, 1 - b.pos[2] / 9) * (b.fly > 0.05 ? 0.85 : 1) },
   };
@@ -424,16 +425,16 @@ export function drawScene(g, S, cam, view, st, time = 0) {
     if (!seen(o)) continue;
     if (o.k === 'prism' && o.shadow) sh.push(flatPts(shadowOf(o.pts, o.z1), 0));
     else if (o.k === 'cone') sh.push(flatPts(shadowOf(ngon(o.x, o.y, o.r * 0.8, 8), (o.h + o.z0) * 0.7), 0));
-    else if (o.k === 'pawn') sh.push(flatPts(shadowOf(ngon(o.x, o.y, o.rb * 0.85, 8), o.h * 1.05), 0));
+    else if (o.k === 'pawn') sh.push(flatPts(shadowOf(ngon(o.x, o.y, 0.2 * dress(o).f, 8), dress(o).tall * 0.92), 0));
     else if (o.k === 'ball' && !o.back) sh.push(flatPts(ngon(o.x + SHADOW[0] * o.z, o.y + SHADOW[1] * o.z, o.r * 0.9, 10), 0));
   }
   const stu = st.student, sec = time / 1000, walk = [];
   for (const w of S.walkers) { // people who stroll: there and back, or round a loop
     const pts = w.loop ? w.pts.concat([w.pts[0]]) : w.pts; let L = 0; for (let i = 1; i < pts.length; i++) L += Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]);
     let u = (sec * w.speed / L + w.phase) % (w.loop ? 1 : 2); if (u > 1) u = 2 - u; const q = along(pts, w.loop ? u : ss(u));
-    walk.push({ k: 'pawn', x: q[0], y: q[1], ...w.pawn, h: w.pawn.h + (time ? Math.abs(Math.sin(sec * 7 + w.phase * 9)) * 0.025 : 0), carry: w.carry });
-    sh.push(flatPts(shadowOf(ngon(q[0], q[1], w.pawn.rb * 0.85, 8), w.pawn.h), 0)); }
-  sh.push(flatPts(shadowOf(ngon(stu[0], stu[1], 0.22, 8), 0.9), 0));
+    walk.push({ k: 'pawn', x: q[0], y: q[1], ...w.pawn, seed: w.phase, step: time ? sec * 6.5 * w.speed / 0.5 + w.phase * 9 : 0.6, carry: w.carry });
+    sh.push(flatPts(shadowOf(ngon(q[0], q[1], 0.2, 8), 1.4), 0)); }
+  sh.push(flatPts(shadowOf(ngon(stu[0], stu[1], 0.2, 8), 1.25), 0));
   if (st.bird && st.bird.shadow) { const b = st.bird, r = 0.42 * b.shadow; sh.push(flatPts(ngon(b.gx, b.gy, r, 10), b.gz)); }
   g.polys(sh, 'rgba(74,48,26,0.16)');
   for (const f of S.deco) if (seen(f)) g.poly(flatPts(f.pts, f.z), f.color, f.a);
@@ -455,11 +456,11 @@ export function drawScene(g, S, cam, view, st, time = 0) {
 
   // solids: back layer first, then depth-sorted
   const dyn = [];
-  dyn.push({ k: 'pawn', x: stu[0], y: stu[1], h: 0.84, rb: 0.25, rt: 0.11, rh: 0.165, color: PAL.terra, head: '#f0d2ad', collar: PAL.ivory, lit: true });
+  dyn.push({ k: 'pawn', x: stu[0], y: stu[1], h: 0.84, color: PAL.terra, head: '#f0d2ad', collar: PAL.ivory, seed: 3, step: st.moving ? st.stride : null, seat: st.seated });
   if (st.withGuitar) dyn.push({ k: 'sprite', x: stu[0] + 0.24, y: stu[1] + 0.12, z: 0.22, shapes: S.GUITAR(0.85, 0.82), bias: 0.3 });
   for (const w of walk) { dyn.push(w); if (w.carry) dyn.push({ k: 'sprite', x: w.x + 0.22, y: w.y + 0.1, z: 0.2, shapes: S.GUITAR(0.7, 0.72), bias: 0.3 }); }
   const keyOf = o => o.k === 'prism' ? (() => { let x = 0, y = 0; for (const p of o.pts) { x += p[0]; y += p[1]; } return D(x / o.pts.length, y / o.pts.length, (o.z0 + o.z1) / 2); })()
-    : o.k === 'ball' ? D(o.x, o.y, o.z) : o.k === 'flat' ? D(o.x, o.y, o.z) : o.k === 'cone' ? D(o.x, o.y, o.z0 + o.h * 0.35) : o.k === 'pawn' ? D(o.x, o.y, o.h * 0.5) : D(o.x, o.y, o.z + 0.5);
+    : o.k === 'ball' ? D(o.x, o.y, o.z) : o.k === 'flat' ? D(o.x, o.y, o.z) : o.k === 'cone' ? D(o.x, o.y, o.z0 + o.h * 0.35) : o.k === 'pawn' ? D(o.x, o.y, 0.6) : D(o.x, o.y, o.z + 0.5);
   const draw = o => DRAW[o.k](g, o, api, cam, sa, ca);
   const backs = S.back.filter(seen).map(o => [keyOf(o), o]).sort((u, v) => u[0] - v[0]); for (const b of backs) draw(b[1]);
   const all = S.solids.filter(seen).concat(dyn).map(o => [keyOf(o) + (o.bias || 0), o]).sort((u, v) => u[0] - v[0]); for (const b of all) draw(b[1]);
@@ -500,6 +501,13 @@ export function drawScene(g, S, cam, view, st, time = 0) {
   return api;
 }
 
+const HAIR = ['#2b211c', '#3a2a1e', '#5a3b28', '#1f1a18', '#4a3426', '#2f2622'], LEGS = ['#3a3f4a', '#4f3122', '#2c3f3c', '#5b5248', '#33302c'], SCARF = ['#e8dcc8', '#7c9a92', '#c98f6b', '#5c7d8c'];
+function dress(o) {
+  if (o._d) return o._d;
+  let h = 7; for (const c of (o.color + (o.head || '') + (o.seed ?? Math.round((o.x || 0) * 31 + (o.y || 0) * 17)))) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+  const style = h % 7, f = (o.kid ? 0.72 : o.h < 0.75 ? 0.76 : o.h < 0.9 ? 0.9 : 1) * 1.12;   // 0,3,4: short hair · 1: long · 2: bun · 5,6: headscarf
+  return (o._d = { f, style, hair: HAIR[(h >>> 3) % HAIR.length], legs: LEGS[(h >>> 6) % LEGS.length], shoe: (h >>> 9) % 2 ? '#2e2925' : '#6d4731', scarf: style >= 5 ? SCARF[(h >>> 11) % SCARF.length] : null, tall: (o.seat ? 1.24 : 1.5) * f });
+}
 const faceShade = (nx, ny) => 0.7 + 0.22 * Math.max(0, nx * LIGHT[0] + ny * LIGHT[1]);
 const DRAW = {
   prism(g, o, { P, ce }, cam, sa, ca) {
@@ -522,12 +530,31 @@ const DRAW = {
     const phi = Math.atan2(dyv / ry, dxv / rx), al = Math.acos(1 / d);
     for (let i = 0; i <= 12; i++) { const t = phi + al + (2 * Math.PI - 2 * al) * i / 12; pts.push(b[0] + Math.cos(t) * rx, b[1] + Math.sin(t) * ry); }
     pts.push(top[0], top[1]); g.poly(pts, g.lin(b[0] - rx, 0, b[0] + rx, 0, [[0, mix(o.color, '#ffffff', 0.16)], [0.55, o.color], [1, shade(o.color, 0.72)]])); },
-  pawn(g, o, { P, s, se }) { const b = P(o.x, o.y, 0), t = P(o.x, o.y, o.h), pts = [];
-    for (let i = 0; i < 14; i++) { const an = i / 14 * Math.PI * 2, c = Math.cos(an), sn = Math.sin(an); pts.push([b[0] + c * o.rb * s, b[1] + sn * o.rb * s * se], [t[0] + c * o.rt * s, t[1] + sn * o.rt * s * se]); }
-    const h = hull(pts), flat = []; for (const q of h) flat.push(q[0], q[1]);
-    g.poly(flat, g.lin(b[0] - o.rb * s, 0, b[0] + o.rb * s, 0, [[0, mix(o.color, '#ffffff', 0.22)], [0.5, o.color], [1, shade(o.color, 0.7)]]));
-    if (o.collar) g.ellipse(t[0], t[1], o.rt * s * 1.25, o.rt * s * 1.25 * Math.max(se, 0.35), o.collar);
-    const hc = P(o.x, o.y, o.h + o.rh * 0.85), r = o.rh * s; g.ellipse(hc[0], hc[1], r, r, g.rad(hc[0] - r * 0.3, hc[1] - r * 0.35, r * 1.3, [[0, mix(o.head || o.color, '#ffffff', 0.35)], [0.65, o.head || o.color], [1, shade(o.head || o.color, 0.78)]])); },
+  // a small person: legs, body, arms, head and hair; standing, walking (o.step) or seated (o.seat). Seen from above it is shoulders and a head.
+  pawn(g, o, { P, s, se, ce }) {
+    const d = dress(o), f = d.f, b = P(o.x, o.y, 0), k = s * f, kz = s * f * ce, skin = o.head || '#e6c6a0', shirt = o.color;
+    if (ce < 0.16) { g.ellipse(b[0], b[1], 0.2 * k, 0.125 * k, shirt); g.ellipse(b[0], b[1], 0.115 * k, 0.115 * k, d.scarf || d.hair); return; }
+    const q = (u, v, fw = 0) => [b[0] + u * k, b[1] - v * kz + fw * k * se], poly = (pts, c) => { const t = []; for (const w of pts) { const c2 = q(w[0], w[1], w[2]); t.push(c2[0], c2[1]); } g.poly(t, c); };
+    const dot = (u, v, r, c, fw = 0, ry = r) => { const c2 = q(u, v, fw); g.ellipse(c2[0], c2[1], r * k, ry * k, c); };
+    const sw = o.step != null ? Math.sin(o.step) : 0, dn = o.seat ? 0.27 : 0, hip = 0.7 - dn, sh = 1.16 - dn, hd = 1.35 - dn;
+    const body = g.lin(b[0] - 0.2 * k, 0, b[0] + 0.2 * k, 0, [[0, mix(shirt, '#ffffff', 0.2)], [0.55, shirt], [1, shade(shirt, 0.76)]]), legD = shade(d.legs, 0.82);
+    if (d.style === 1) poly([[-0.135, hd + 0.02], [0.135, hd + 0.02], [0.15, sh - 0.12], [-0.15, sh - 0.12]], d.hair);                // long hair falls behind the shoulders
+    if (o.seat) { // thighs come forward, shins drop to the floor
+      for (const m of [-1, 1]) { poly([[m * 0.02, hip + 0.06, 0], [m * 0.15, hip + 0.06, 0], [m * 0.15, hip, 0.3], [m * 0.03, hip, 0.3]], m < 0 ? d.legs : legD);
+        poly([[m * 0.035, hip, 0.3], [m * 0.145, hip, 0.3], [m * 0.135, 0.05, 0.33], [m * 0.045, 0.05, 0.33]], m < 0 ? d.legs : legD); dot(m * 0.09, 0.035, 0.07, d.shoe, 0.36, 0.04); }
+    } else for (const m of [-1, 1]) { const a = sw * m * 0.1, lift = Math.max(0, sw * m) * 0.05;                                         // legs swing when walking
+      poly([[m * 0.015, hip + 0.04, 0], [m * 0.145, hip + 0.04, 0], [m * 0.125, 0.05 + lift, a], [m * 0.035, 0.05 + lift, a]], m < 0 ? d.legs : legD); dot(m * 0.08, 0.035 + lift, 0.07, d.shoe, a + 0.03, 0.04); }
+    poly([[-0.15, hip - 0.02], [0.15, hip - 0.02], [0.2, sh - 0.06], [0.14, sh + 0.03], [-0.14, sh + 0.03], [-0.2, sh - 0.06]], body);
+    for (const m of [-1, 1]) { const a = o.seat ? 0.16 : -sw * m * 0.09, e = o.seat ? hip + 0.1 : hip + 0.02;                            // arms and hands
+      poly([[m * 0.19, sh - 0.02, 0], [m * 0.255, sh - 0.07, 0], [m * 0.265, e + 0.03, a], [m * 0.2, e + 0.03, a]], m < 0 ? mix(shirt, '#ffffff', 0.12) : shade(shirt, 0.8)); dot(m * 0.233, e, 0.042, skin, a); }
+    if (o.collar) poly([[-0.07, sh + 0.035], [0.07, sh + 0.035], [0, sh - 0.07]], o.collar);
+    poly([[-0.045, sh], [0.045, sh], [0.045, sh + 0.09], [-0.045, sh + 0.09]], shade(skin, 0.9));
+    const hc = q(0, hd), r = 0.128 * k;
+    if (d.scarf) { poly([[-0.15, hd], [0.15, hd], [0.19, sh - 0.04], [-0.19, sh - 0.04]], d.scarf); g.ellipse(hc[0], hc[1], r * 1.1, r * 1.1, d.scarf); g.ellipse(hc[0], hc[1] + r * 0.2, r * 0.7, r * 0.76, skin); return; }
+    g.ellipse(hc[0], hc[1], r, r, d.hair);
+    if (d.style === 2) g.ellipse(hc[0], hc[1] - r * 1.05, r * 0.46, r * 0.46, d.hair);                                                // a bun
+    g.ellipse(hc[0], hc[1] + r * 0.26, r * 0.78, r * 0.74, g.rad(hc[0] - r * 0.2, hc[1], r, [[0, mix(skin, '#ffffff', 0.25)], [1, skin]]));
+  },
   sprite(g, o, { P, s, ce }) { const c = P(o.x, o.y, o.z), k = Math.max(ce, 0.0);
     if (k < 0.08) return;
     for (const sh of o.shapes) { if (sh.ell) g.ellipse(c[0] + sh.ell[0] * s, c[1] - sh.ell[1] * s * k, sh.ell[2] * s, sh.ell[3] * s * k, sh.color);
