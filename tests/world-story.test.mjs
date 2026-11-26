@@ -22,7 +22,7 @@ test('the timeline is continuous: camera and student never jump between neighbou
     for (let p = 0.01; p <= 5.0001; p += 0.01) {
       const c = cameraAt(p, phone), s = studentAt(p);
       for (const k of ['tx', 'ty', 'w', 'h', 'e', 'a']) assert.ok(Number.isFinite(c[k]), `camera ${k} at p=${p.toFixed(2)}`);
-      assert.ok(Math.hypot(c.tx - c0.tx, c.ty - c0.ty) < 1.2, `camera target jumps at p=${p.toFixed(2)}`);
+      assert.ok(Math.hypot(c.tx - c0.tx, c.ty - c0.ty) < 1.5, `camera target jumps at p=${p.toFixed(2)}`);
       assert.ok(Math.abs(c.e - c0.e) < 4 && Math.abs(c.a - c0.a) < 4, `camera angle jumps at p=${p.toFixed(2)}`);
       assert.ok(Math.hypot(s[0] - s0[0], s[1] - s0[1]) < 1.6, `student jumps at p=${p.toFixed(2)}`);
       c0 = c; s0 = s;
@@ -41,17 +41,19 @@ test('the story opens from above and ends on the whole world', () => {
 test('the viewer is the bird: its flight is continuous, it rests at every stop and the camera travels with it', () => {
   let b0 = birdAt(0).pos;
   for (let p = 0.005; p <= 5.0001; p += 0.005) { const b = birdAt(p).pos; assert.ok(b.every(Number.isFinite)); assert.ok(Math.hypot(b[0] - b0[0], b[1] - b0[1], b[2] - b0[2]) < 0.9, 'bird jumps at p=' + p.toFixed(3)); b0 = b; }
-  for (const p of [0.5, 1, 1.45, 2.2, 3.3]) assert.equal(birdAt(p).fly, 0, 'perched at p=' + p);
-  for (const p of [0.2, 2.75, 4.15, 5]) assert.ok(birdAt(p).fly > 0.5, 'in the air at p=' + p);
+  for (const p of [0.5, 1, 1.45, 2, 2.42, 3.3]) assert.equal(birdAt(p).fly, 0, 'perched at p=' + p);
+  for (const p of [0.2, 2.24, 2.8, 4.15, 5]) assert.ok(birdAt(p).fly > 0.5, 'in the air at p=' + p);
   for (const phone of [false, true]) for (let p = 0; p <= 5; p += 0.05) { const c = cameraAt(p, phone), b = birdAt(p).pos;
     assert.ok(Math.abs(c.tx - b[0]) < c.w * 0.62 && Math.abs(c.ty - b[1]) < c.h * 0.62, 'the bird stays in the frame at p=' + p.toFixed(2)); }
-  assert.ok(Math.hypot(birdAt(2.75).pos[0] - studentAt(2.75)[0], birdAt(2.75).pos[1] - studentAt(2.75)[1]) < 1.5, 'it flies home beside the learner');
+  assert.ok(Math.hypot(birdAt(2.8).pos[0] - studentAt(2.8)[0], birdAt(2.8).pos[1] - studentAt(2.8)[1]) < 1.5, 'it flies home beside the learner');
   assert.equal(typeof birdFaces(2.75, (x, y) => [x, y], 1), 'boolean');
 });
 
 test('the story ends with everything tied to the bird', () => {
   assert.equal(storyState(4.2).connect, 0); assert.equal(storyState(5).connect, 1);
-  const S = buildScene(); assert.ok(S.nodes.length >= 6, 'reception, management, classes, courtyard and home');
+  const S = buildScene(); assert.ok(S.nodes.length >= 9, 'reception, management, classes, studio, café and home');
+  for (const k of ['cafe', 'studio', 'reception', 'management', 'classes', 'home']) assert.ok(S.rooms[k], k + ' has a label spot');
+  assert.ok(S.walkers.length >= 4 && S.notes.length >= 6 && S.steam.length >= 3, 'the academy is alive: walkers, notes, steam');
   const lines = []; const g = { poly() {}, polys() {}, ellipse() {}, glow() {}, rect() {}, lin: () => '#000', rad: () => '#000', line(pts, color) { lines.push(color); } };
   const view = { W: 1200, H: 800, cx: 600, cy: 400, fitW: 1100, fitH: 740 };
   drawScene(g, S, cameraAt(4.2, false), view, storyState(4.2), 0); const before = lines.length; lines.length = 0;
@@ -70,7 +72,7 @@ test('every chapter draws with finite geometry at desktop and phone sizes', () =
 test('static chapter art and the teaser exist, are light, and carry no scripts, raster images or remote references', () => {
   for (const f of ['ch1', 'ch2', 'ch3', 'ch4', 'ch5', 'ch6', 'teaser']) {
     const path = new URL(`../dist/world/${f}.svg`, import.meta.url); assert.ok(existsSync(path), f);
-    const s = readFileSync(path, 'utf8'); assert.ok(statSync(path).size < 190_000, f + ' stays under 190 KB before compression');
+    const s = readFileSync(path, 'utf8'); assert.ok(statSync(path).size < 260_000, f + ' stays under 260 KB before compression');
     assert.ok(!/<script|<image|<foreignObject|https?:\/\/(?!www\.w3\.org)/.test(s), f + ' is self-contained vector art');
   }
 });

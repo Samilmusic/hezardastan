@@ -30,7 +30,7 @@
 .wd-bird .hv-wing{transform-box:fill-box;transform-origin:28% 62%}
 .wd-bird .hv-legs{transition:opacity .2s}
 .wd-bird.is-flying .hv-legs{opacity:0}
-.wd-bird.is-flying .hv-wing{animation:wd-flap .29s ease-in-out infinite alternate}
+.wd-bird.is-flying .hv-wing{animation:wd-flap var(--flap,.29s) ease-in-out infinite alternate}
 .wd-bird.is-settling .hv-wing{animation:wd-settle .75s ease-out 1}
 @keyframes wd-flap{from{transform:rotate(-36deg) scaleY(1.18)}to{transform:rotate(16deg) scaleY(.78)}}
 @keyframes wd-settle{0%{transform:rotate(-24deg) scaleY(1.1)}45%{transform:rotate(7deg)}75%{transform:rotate(-3deg)}100%{transform:none}}

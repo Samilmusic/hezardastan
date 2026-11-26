@@ -34,7 +34,7 @@ export function start(opts) {
   const g = new CanvasG(ctx), S = buildScene(), reduced = !!opts.reduced;
   let W = 0, H = 0, dpr = Math.min(window.devicePixelRatio || 1, 2), anchors = [], phone = null, vw = { W: 1, H: 1, cx: 0, cy: 0, fitW: 1, fitH: 1 };
   let p = 0, ps = 0, raf = 0, running = false, visible = true, destroyed = false, lastT = 0, chapter = -1, api = null;
-  let drawMs = 8, frames = 0, dir = 1, faceLeft = false, flying = null, shown = false, birdW = 80;
+  let drawMs = 8, frames = 0, dir = 1, faceLeft = false, flying = null, shown = false, birdW = 80, vel = 0, tilt = 0, skip = false, flap = '';
   const probe = document.createElement('div'); probe.style.cssText = 'position:fixed;top:0;left:0;width:0;height:100vh;height:100svh;visibility:hidden;pointer-events:none'; stage.appendChild(probe);
 
   function measure() {
@@ -84,7 +84,9 @@ export function start(opts) {
     const face = birdFaces(ps, api.P, dir); if (bs.fly > 0.05 || !shown) faceLeft = face; else faceLeft = bs.flip;
     const base = phone ? clamp(1.7 * api.s, 78, 150) : clamp(1.5 * api.s, 84, 190), w = base + (Math.max(base, phone ? 112 : 170) - base) * st.connect, k = w / 160; birdW = w;
     const bob = reduced || bs.fly < 0.05 ? 0 : Math.sin(now * 0.0052) * 3.2 * bs.fly * k * 1.6;
-    bird.style.transform = `translate3d(${(q[0] + (faceLeft ? 86 : -86) * k).toFixed(1)}px,${(q[1] - (bs.fly > 0.05 ? 84 : 111) * k + bob).toFixed(1)}px,0) scale(${faceLeft ? -k : k},${k})`;
+    tilt += ((bs.fly > 0.05 ? clamp(-Math.abs(vel) * 26, -16, 0) : 0) - tilt) * 0.15;       // lean into the flight
+    bird.style.transform = `translate3d(${(q[0] + (faceLeft ? 86 : -86) * k).toFixed(1)}px,${(q[1] - (bs.fly > 0.05 ? 84 : 111) * k + bob).toFixed(1)}px,0) scale(${faceLeft ? -k : k},${k}) translate(86px,84px) rotate(${tilt.toFixed(1)}deg) translate(-86px,-84px)`;
+    const fs = Math.abs(vel) > 0.7 ? '.19s' : Math.abs(vel) > 0.25 ? '.24s' : '.3s'; if (fs !== flap) { flap = fs; bird.style.setProperty('--flap', fs); }
     const fl = bs.fly > 0.05; if (fl !== flying) { flying = fl; bird.classList.toggle('is-flying', fl); bird.classList.toggle('is-settling', !fl && shown && !reduced); }
     if (!shown) { shown = true; bird.style.opacity = '1'; }
     return q;
@@ -92,6 +94,7 @@ export function start(opts) {
 
   function frame(now) {
     raf = 0; if (destroyed) return;
+    if (!reduced && p === ps && (skip = !skip)) { schedule(); return; }   // nothing is moving but the ambient life: half the frame rate is enough
     const dt = Math.min(64, now - (lastT || now)); lastT = now;
     p = readP(); const before = ps;
     ps = reduced ? p : ps + (p - ps) * (1 - Math.exp(-dt / 150)); if (Math.abs(p - ps) < 0.0004) ps = p;
@@ -100,7 +103,9 @@ export function start(opts) {
     fadeCards();
 
     if (phone) frameArea(ps);
-    const st = storyState(ps), t0 = performance.now();
+    const st = storyState(ps), t0 = performance.now(), bsNow = birdAt(ps);
+    vel += ((ps - before) / Math.max(dt, 1) * 1000 - vel) * 0.18;                         // story units per second, smoothed
+    if (!reduced && bsNow.fly > 0.05) { st.trail = []; for (let k = 1; k <= 9; k++) { const q = ps - dir * k * 0.011; if (q < 0 || q > 5) break; const b = birdAt(q); if (b.fly < 0.05) break; st.trail.push([b.pos[0], b.pos[1], b.pos[2] + 0.35, (1 - k / 10) * Math.min(1, Math.abs(vel) * 4 + 0.25) * bsNow.fly]); } }
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     api = drawScene(g, S, cameraAt(ps, !!phone), vw, st, reduced ? 0 : now);
     drawMs += (performance.now() - t0 - drawMs) * 0.12; frames++;
@@ -111,11 +116,10 @@ export function start(opts) {
       el.style.opacity = (key === 'court' ? st.labels * (1 - st.connect) : key === 'home' ? Math.min(st.labels, ps > 4.6 ? 1 : 0) : st.labels).toFixed(2); }
     // stay light on slower devices: lower the canvas resolution first, then hand over to the simple view
     if (frames > 24 && drawMs > 26) { if (dpr > 1) { dpr = Math.max(1, dpr - 0.5); frames = 0; drawMs = 12; measure(); } else if (drawMs > 45) { opts.onSlow?.(); return; } }
-    const animated = !reduced && (birdAt(ps).fly > 0.05 || st.lesson > 0.01 || (st.back > 0.01 && ps < 4.75) || (st.way > 0.01 && st.way < 0.999) || st.connect > 0.01);
-    if (p !== ps || animated) schedule();
+    if (p !== ps || !reduced) schedule();   // the scene is alive (people, water, notes), so it keeps drawing while it is on screen
   }
   function schedule() { if (!raf && running && visible && !document.hidden && !destroyed) raf = requestAnimationFrame(frame); }
-  const onScroll = () => schedule();
+  const onScroll = () => { skip = true; schedule(); };
   let lastW = innerWidth, keep = null;
   const onResize = () => {
     if (destroyed) return;

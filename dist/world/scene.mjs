@@ -74,8 +74,8 @@ export function buildScene() {
 
   // ---- ground, garden and the way home
   flat(rect(-30, -30, 70, 50), PAL.ground, { on: 'ground' });
-  flat([[-3, -3.2], [24.2, -3.2], [24.2, 15.6], [16, 15.6], [16, 14.2], [-3, 14.2]], mix(PAL.ground, '#ffffff', 0.25), { on: 'ground' });
-  for (const g of [[[23.4, 2], [36, 1], [37.5, 5], [25.5, 5.2]], [[15.2, 16.6], [26.5, 16.6], [26.5, 19.6], [14, 19.8]], [[1, 15], [11.5, 15], [11.5, 19], [-1.5, 18.6]], [[33.8, 12.6], [38, 12], [39, 18], [32, 18.5]]])
+  flat([[-3, -3.2], [26.9, -3.2], [26.9, 5.7], [24.2, 5.7], [24.2, 15.6], [16, 15.6], [16, 14.2], [12.5, 14.2], [12.5, 17.8], [-3, 17.8]], mix(PAL.ground, '#ffffff', 0.25), { on: 'ground' });
+  for (const g of [[[27.4, 1.6], [36, 1], [37.5, 5], [27.6, 5.2]], [[15.2, 16.6], [26.5, 16.6], [26.5, 19.6], [14, 19.8]], [[-1.5, 18.5], [11.8, 18.4], [12.4, 21], [-2.2, 20.8]], [[33.8, 12.6], [38, 12], [39, 18], [32, 18.5]]])
     flat(g, PAL.garden, { on: 'ground' });
   const WAY = [[13.5, 13], [13.5, 15.4], [29.9, 15.4], [29.9, 11.6]];
   flat([[12.7, 13], [14.3, 13], [14.3, 14.6], [29.1, 14.6], [29.1, 11.6], [30.7, 11.6], [30.7, 16.2], [12.7, 16.2]], PAL.path, { on: 'ground' });
@@ -86,6 +86,7 @@ export function buildScene() {
   const F = (x0, y0, x1, y1, c) => flat(rect(x0, y0, x1, y1), c, { on: 'ground' });
   F(0, 0, 6, 5, PAL.floor); F(0, 5, 6, 11.5, PAL.floorB);
   F(6, 0, 11, 5, PAL.floorB); F(11, 0, 16, 5, PAL.floor); F(16, 0, 21, 5, PAL.floorB);
+  F(21, 0, 25.6, 5, '#d9c7a4'); F(0, 11.5, 6, 16.5, PAL.floor); F(6, 13, 11.6, 16.5, PAL.floorB);
   F(6, 5, 21, 13, PAL.court);
   for (let i = 0; i < 15; i++) for (let j = 0; j < 8; j++) if ((i + j) % 2) flat(rect(6 + i, 5 + j, 7 + i, 6 + j), PAL.courtB, { on: 'ground' });
   // turquoise tile border and the star around the pool
@@ -99,23 +100,28 @@ export function buildScene() {
   S.solids.push({ k: 'flat', pts: ngon(HX - 0.25, HY - 0.2, 0.7, 8, 0.2), z: 0.312, color: PAL.waterL, x: HX, y: HY, bias: 0.03, a: 0.55 });
   prism(ngon(HX, HY, 0.2, 8), 0.3, 0.62, PAL.brass, { bias: 0.05 }); prism(ngon(HX, HY, 0.42, 8), 0.62, 0.72, PAL.brassL, { bias: 0.06 });
   // planters with orange trees
-  for (const [px, py] of [[8.2, 6.8], [18.8, 6.8], [8.2, 11.2], [18.8, 11.2]]) {
+  for (const [px, py] of [[8.2, 6.8], [8.2, 11.2]]) {
     box(px - 0.5, py - 0.5, px + 0.5, py + 0.5, 0, 0.42, PAL.terra, { top: PAL.walnutD });
     prism(ngon(px, py, 0.09, 6), 0.42, 1.25, PAL.walnut, { bias: 0.02 });
     ball(px, py, 1.55, 0.62, PAL.leaf, { dots: PAL.orange });
   }
   // ---- back walls (north, west) with niches and tile band; drawn before everything inside
+  const foam = (i, len) => [0, 1, 2].flatMap(r => [0.14, 0.14 + (len - 0.28) / 2].map((u, c) => ({ pts: [[u, 0.4 + r * 0.42], [u + (len - 0.28) / 2 - 0.06, 0.4 + r * 0.42], [u + (len - 0.28) / 2 - 0.06, 0.76 + r * 0.42], [u, 0.76 + r * 0.42]], color: (r + c + i) % 2 ? PAL.tealD : PAL.walnut })))
+    .concat([{ pts: [[0, 1.68], [len, 1.68], [len, 1.71], [0, 1.71]], color: PAL.brassL }]);
   wall(-T / 2, -T / 2, 21 + T / 2, -T / 2, HB, { back: true, decal: niche, top: PAL.ivory });
-  wall(-T / 2, 0, -T / 2, 11.5, HB, { back: true, decal: niche, top: PAL.ivory });
+  wall(21 + T / 2, -T / 2, 25.6 + T / 2, -T / 2, HB, { back: true, decal: foam, top: PAL.ivory, seg: 1.15 });
+  wall(-T / 2, 0, -T / 2, 16.5, HB, { back: true, decal: niche, top: PAL.ivory });
   // wind tower and cypress trees behind
   box(-1.9, -1.9, -0.45, -0.45, 0, 3.3, PAL.plaster, { back: true, top: PAL.ivory, decals: [1, 2].flatMap(e => [0.22, 0.6, 0.98].map(u => ({ edge: e, pts: [[u, 2.2], [u + 0.24, 2.2], [u + 0.24, 3.05], [u, 3.05]], color: PAL.walnutD }))).concat([1, 2].map(e => ({ edge: e, pts: [[0, 1.95], [1.45, 1.95], [1.45, 2.08], [0, 2.08]], color: PAL.teal }))) });
-  for (const [tx, ty, r, h] of [[3.5, -1.6, 0.55, 3.1], [9, -1.9, 0.6, 3.4], [14.5, -1.5, 0.5, 2.8], [19.5, -1.9, 0.6, 3.3], [-1.6, 3.5, 0.55, 3], [-1.8, 8.5, 0.6, 3.3]]) cone(tx, ty, r, h, PAL.cypress, { back: true });
+  for (const [tx, ty, r, h] of [[3.5, -1.6, 0.55, 3.1], [9, -1.9, 0.6, 3.4], [14.5, -1.5, 0.5, 2.8], [19.5, -1.9, 0.6, 3.3], [-1.6, 3.5, 0.55, 3], [-1.8, 8.5, 0.6, 3.3], [-1.7, 13.6, 0.55, 3.1], [24.2, -1.7, 0.55, 3]]) cone(tx, ty, r, h, PAL.cypress, { back: true });
   // ---- partitions and low front walls
   wall(0, 5, 6, 5, 1.05, { gaps: [[2.3, 3.7]], decal: band });
   wall(6, 0, 6, 5, 1.25, { decal: band }); wall(11, 0, 11, 5, 1.25, { decal: band }); wall(16, 0, 16, 5, 1.25, { decal: band });
-  wall(21, 0, 21, 5, 0.3, { color: PAL.plasterD }); wall(21, 5, 21, 13, 0.36, { color: PAL.plasterD });
-  wall(6, 13, 21, 13, 0.36, { gaps: [[12.5, 14.5]], color: PAL.plasterD });
-  wall(0, 11.5, 6, 11.5, 0.3, { color: PAL.plasterD });
+  wall(21, 0, 21, 5, 1.25, { decal: band }); wall(21, 5, 21, 13, 0.36, { color: PAL.plasterD });
+  wall(25.6, 0, 25.6, 5, 0.3, { color: PAL.plasterD }); wall(21, 5, 25.6, 5, 0.3, { gaps: [[21.6, 22.9]], color: PAL.plasterD });
+  wall(6, 13, 21, 13, 0.36, { gaps: [[8.1, 9.5], [12.5, 14.5]], color: PAL.plasterD });
+  wall(0, 11.5, 6, 11.5, 0.6, { gaps: [[2.3, 3.7]], color: PAL.plaster, top: PAL.tealL });
+  wall(6, 13, 6, 16.5, 1.05, { decal: band }); wall(0, 16.5, 11.6, 16.5, 0.3, { color: PAL.plasterD }); wall(11.6, 13, 11.6, 16.5, 0.3, { color: PAL.plasterD });
   wall(6, 5, 6, 13, 0.3, { gaps: [[8.6, 10.4]], color: PAL.plasterD });
   // columns of the north arcade
   for (const cx of [6, 8.5, 11, 13.5, 16, 18.5, 21]) { prism(ngon(cx, 5, 0.17, 8), 0, 1.5, PAL.ivory); box(cx - 0.24, 4.76, cx + 0.24, 5.24, 1.5, 1.62, PAL.brassL, { bias: 0.02 }); }
@@ -189,10 +195,97 @@ export function buildScene() {
   box(31.5, 9.6, 32.2, 10.3, 0, 0.5, PAL.walnut, { top: PAL.walnutL }); box(31.62, 9.75, 32.05, 10.1, 0.5, 0.53, PAL.tealD, { bias: 0.04 });
   // lanterns and shrubs along the way
   for (const [lx, ly] of [[14.9, 14.3], [21.5, 16.5], [28.6, 14.3]]) { prism(ngon(lx, ly, 0.06, 6), 0, 0.75, PAL.walnutD); box(lx - 0.14, ly - 0.14, lx + 0.14, ly + 0.14, 0.75, 1.02, PAL.glow, { bias: 0.02, top: PAL.brass }); S.pools.push({ x: lx, y: ly, r: 1.3, key: 'way' }); }
-  for (const [bx, by, r] of [[17.5, 17.6, 0.55], [24, 17.3, 0.7], [25.2, 3, 0.6], [34.5, 3.4, 0.75], [4, 16.8, 0.7], [9, 17.2, 0.55], [35.5, 15, 0.7]]) ball(bx, by, r * 0.8, r, PAL.leaf);
-  for (const [tx, ty, r, h] of [[22.8, 16.9, 0.5, 2.6], [31.8, 3.6, 0.55, 3], [36.2, 13.6, 0.5, 2.7], [1.5, 16.3, 0.5, 2.6], [26.6, 3.4, 0.45, 2.4]]) cone(tx, ty, r, h, PAL.cypress);
-  S.nodes = [[3, 2.6], [3, 8.4], [8.7, 2.8], [13.5, 2.8], [18.5, 2.8], [13.5, 9], [29.6, 9.2]]; // management, reception, three classes, courtyard, home
-  S.WAY = WAY; S.rooms = { court: [13.5, 9], reception: [3, 8.4], management: [3, 2.6], classes: [13.5, 2.6], home: [29.9, 9] };
+  for (const [bx, by, r] of [[17.5, 17.6, 0.55], [24, 17.3, 0.7], [28.4, 2.6, 0.6], [34.5, 3.4, 0.75], [4, 19.4, 0.7], [9, 19.7, 0.55], [35.5, 15, 0.7]]) ball(bx, by, r * 0.8, r, PAL.leaf);
+  for (const [tx, ty, r, h] of [[22.8, 16.9, 0.5, 2.6], [31.8, 3.6, 0.55, 3], [36.2, 13.6, 0.5, 2.7], [1.2, 19.3, 0.5, 2.6], [29.6, 3.2, 0.45, 2.4]]) cone(tx, ty, r, h, PAL.cypress);
+
+  // small helpers for furniture
+  const table = (x, y, r = 0.36, top = PAL.ivory) => { prism(ngon(x, y, 0.07, 6), 0, 0.5, PAL.walnutD); prism(ngon(x, y, r, 10), 0.5, 0.56, PAL.walnutL, { top, bias: 0.03 }); };
+  const stool = (x, y, c = PAL.walnutL) => prism(ngon(x, y, 0.17, 8), 0, 0.3, c, { top: mix(c, '#ffffff', 0.25) });
+  const cup = (x, y, z) => { prism(ngon(x, y, 0.055, 6), z, z + 0.09, PAL.ivory, { bias: 0.08, shadow: false }); };
+  const sit = (x, y, color, head, o = {}) => pawn(x, y, { color, head, h: 0.78, rb: 0.25, rh: 0.165, ...o });
+  const DRUM = (c = PAL.rugB) => [{ ell: [0, 0.3, 0.3, 0.3], color: PAL.walnut }, { ell: [0, 0.3, 0.25, 0.25], color: c }];
+  const MIC = [{ pts: [[-0.02, 0], [0.02, 0], [0.02, 1.05], [-0.02, 1.05]], color: PAL.ink }, { pts: [[-0.2, 0], [0, 0.1], [0.2, 0], [0.18, -0.02], [0, 0.06], [-0.18, -0.02]], color: PAL.ink },
+    { ell: [0, 1.12, 0.07, 0.1], color: PAL.brass }, { ell: [0.16, 1.12, 0.1, 0.13], color: PAL.ink }, { ell: [0.16, 1.12, 0.075, 0.105], color: '#6f6a62' }];
+  S.notes = []; S.steam = []; S.walkers = [];
+
+  // ---- café in the courtyard (east side): kiosk under a striped awning, tables, parasol
+  flat(rect(17.1, 6.1, 20.5, 12.3), mix(PAL.court, PAL.brassL, 0.35), { a: 0.55 }); for (const r of [rect(17.1, 6.1, 20.5, 6.22), rect(17.1, 12.18, 20.5, 12.3), rect(17.1, 6.1, 17.22, 12.3)]) flat(r, PAL.terra);
+  box(19.45, 8, 19.95, 10.8, 0, 0.95, PAL.walnut, { top: PAL.walnutL, decals: [{ edge: 3, pts: [[0.12, 0.12], [2.68, 0.12], [2.68, 0.8], [0.12, 0.8]], color: PAL.walnutD }, { edge: 2, pts: [[0, 0.85], [0.5, 0.85], [0.5, 0.95], [0, 0.95]], color: PAL.brass }] });
+  box(20.62, 8.1, 20.86, 10.7, 0, 1.3, PAL.walnutD, { top: PAL.walnut }); for (const [j, c] of [PAL.terra, PAL.brassL, PAL.tealL, PAL.ivory, PAL.terra].entries()) prism(ngon(20.74, 8.45 + j * 0.47, 0.09, 6), 1.3, 1.5, c, { bias: 0.05, shadow: false });
+  box(19.52, 8.25, 19.9, 8.85, 0.95, 1.3, PAL.brass, { top: PAL.brassL, bias: 0.05, shadow: false }); prism(ngon(19.7, 8.4, 0.06, 6), 1.3, 1.42, PAL.ink, { bias: 0.06, shadow: false });
+  cup(19.7, 9.3, 0.95); cup(19.7, 9.6, 0.95); cup(19.72, 10.4, 0.95); prism(ngon(19.7, 10.05, 0.13, 8), 0.95, 1.0, PAL.ivory, { bias: 0.06, shadow: false }); ball(19.7, 10.05, 1.08, 0.1, PAL.orange);
+  for (const [ax, ay] of [[20.05, 7.75], [20.98, 7.75], [20.05, 11.05], [20.98, 11.05]]) prism(ngon(ax, ay, 0.045, 6), 0, 2.0, PAL.walnutD);
+  for (let i = 0; i < 7; i++) box(19.85, 7.6 + i * 0.52, 21.12, 8.12 + i * 0.52, 2.0, 2.06, i % 2 ? PAL.ivory : PAL.terra, { bias: 0.02, shadow: i === 0 });
+  pawn(20.3, 9.4, { color: PAL.ivory, head: '#e2bf98', collar: PAL.terra, h: 1.0 });
+  table(17.9, 7.3); stool(17.35, 7.25, PAL.terra); stool(18.45, 7.4, PAL.terra); cup(17.8, 7.2, 0.56); cup(18.02, 7.38, 0.56);
+  sit(17.35, 7.25, PAL.tealL, '#edd0ac'); sit(18.45, 7.4, PAL.brass, '#dcb88f');
+  prism(ngon(17.9, 7.3, 0.035, 6), 0.56, 1.75, PAL.walnutD, { bias: 0.02, shadow: false }); cone(17.9, 7.3, 0.95, 0.42, PAL.teal, { z0: 1.6 });
+  table(17.75, 10.4); stool(17.2, 10.45, PAL.terra); stool(18.3, 10.3, PAL.terra); cup(17.65, 10.45, 0.56); sit(17.2, 10.45, PAL.terraD, '#e6c6a0'); sit(18.3, 10.3, PAL.cypress, '#edd0ac', { collar: PAL.brassL });
+  table(18.6, 11.75, 0.32); stool(18.1, 11.75, PAL.terra); cup(18.6, 11.7, 0.56); sit(18.1, 11.75, PAL.walnutL, '#e9c9a4');
+  prism(ngon(20.3, 6.5, 0.26, 8), 0, 0.42, PAL.terra); ball(20.3, 6.5, 0.95, 0.5, PAL.leaf, { dots: PAL.orange }); prism(ngon(20.3, 11.85, 0.24, 8), 0, 0.4, PAL.terra); ball(20.3, 11.85, 0.88, 0.44, PAL.leaf);
+  S.steam.push([17.9, 7.3, 0.7], [17.72, 10.42, 0.7], [19.7, 8.4, 1.48], [18.6, 11.72, 0.7]);
+  S.pools.push({ x: 19.4, y: 9.4, r: 2.6, key: 'cafe' });
+
+  // ---- recording and arrangement studio (x 21..25.6, y 0..5): control desk, monitors, vocal booth
+  flat(rect(21.5, 1.1, 23.6, 4.5), '#3b4a48'); flat(rect(21.65, 1.25, 23.45, 4.35), '#4b5d5a');
+  box(21.55, 1.5, 23.45, 2.25, 0, 0.74, PAL.walnutD, { top: PAL.walnut, decals: [{ edge: 2, pts: [[0, 0.66], [1.9, 0.66], [1.9, 0.74], [0, 0.74]], color: PAL.brass }] });
+  S.solids.push({ k: 'flat', pts: rect(21.85, 1.72, 23.15, 2.16), z: 0.745, color: PAL.ink, x: 22.5, y: 1.95, bias: 0.05 });
+  for (let i = 0; i < 9; i++) { S.solids.push({ k: 'flat', pts: rect(21.93 + i * 0.135, 1.78, 21.96 + i * 0.135, 2.1), z: 0.75, color: '#6f6a62', x: 22.5, y: 1.95, bias: 0.06 });
+    const k = 1.82 + ((i * 7) % 5) * 0.055; S.solids.push({ k: 'flat', pts: rect(21.905 + i * 0.135, k, 21.985 + i * 0.135, k + 0.07), z: 0.755, color: i % 3 ? PAL.ivory : PAL.terra, x: 22.5, y: 1.95, bias: 0.07 }); }
+  box(22.05, 1.52, 22.95, 1.62, 0.74, 1.28, PAL.ink, { bias: 0.05, shadow: false, decals: [{ edge: 2, pts: [[0.05, 0.05], [0.85, 0.05], [0.85, 0.49], [0.05, 0.49]], color: '#27403d' }]
+    .concat([0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7].map((u, i) => ({ edge: 2, pts: [[u, 0.27 - [0.06, 0.14, 0.09, 0.18, 0.12, 0.16, 0.07][i]], [u + 0.06, 0.27 - [0.06, 0.14, 0.09, 0.18, 0.12, 0.16, 0.07][i]], [u + 0.06, 0.27 + [0.06, 0.14, 0.09, 0.18, 0.12, 0.16, 0.07][i]], [u, 0.27 + [0.06, 0.14, 0.09, 0.18, 0.12, 0.16, 0.07][i]]], color: i % 2 ? PAL.tealL : PAL.brassL }))) });
+  for (const sx of [21.55, 23.1]) box(sx, 1.5, sx + 0.36, 1.82, 0.74, 1.3, '#2e2925', { bias: 0.05, shadow: false, decals: [{ edge: 2, pts: [[0.08, 0.3], [0.28, 0.3], [0.28, 0.5], [0.08, 0.5]], color: PAL.brass }, { edge: 2, pts: [[0.1, 0.06], [0.26, 0.06], [0.26, 0.22], [0.1, 0.22]], color: '#6f6a62' }] });
+  prism(ngon(22.5, 2.85, 0.24, 8), 0, 0.4, PAL.ink, { top: '#4b4640' }); sit(22.5, 2.85, PAL.tealD, '#e2bf98', { h: 0.84, collar: PAL.ink });
+  box(21.5, 3.95, 23.3, 4.55, 0, 0.4, PAL.terraD, { top: PAL.terra }); sit(22.9, 4.2, PAL.brassL, '#edd0ac', { h: 0.72 });
+  sprite(21.75, 4.15, 0.4, GUITAR(0.5, 0.8), { bias: 0.3 });
+  // vocal booth with a low sill, corner posts and a top rail (reads as glass)
+  wall(23.9, 0, 23.9, 3.5, 0.42, { color: PAL.plasterD, top: PAL.tealL }); wall(23.9, 3.5, 25.6, 3.5, 0.42, { gaps: [[24.3, 25.1]], color: PAL.plasterD, top: PAL.tealL });
+  for (const [qx, qy] of [[23.9, 0.1], [23.9, 3.5], [25.5, 3.5]]) prism(ngon(qx, qy, 0.06, 6), 0.42, 1.62, PAL.walnutD, { bias: 0.02, shadow: false });
+  box(23.84, 0.1, 23.96, 3.5, 1.56, 1.64, PAL.walnutD, { bias: 0.03, shadow: false }); box(23.9, 3.44, 25.5, 3.56, 1.56, 1.64, PAL.walnutD, { bias: 0.03, shadow: false });
+  flat(ngon(24.8, 1.75, 0.95, 16), PAL.rug); flat(ngon(24.8, 1.75, 0.75, 16), PAL.rugB);
+  sprite(24.55, 1.45, 0, MIC); pawn(24.95, 1.9, { color: PAL.terra, head: '#e6c6a0', collar: PAL.ivory, h: 0.98 });
+  ball(23.9, 3.5, 1.76, 0.1, '#d2453a'); S.rec = [23.9, 3.5, 1.76];
+  S.notes.push([24.8, 1.6, 1.5, 0.1], [22.5, 1.9, 1.5, 0.6]);
+  S.pools.push({ x: 23.2, y: 2.6, r: 3, key: 'studio' });
+
+  // ---- class D: piano and voice (x 0..6, y 11.5..16.5)
+  flat(rect(1.5, 12.5, 5.2, 15.7), PAL.tealD); flat(rect(1.7, 12.7, 5, 15.5), PAL.rugB); flat(rect(1.9, 12.9, 4.8, 15.3), PAL.teal);
+  box(0.15, 13, 0.8, 15, 0, 1.18, '#2e2925', { top: '#4b4640', decals: [{ edge: 1, pts: [[0.08, 0.72], [1.92, 0.72], [1.92, 1.1], [0.08, 1.1]], color: '#3b3530' }] });
+  box(0.8, 13.08, 1.14, 14.92, 0.6, 0.68, PAL.ivory, { bias: 0.04, shadow: false });
+  for (let i = 0; i < 11; i++) S.solids.push({ k: 'flat', pts: rect(0.82, 13.16 + i * 0.16, 1.02, 13.25 + i * 0.16), z: 0.685, color: PAL.ink, x: 0.97, y: 14, bias: 0.08 });
+  box(1.5, 13.7, 1.95, 14.3, 0, 0.42, PAL.walnut, { top: PAL.rug }); sit(1.72, 14, PAL.teal, '#e6c6a0', { h: 0.9, collar: PAL.brassL });
+  pawn(3.4, 13.4, { color: PAL.terra, head: '#edd0ac', h: 0.86, rb: 0.26, rh: 0.165, collar: PAL.ivory }); pawn(4.1, 14.2, { color: PAL.brass, head: '#dcb88f', h: 0.92, rb: 0.27, collar: PAL.ivory }); pawn(3.5, 15, { color: PAL.tealL, head: '#e9c9a4', h: 0.8, rb: 0.25, rh: 0.16 });
+  sprite(2.75, 14.25, 0, STAND);
+  prism(ngon(5.3, 12.15, 0.26, 8), 0, 0.46, PAL.terra); ball(5.3, 12.15, 0.92, 0.46, PAL.leaf);
+  S.notes.push([1.4, 14, 1.4, 0.3], [3.7, 14.2, 1.3, 0.8]);
+
+  // ---- class E: percussion circle (x 6..11.6, y 13..16.5)
+  flat(ngon(8.8, 14.8, 1.55, 20), PAL.rug); flat(ngon(8.8, 14.8, 1.3, 20), PAL.rugB); flat(ngon(8.8, 14.8, 0.6, 12), PAL.rug);
+  for (const [i, c] of [PAL.teal, PAL.terra, PAL.brass, PAL.tealL, PAL.walnutL].entries()) { const t = -0.5 + i * 1.257, x = 8.8 + Math.cos(t) * 1.25, y = 14.8 + Math.sin(t) * 1.0;
+    stool(x, y, PAL.walnut); sit(x, y, c, ['#e6c6a0', '#edd0ac', '#dcb88f', '#e9c9a4', '#e2bf98'][i], i === 0 ? { h: 0.92, collar: PAL.brassL } : {});
+    const dx = 8.8 + Math.cos(t) * 0.72, dy = 14.8 + Math.sin(t) * 0.58;
+    if (i % 2) sprite(dx, dy, 0.42, DRUM(i === 1 ? PAL.ivory : PAL.rugB), { bias: 0.25 }); else prism(ngon(dx, dy, 0.17, 8), 0, 0.5, PAL.walnutL, { top: PAL.ivory }); }
+  box(10.6, 13.3, 11.3, 13.8, 0, 0.5, PAL.wood, { top: PAL.woodD }); box(6.3, 15.6, 6.8, 16.2, 0, 0.85, PAL.walnut, { top: PAL.walnutL });
+  S.notes.push([8.8, 14.8, 1.2, 0.45], [8, 14.2, 1.2, 0.95]);
+
+  // ---- more people: a second learner in each class, someone waiting at reception, friends by the pool
+  sit(9.9, 1.9, PAL.brassL, '#edd0ac', { h: 0.74 }); stool(9.9, 1.9);
+  sit(12.6, 3.75, PAL.brass, '#e9c9a4'); sit(14.5, 3.7, PAL.tealL, '#e6c6a0');
+  pawn(17.4, 3.9, { color: PAL.terra, head: '#dcb88f', h: 0.84, rb: 0.25, rh: 0.16 });
+  box(4.4, 6.1, 5.6, 6.6, 0, 0.42, PAL.walnutL, { top: PAL.terra }); sit(4.75, 6.35, PAL.tealL, '#edd0ac'); sit(5.25, 6.35, PAL.terraD, '#dcb88f', { h: 0.62, rb: 0.2, rh: 0.14 });
+  pawn(4.6, 3.9, { color: PAL.walnutL, head: '#e9c9a4', collar: PAL.ivory, h: 0.96 });
+  sit(11.75, 9.9, PAL.terra, '#e6c6a0'); sit(12.1, 10.65, PAL.teal, '#edd0ac', { collar: PAL.brassL });
+  S.notes.push([8.6, 2.9, 1.4, 0.2], [13.5, 2.9, 1.3, 0.7]);
+  // people who move (time-driven; they stand still in the static pictures)
+  S.walkers.push(
+    { pts: [[9.4, 6.3], [16.6, 6.2], [16.9, 11.9], [9.6, 12]], loop: true, speed: 0.55, phase: 0.1, pawn: { color: PAL.cypress, head: '#e6c6a0', collar: PAL.brassL, h: 0.92, rb: 0.26, rt: 0.12, rh: 0.17 }, carry: true },
+    { pts: [[7.2, 5.75], [15.4, 5.75]], speed: 0.42, phase: 0.55, pawn: { color: PAL.walnut, head: '#dcb88f', collar: PAL.ivory, h: 1.0, rb: 0.28, rt: 0.12, rh: 0.175 } },
+    { pts: [[19.1, 9.5], [18.4, 9.3], [18.2, 10.9], [18.9, 11.3]], speed: 0.5, phase: 0.3, pawn: { color: PAL.ivory, head: '#e9c9a4', collar: PAL.terra, h: 0.95, rb: 0.26, rt: 0.12, rh: 0.17 } },
+    { pts: [[26.5, 15.45], [14.6, 15.45], [13.5, 15], [13.5, 12.2], [11.2, 8.2]], speed: 0.6, phase: 0.75, pawn: { color: PAL.terraD, head: '#edd0ac', h: 0.8, rb: 0.24, rt: 0.11, rh: 0.16 }, carry: true },
+    { pts: [[3, 9.2], [3, 12.6], [2.6, 14.6]], speed: 0.4, phase: 0.2, pawn: { color: PAL.brass, head: '#e2bf98', h: 0.78, rb: 0.24, rt: 0.11, rh: 0.155 } });
+  // everything the bird is tied to at the end: management, reception, classes, studio, café, the two south classes, home
+  S.nodes = [[3, 2.6], [3, 8.4], [8.7, 2.8], [13.5, 2.8], [18.5, 2.8], [23, 2.8], [19.2, 9.4], [3.2, 14.2], [8.8, 14.8], [29.6, 9.2]];
+  S.WAY = WAY; S.rooms = { court: [12.2, 8.6], reception: [3, 8.4], management: [3, 2.6], classes: [13.5, 2.6], cafe: [19.3, 9.4], studio: [23.2, 2.7], home: [29.9, 9] };
   return S;
 }
 
@@ -214,8 +307,8 @@ export const ROUTES = {
 export function studentAt(p) {
   if (p < 0.5) return along(ROUTES.arrive, ss((p - 0.08) / 0.4));
   if (p < 1.45) return along(ROUTES.toReception, ss((p - 0.56) / 0.3));
-  if (p < 2.5) return along(ROUTES.toClass, ss((p - 1.45) / 0.35));
-  return along(ROUTES.toHome, ss((p - 2.5) / 0.48));
+  if (p < 2.56) return along(ROUTES.toClass, ss((p - 1.45) / 0.35));
+  return along(ROUTES.toHome, ss((p - 2.56) / 0.44));
 }
 /**
  * The bird is the viewer: scrolling flies it through the story and the camera travels with it.
@@ -224,14 +317,16 @@ export function studentAt(p) {
  */
 const BIRD = [
   { p: 0, at: [13.5, 14.4, 2.4], air: 1 },                                   // arriving over the gate
-  { p: 0.42, at: [14.72, 9.95, 0.3] }, { p: 0.6, at: [14.72, 9.95, 0.3] },   // rim of the pool
+  { p: 0.42, at: [17.75, 10.4, 0.56] }, { p: 0.6, at: [17.75, 10.4, 0.56] }, // a café table in the courtyard
   { p: 0.86, at: [3.62, 7.9, 0.78], flip: true }, { p: 1.12, at: [3.62, 7.9, 0.78], flip: true },   // reception desk
   { p: 1.36, at: [4.05, 2.9, 0.78], flip: true }, { p: 1.54, at: [4.05, 2.9, 0.78], flip: true },   // management desk
-  { p: 1.84, at: [10.35, 0.25, 0.95], flip: true }, { p: 2.46, at: [10.35, 0.25, 0.95], flip: true }, // shelf in the classroom
-  { p: 2.62, follow: [0.55, -0.5, 1.7], air: 1 }, { p: 2.9, follow: [0.55, -0.5, 1.7], air: 1 },    // flying home with the learner
+  { p: 1.84, at: [10.35, 0.25, 0.95], flip: true }, { p: 2.08, at: [10.35, 0.25, 0.95], flip: true }, // shelf in the guitar class
+  { p: 2.24, at: [16.4, 3.1, 2.3], air: 1 },                                                         // gliding over the other classes
+  { p: 2.36, at: [22.5, 1.57, 1.28] }, { p: 2.48, at: [22.5, 1.57, 1.28] },                          // on the studio screen
+  { p: 2.68, follow: [0.55, -0.5, 1.7], air: 1 }, { p: 2.92, follow: [0.55, -0.5, 1.7], air: 1 },    // flying home with the learner
   { p: 3.04, at: [30.6, 9.9, 1.36], flip: true }, { p: 3.52, at: [30.6, 9.9, 1.36], flip: true },   // on the music stand at home
   { p: 3.92, at: [21.5, 7.4, 5], air: 1 }, { p: 4.4, at: [18.4, 6.6, 5.4], air: 1 },               // riding the sound back to class
-  { p: 4.84, at: [15.4, -4.6, 4.2], air: 1 }, { p: 5, at: [15.4, -4.6, 4.2], air: 1 },               // above everything, holding it together
+  { p: 4.84, at: [15.4, -4.6, 4.2], air: 1 }, { p: 5, at: [15.4, -4.6, 4.2], air: 1 },             // above everything, holding it together
 ];
 const spot = (k, p) => { if (!k.follow) return k.at; const s = studentAt(p); return [s[0] + k.follow[0], s[1] + k.follow[1], k.follow[2]]; };
 /** Where the bird is at story position p. Returns { pos: [x, y, z], fly: 0…1 (in the air), flip }. */
@@ -240,7 +335,7 @@ export function birdAt(p) {
   const A = BIRD[i], B = BIRD[i + 1], t = ss((p - A.p) / (B.p - A.p)), a = spot(A, p), b = spot(B, p);
   const d = Math.hypot(b[0] - a[0], b[1] - a[1], b[2] - a[2]), arc = Math.sin(Math.PI * t), lift = A.air && B.air ? 0 : Math.min(3.2, d * 0.17);
   const air = lerp(A.air || 0, B.air || 0, t), moving = d > 0.01 ? Math.min(1, arc * 3) : 0;
-  return { pos: [lerp(a[0], b[0], t), lerp(a[1], b[1], t), lerp(a[2], b[2], t) + arc * lift], fly: Math.max(air, moving), flip: !!(t < 0.5 ? A.flip : B.flip) };
+  return { pos: [lerp(a[0], b[0], t), lerp(a[1], b[1], t), lerp(a[2], b[2], t) + arc * lift], fly: Math.max(air, moving), flip: !!(t < 0.5 ? A.flip : B.flip), hop: d > 2.5 && !(A.follow && B.follow) ? arc : 0 };
 }
 /** Does the bird face left on screen? P: the projection returned by drawScene; dir: +1 scrolling forward, −1 back. */
 export function birdFaces(p, P, dir = 1) {
@@ -252,30 +347,34 @@ export function birdFaces(p, P, dir = 1) {
 /** Camera keys. w/h: world units that must fit; e elevation, a azimuth (degrees); dim: spotlight strength. m: phone overrides.
  *  tx, ty say how the stop is framed; between stops the camera keeps its place relative to the bird (rel: explicit offset). */
 const KEYS = [
-  { p: 0, tx: 10.4, ty: 6.3, w: 27, h: 17.5, e: 90, a: 0, dim: 0, m: { w: 24, h: 15.5 } },
-  { p: 0.38, tx: 11.2, ty: 6.6, w: 30, h: 20, e: 55, a: 32, dim: 0, m: { tx: 12.6, ty: 8, w: 15.5, h: 12 } },
-  { p: 0.6, tx: 11.2, ty: 6.6, w: 30, h: 20, e: 55, a: 32, dim: 0, m: { tx: 12.6, ty: 8, w: 15.5, h: 12 } },
-  { p: 0.86, tx: 3.1, ty: 8.6, w: 11.5, h: 8.2, e: 50, a: 34, dim: 0.3, m: { w: 9.5, h: 7 } },
-  { p: 1.12, tx: 3.1, ty: 8.6, w: 11.5, h: 8.2, e: 50, a: 34, dim: 0.3, m: { w: 9.5, h: 7 } },
+  { p: 0, tx: 11.9, ty: 7.6, w: 30.5, h: 21, e: 90, a: 0, dim: 0, m: { w: 29.5, h: 21 } },
+  { p: 0.4, tx: 15.2, ty: 8.9, w: 19.5, h: 13.5, e: 55, a: 32, dim: 0, m: { tx: 16.4, ty: 9.2, w: 12.5, h: 10 } },
+  { p: 0.6, tx: 15.2, ty: 8.9, w: 19.5, h: 13.5, e: 55, a: 32, dim: 0, m: { tx: 16.4, ty: 9.2, w: 12.5, h: 10 } },
+  { p: 0.86, tx: 3.1, ty: 8.9, w: 12, h: 9, e: 50, a: 34, dim: 0.3, m: { w: 9.5, h: 7.4 } },
+  { p: 1.12, tx: 3.1, ty: 8.9, w: 12, h: 9, e: 50, a: 34, dim: 0.3, m: { w: 9.5, h: 7.4 } },
   { p: 1.36, tx: 3.1, ty: 3.4, w: 11.5, h: 8.6, e: 52, a: 34, dim: 0.28, m: { w: 9.5, h: 7.4 } },
   { p: 1.54, tx: 3.1, ty: 3.4, w: 11.5, h: 8.6, e: 52, a: 34, dim: 0.28, m: { w: 9.5, h: 7.4 } },
   { p: 1.84, tx: 8.6, ty: 2.9, w: 9.2, h: 7, e: 48, a: 36, dim: 0.32, m: { w: 7.6, h: 6 } },
-  { p: 2.46, tx: 8.6, ty: 2.9, w: 9.2, h: 7, e: 48, a: 36, dim: 0.32, m: { w: 7.6, h: 6 } },
-  { p: 2.62, rel: [-0.4, 0.5], w: 15, h: 10.5, e: 52, a: 33, dim: 0.14, m: { w: 11.5, h: 8.6 } },
-  { p: 2.9, rel: [-0.4, 0.5], w: 16, h: 11, e: 54, a: 31, dim: 0.14, m: { w: 12, h: 8.8 } },
+  { p: 2.08, tx: 8.6, ty: 2.9, w: 9.2, h: 7, e: 48, a: 36, dim: 0.32, m: { w: 7.6, h: 6 } },
+  { p: 2.24, tx: 16, ty: 3.2, w: 15, h: 9.5, e: 52, a: 30, dim: 0.12, m: { w: 11.5, h: 8 } },       // over the classes
+  { p: 2.36, tx: 23.2, ty: 2.7, w: 9, h: 7, e: 50, a: 30, dim: 0.3, m: { w: 7.4, h: 6.2 } },        // the studio
+  { p: 2.48, tx: 23.2, ty: 2.7, w: 9, h: 7, e: 50, a: 30, dim: 0.3, m: { w: 7.4, h: 6.2 } },
+  { p: 2.68, rel: [-0.4, 0.5], w: 15, h: 10.5, e: 52, a: 33, dim: 0.14, m: { w: 11.5, h: 8.6 } },
+  { p: 2.92, rel: [-0.4, 0.5], w: 16, h: 11, e: 54, a: 31, dim: 0.14, m: { w: 12, h: 8.8 } },
   { p: 3.04, tx: 29.9, ty: 9, w: 10, h: 7.6, e: 48, a: 34, dim: 0.32, m: { w: 8.2, h: 6.4 } },
   { p: 3.52, tx: 29.9, ty: 9, w: 10, h: 7.6, e: 48, a: 34, dim: 0.32, m: { w: 8.2, h: 6.4 } },
-  { p: 3.92, tx: 17.2, ty: 8.6, w: 32.5, h: 18, e: 56, a: 30, dim: 0, m: { w: 31, h: 18.5 } },
-  { p: 4.4, tx: 17, ty: 8.6, w: 32.5, h: 18, e: 56, a: 30, dim: 0, m: { w: 31, h: 18.5 } },
-  { p: 4.84, tx: 16.2, ty: 6.2, w: 36, h: 25, e: 68, a: 14, dim: 0, m: { tx: 16.2, ty: 5.6, w: 34, h: 27 } },   // the view rises
-  { p: 5, tx: 16.2, ty: 6.2, w: 36, h: 25, e: 68, a: 14, dim: 0, m: { tx: 16.2, ty: 5.6, w: 34, h: 27 } },
+  { p: 3.92, tx: 17, ty: 9.2, w: 33.5, h: 20, e: 56, a: 30, dim: 0, m: { w: 31.5, h: 20 } },
+  { p: 4.4, tx: 16.8, ty: 9.2, w: 33.5, h: 20, e: 56, a: 30, dim: 0, m: { w: 31.5, h: 20 } },
+  { p: 4.84, tx: 16, ty: 6.6, w: 36.5, h: 27, e: 68, a: 14, dim: 0, m: { tx: 16, ty: 6.4, w: 35, h: 29 } },   // the view rises
+  { p: 5, tx: 16, ty: 6.6, w: 36.5, h: 27, e: 68, a: 14, dim: 0, m: { tx: 16, ty: 6.4, w: 35, h: 29 } },
 ];
 const framed = phone => KEYS.map(k => { const b = phone && k.m ? { ...k, ...k.m } : { ...k }; if (!k.rel) { const g = birdAt(k.p).pos; b.rel = [b.tx - g[0], b.ty - g[1]]; } return b; });
 const KD = framed(false), KM = framed(true);
 export function cameraAt(p, phone = false) {
   const K = phone ? KM : KD; let i = 0; while (i < K.length - 2 && p > K[i + 1].p) i++;
-  const A = K[i], B = K[i + 1], t = ss((p - A.p) / (B.p - A.p)), out = {}, g = birdAt(p).pos;
+  const A = K[i], B = K[i + 1], t = ss((p - A.p) / (B.p - A.p)), out = {}, bs = birdAt(p), g = bs.pos;
   for (const k of ['w', 'h', 'e', 'a', 'dim']) out[k] = lerp(A[k], B[k], t);
+  const pull = 1 + 0.16 * bs.hop * (Math.max(A.w, B.w) < 20 ? 1 : 0); out.w *= pull; out.h *= pull;   // the camera pulls back a little in the middle of a flight
   out.tx = g[0] + lerp(A.rel[0], B.rel[0], t); out.ty = g[1] + lerp(A.rel[1], B.rel[1], t);
   return out;
 }
@@ -285,9 +384,9 @@ export function storyState(p) {
   return {
     reveal: ss(p / 0.34), labels: Math.max(1 - ss((p - 0.28) / 0.14), ss((p - 4.72) / 0.2)),
     admin: ss((p - 1.08) / 0.3) * (1 - ss((p - 1.7) / 0.15)) + ss((p - 4.7) / 0.25),
-    lesson: ss((p - 1.86) / 0.14) * (1 - ss((p - 2.5) / 0.08)),
-    way: ss((p - 2.5) / 0.5), wayFade: 1 - 0.45 * ss((p - 3.1) / 0.3) + 0.45 * ss((p - 4.6) / 0.3),
-    back: ss((p - 3.85) / 0.45), home: ss((p - 2.75) / 0.3), student: studentAt(p), withGuitar: p > 1.76,
+    lesson: ss((p - 1.86) / 0.14) * (1 - ss((p - 2.56) / 0.08)),
+    way: ss((p - 2.56) / 0.46), wayFade: 1 - 0.45 * ss((p - 3.1) / 0.3) + 0.45 * ss((p - 4.6) / 0.3),
+    back: ss((p - 3.85) / 0.45), home: ss((p - 2.8) / 0.25), student: studentAt(p), withGuitar: p > 1.76,
     connect: ss((p - 4.5) / 0.42),
     bird: { gx: b.pos[0], gy: b.pos[1], gz: b.fly > 0.05 ? 0.02 : b.pos[2], x: b.pos[0], y: b.pos[1], z: b.pos[2], shadow: Math.max(0.3, 1 - b.pos[2] / 9) * (b.fly > 0.05 ? 0.85 : 1) },
   };
@@ -305,9 +404,13 @@ export function drawScene(g, S, cam, view, st, time = 0) {
   const D = (x, y, z = 0) => { const dx = x - cam.tx, dy = y - cam.ty; return (dx * sa + dy * ca) * ce + z * se; };
   const flatPts = (pts, z) => { const o = []; for (const p of pts) { const q = P(p[0], p[1], z); o.push(q[0], q[1]); } return o; };
   const api = { P, D, s, ce, se };
+  // skip what is far outside the picture (close-ups draw a fraction of the world)
+  const mg = 3 * s, near = (x, y, r = 0) => { const q = P(x, y, 0), m = mg + r * s; return q[0] > -m && q[0] < view.W + m && q[1] > -m && q[1] < view.H + m + 1.5 * s; };
+  const ref = o => o.x != null ? [o.x, o.y] : o.pts[0], size = o => o.rad ?? (o.rad = o.pts ? Math.max(...o.pts.map(q => Math.hypot(q[0] - o.pts[0][0], q[1] - o.pts[0][1]))) : 0);
+  const seen = o => { const c = ref(o); return near(c[0], c[1], size(o)); };
 
   g.rect(0, 0, view.W, view.H, g.lin(0, 0, 0, view.H, [[0, '#f4ecdb'], [1, '#eadfc8']]));
-  for (const f of S.ground) g.poly(flatPts(f.pts, f.z), f.color);
+  for (const f of S.ground) if (seen(f)) g.poly(flatPts(f.pts, f.z), f.color);
   // warm light pools: rooms being revealed, lanterns, the home lamp
   const pool = (x, y, r, alpha, c = PAL.glow) => { if (alpha <= 0.01) return; const q = P(x, y, 0); g.glow(q[0], q[1], r * s, r * s * Math.max(0.2, se), c, alpha); };
   const rv = st.reveal;
@@ -318,16 +421,22 @@ export function drawScene(g, S, cam, view, st, time = 0) {
   const sh = [];
   const shadowOf = (pts, h) => hull(pts.concat(pts.map(p => [p[0] + SHADOW[0] * h, p[1] + SHADOW[1] * h])));
   for (const list of [S.back, S.solids]) for (const o of list) {
+    if (!seen(o)) continue;
     if (o.k === 'prism' && o.shadow) sh.push(flatPts(shadowOf(o.pts, o.z1), 0));
     else if (o.k === 'cone') sh.push(flatPts(shadowOf(ngon(o.x, o.y, o.r * 0.8, 8), (o.h + o.z0) * 0.7), 0));
     else if (o.k === 'pawn') sh.push(flatPts(shadowOf(ngon(o.x, o.y, o.rb * 0.85, 8), o.h * 1.05), 0));
     else if (o.k === 'ball' && !o.back) sh.push(flatPts(ngon(o.x + SHADOW[0] * o.z, o.y + SHADOW[1] * o.z, o.r * 0.9, 10), 0));
   }
-  const stu = st.student;
+  const stu = st.student, sec = time / 1000, walk = [];
+  for (const w of S.walkers) { // people who stroll: there and back, or round a loop
+    const pts = w.loop ? w.pts.concat([w.pts[0]]) : w.pts; let L = 0; for (let i = 1; i < pts.length; i++) L += Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]);
+    let u = (sec * w.speed / L + w.phase) % (w.loop ? 1 : 2); if (u > 1) u = 2 - u; const q = along(pts, w.loop ? u : ss(u));
+    walk.push({ k: 'pawn', x: q[0], y: q[1], ...w.pawn, h: w.pawn.h + (time ? Math.abs(Math.sin(sec * 7 + w.phase * 9)) * 0.025 : 0), carry: w.carry });
+    sh.push(flatPts(shadowOf(ngon(q[0], q[1], w.pawn.rb * 0.85, 8), w.pawn.h), 0)); }
   sh.push(flatPts(shadowOf(ngon(stu[0], stu[1], 0.22, 8), 0.9), 0));
   if (st.bird && st.bird.shadow) { const b = st.bird, r = 0.42 * b.shadow; sh.push(flatPts(ngon(b.gx, b.gy, r, 10), b.gz)); }
   g.polys(sh, 'rgba(74,48,26,0.16)');
-  for (const f of S.deco) g.poly(flatPts(f.pts, f.z), f.color, f.a);
+  for (const f of S.deco) if (seen(f)) g.poly(flatPts(f.pts, f.z), f.color, f.a);
   for (const l of S.lines) g.line(flatPts(l.pts, l.z), l.color, Math.max(0.6, l.w * s), { alpha: l.a });
 
   // light paths on the floor
@@ -348,12 +457,25 @@ export function drawScene(g, S, cam, view, st, time = 0) {
   const dyn = [];
   dyn.push({ k: 'pawn', x: stu[0], y: stu[1], h: 0.84, rb: 0.25, rt: 0.11, rh: 0.165, color: PAL.terra, head: '#f0d2ad', collar: PAL.ivory, lit: true });
   if (st.withGuitar) dyn.push({ k: 'sprite', x: stu[0] + 0.24, y: stu[1] + 0.12, z: 0.22, shapes: S.GUITAR(0.85, 0.82), bias: 0.3 });
+  for (const w of walk) { dyn.push(w); if (w.carry) dyn.push({ k: 'sprite', x: w.x + 0.22, y: w.y + 0.1, z: 0.2, shapes: S.GUITAR(0.7, 0.72), bias: 0.3 }); }
   const keyOf = o => o.k === 'prism' ? (() => { let x = 0, y = 0; for (const p of o.pts) { x += p[0]; y += p[1]; } return D(x / o.pts.length, y / o.pts.length, (o.z0 + o.z1) / 2); })()
     : o.k === 'ball' ? D(o.x, o.y, o.z) : o.k === 'flat' ? D(o.x, o.y, o.z) : o.k === 'cone' ? D(o.x, o.y, o.z0 + o.h * 0.35) : o.k === 'pawn' ? D(o.x, o.y, o.h * 0.5) : D(o.x, o.y, o.z + 0.5);
   const draw = o => DRAW[o.k](g, o, api, cam, sa, ca);
-  const backs = S.back.map(o => [keyOf(o), o]).sort((u, v) => u[0] - v[0]); for (const b of backs) draw(b[1]);
-  const all = S.solids.concat(dyn).map(o => [keyOf(o) + (o.bias || 0), o]).sort((u, v) => u[0] - v[0]); for (const b of all) draw(b[1]);
+  const backs = S.back.filter(seen).map(o => [keyOf(o), o]).sort((u, v) => u[0] - v[0]); for (const b of backs) draw(b[1]);
+  const all = S.solids.filter(seen).concat(dyn).map(o => [keyOf(o) + (o.bias || 0), o]).sort((u, v) => u[0] - v[0]); for (const b of all) draw(b[1]);
 
+  // ---- ambient life (time-driven; frozen at time 0 in the static pictures)
+  for (let i = 0; i < 2; i++) { const u = (sec * 0.22 + i * 0.5) % 1, ring = ngon(13.5, 9, 0.22 + u * 1.0, 18); ring.push(ring[0]);   // ripples on the pool
+    g.line(flatPts(ring, 0.32), '#e8fbf6', Math.max(1, 0.03 * s), { alpha: 0.6 * (1 - u) }); }
+  for (const [i, n] of S.notes.entries()) { // notes drifting up from the rooms where music is being made
+    const u = (sec * 0.16 + n[3]) % 1, q = P(n[0] + Math.sin(u * 6.3 + i) * 0.16, n[1], n[2] + u * 1.5), al = Math.sin(Math.PI * u) * 0.85, r = Math.max(2.2, 0.085 * s);
+    if (al < 0.05) continue; const col = i % 2 ? PAL.brass : PAL.teal;
+    g.line([q[0] + r * 0.85, q[1], q[0] + r * 0.85, q[1] - r * 2.7, q[0] + r * 2, q[1] - r * 2.1], col, Math.max(1, r * 0.34), { alpha: al, cap: 'round' }); g.ellipse(q[0], q[1], r, r * 0.78, rgba(col, al.toFixed(2))); }
+  for (const [i, c] of S.steam.entries()) { const u = (sec * 0.3 + i * 0.37) % 1, q = [];   // steam over the coffee
+    for (let k = 0; k <= 6; k++) { const v = k / 6, w = P(c[0], c[1], c[2] + (u * 0.5 + v * 0.42)); q.push(w[0] + Math.sin(v * 5 + sec * 2 + i) * 0.05 * s, w[1]); }
+    g.line(q, '#ffffff', Math.max(1, 0.035 * s), { alpha: 0.5 * Math.sin(Math.PI * u), cap: 'round' }); }
+  if (S.rec) { const q = P(S.rec[0], S.rec[1], S.rec[2]), on = time ? 0.5 + 0.5 * Math.sin(sec * 4) : 1; g.glow(q[0], q[1], 0.45 * s, 0.45 * s, '#ff5a48', 0.25 + 0.5 * on); }
+  if (st.trail) for (const t of st.trail) { const q = P(t[0], t[1], t[2]), r = Math.max(2, t[3] * 0.2 * s); g.glow(q[0], q[1], r * 2.4, r * 2.4, PAL.glow, 0.55 * t[3]); g.ellipse(q[0], q[1], r * 0.4, r * 0.4, rgba('#fff8e4', (0.9 * t[3]).toFixed(2))); }
   // lesson: a small sound wave from teacher to student
   if (st.lesson > 0.01) { const A = P(7.75, 2.95, 1.0), B = P(stu[0] - 0.1, stu[1], 0.95), q = [], n = 26;
     for (let i = 0; i <= n * st.lesson; i++) { const t = i / n, env = Math.sin(Math.PI * t); q.push(lerp(A[0], B[0], t), lerp(A[1], B[1], t) + Math.sin(t * 16 - time * 0.006) * env * 0.16 * s); }
