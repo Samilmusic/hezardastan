@@ -16,3 +16,24 @@
 .st .st-search{border-radius:10px;background:#fffdf8}.st .st-search input{border:0!important;background:transparent!important;border-radius:0!important;padding:10px 0!important;box-shadow:none!important;min-height:46px;font-size:16px}.st .st-search:focus-within{border-color:#689b83;box-shadow:0 0 0 3px #20595212}
 .ny-form{border-radius:17px;box-shadow:none;border:1px solid #ded3bc}.ny-extra>summary,.ny-sources>summary{font-size:12px;color:#716d5f;cursor:pointer;min-height:40px;padding:8px 0}.ny-extra .ny-field>span{display:none}.ny-sources p{font-size:12px;color:#777363;line-height:1.9}.ny-form .ny-inst-grid{gap:8px}.ny-form .ny-chip span{border-radius:8px;font-size:13px;min-height:44px}.ny-field input{border-radius:10px}.ny-submit button{border-radius:10px}.ny-submit{align-items:flex-start}.sx-nav a[aria-current],.menu-tools a[aria-current]{color:#205952;font-weight:700}.menu-tools a[aria-current]{background:#e8efdf;border-color:#b3c5a4}
 @media(max-width:767px){.sx-intro{padding-top:18px;padding-bottom:23px}.sx-intro .st-kicker{display:none}.sx-intro h1{font-size:27px;line-height:1.75;margin-top:10px}.sx-intro .st-lead,.sx-intro p{font-size:14px;line-height:1.9}.sx-intro .st-actions{margin-top:17px}.st-notyab{padding:20px 21px 35px}.ny-form{padding:19px 16px;border-radius:15px}.ny-fields{display:grid;grid-template-columns:1fr;gap:8px}.ny-field{font-size:13px}.ny-field input{font-size:16px}.ny-instruments{margin-top:12px}.ny-form .ny-inst-grid{gap:7px}.ny-chip{flex:1 1 29%;min-width:0}.ny-chip span{justify-content:center;padding:0 7px}.ny-submit{display:flex;flex-direction:column;gap:10px;margin-top:20px}.ny-submit button{width:100%}.ny-sources{width:100%}.ny-sources>summary{font-size:11px}.ny-extra>summary{font-size:12px}.st-world-links{display:flex;flex-wrap:wrap}.st-hava .st-actions .st-btn--link{font-size:11px}.sx-footer-grid nav a{min-height:38px;display:inline-flex;align-items:center}.st .sx-footer h2{font-size:14px}.st .sx-footer .st-fine{font-size:10px}}
+
+/* Footer: explicit light-surface colors; compact mobile navigation. */
+.st .sx-footer{background:#eee7d9;color:#493a2c;padding:32px var(--gut) 24px}
+.st .sx-footer .st-identity{color:#302b24;opacity:1}
+.st .sx-footer .st-identity small{color:#52665c;font-size:12px;line-height:1.8}
+.st .sx-footer h2{color:#72512d;font-size:13px;margin-bottom:8px}
+.st .sx-footer nav a,.st .sx-footer nav button{color:#493a2c;font-size:13px;min-height:40px;line-height:1.8}
+.st .sx-footer nav a:hover,.st .sx-footer nav button:hover{color:#174c43}
+.st .sx-footer-top{border-color:#d1c4ae;gap:24px}
+.st .sx-footer-base{color:#52665c;border-color:#d1c4ae;font-size:12px}
+.st .sx-footer :focus-visible{outline:2px solid #205b50;outline-offset:4px}
+@media(max-width:767px){
+.st .sx-footer{padding:25px 21px 24px}
+.st .sx-footer-top{grid-template-columns:repeat(2,minmax(0,1fr));gap:20px 18px;padding-bottom:20px}
+.st .sx-footer-top>.st-identity{grid-column:1/-1;font-size:17px;gap:12px}
+.st .sx-footer .st-identity img{width:48px;height:48px}
+.st .sx-footer-top>nav:last-child{grid-column:1/-1;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 18px}
+.st .sx-footer-top>nav:last-child h2{grid-column:1/-1}
+.st .sx-footer nav a,.st .sx-footer nav button{min-height:42px;font-size:12px;text-align:right}
+.st .sx-footer-base{padding-top:16px;gap:8px;font-size:11px;flex-direction:column;align-items:flex-start}
+}
