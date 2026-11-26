@@ -10,7 +10,7 @@
 <meta property="og:title" content="هزارآوا | دستانِ نوا"><meta property="og:description" content="دست‌هایت را حرکت بده؛ موسیقی بساز."><meta property="og:url" content="https://avayehezardastan.com/air.html">
 <link rel="icon" href="logo.png">
 <link rel="stylesheet" href="fonts.css">
-<link rel="stylesheet" href="air/air.css?v=20261126n">
+<link rel="stylesheet" href="air/air.css?v=20261126r">
 </head>
 <body class="air">
 <a class="air-skip" href="#air-main">رفتن به محتوای اصلی</a>
@@ -56,7 +56,7 @@
     <svg class="air-intro-glass" aria-hidden="true"><use href="#ag-guide"/></svg>
     <p class="air-kicker">هزارآوا | دستانِ نوا</p>
     <h1 id="air-title">دست‌هایت را حرکت بده؛ <em>موسیقی بساز.</em></h1>
-    <p class="air-lead">یک دست ملودی می‌نوازد و دست دیگر پدِ همراهی را نگه می‌دارد. بدون دوربین هم با لمس صفحه یا صفحه‌کلید می‌شود نواخت.</p>
+    <p class="air-lead">دست راست ملودی می‌نوازد و دست چپ با نشان دادن ۱ تا ۵ انگشت، یکی از پنج آکورد را نگه می‌دارد. بدون دوربین هم با لمس صفحه یا صفحه‌کلید می‌شود نواخت.</p>
     <fieldset class="air-choose">
       <legend class="air-sr">روش نواختن</legend>
       <label class="air-option"><input type="radio" name="air-input" value="camera" checked><span><b>با دوربین</b><small>تشخیص دست روی همین دستگاه</small></span></label>
@@ -65,6 +65,8 @@
     <div class="air-intro-actions">
       <button type="button" class="air-btn air-btn--primary air-start" id="air-start">شروع نوازندگی</button>
       <button type="button" class="air-btn air-btn--glass" id="air-intro-guide"><svg aria-hidden="true"><use href="#ag-guide"/></svg>راهنمای تصویری</button>
+    
+      <button type="button" class="air-btn air-btn--glass" id="air-intro-chords">چیدن پنج آکورد</button>
     </div>
     <ul class="air-assure">
       <li>تصویر دوربین فقط روی دستگاه خودت پردازش می‌شود و ذخیره یا ارسال نمی‌شود. میکروفون درخواست نمی‌شود.</li>
@@ -84,7 +86,12 @@
         <video id="air-video" playsinline muted hidden></video>
         <canvas id="air-canvas" aria-hidden="true"></canvas>
         <div class="air-pads" id="air-pads" hidden role="group" aria-label="نت‌ها: لمس کن و نگه دار"></div>
-        <div class="air-chords" id="air-chords" hidden role="group" aria-label="همراهی"></div>
+        <div class="air-ring" id="air-ring" hidden role="group" aria-label="حلقهٔ آکورد: پنج آکورد همراهی">
+          <span class="air-ring-track" aria-hidden="true"></span>
+          <span class="air-ring-hl" id="air-ring-hl" aria-hidden="true"></span>
+          <div class="air-ring-slots" id="air-ring-slots"></div>
+          <button type="button" class="air-ring-core" id="air-ring-core"><b id="air-ring-now">—</b><small id="air-ring-state">خاموش</small></button>
+        </div>
         <div class="air-status" id="air-status" aria-live="polite"></div>
         <div class="air-overlay" id="air-overlay" hidden role="alertdialog" aria-labelledby="air-overlay-title" aria-describedby="air-overlay-body">
           <div><b id="air-overlay-title"></b><p id="air-overlay-body"></p><div class="air-overlay-actions" id="air-overlay-actions"></div></div>
@@ -101,7 +108,6 @@
         <div class="air-meter air-meter--melody" id="air-m-melody"><small id="air-m-melody-hand">ملودی</small><b id="air-m-note">—</b><span id="air-m-note-state">آماده</span></div>
         <button type="button" class="air-meter air-meter--pad" id="air-m-pad" aria-describedby="air-m-chord-state"><svg aria-hidden="true"><use href="#ag-pad"/></svg><small id="air-m-pad-hand">همراهی</small><b id="air-m-chord">خاموش</b><span id="air-m-chord-state"></span><i class="air-expr" aria-hidden="true"><i id="air-m-expr"></i></i></button>
       </div>
-      <div class="air-scale" id="air-scale" aria-hidden="true"></div>
     </div>
 
     <div class="air-side">
@@ -143,7 +149,7 @@
   <div class="air-tabs" role="tablist" aria-label="بخش‌های تنظیمات">
     <button type="button" role="tab" id="air-t-sound" aria-controls="air-p-sound" aria-selected="true">صدا</button>
     <button type="button" role="tab" id="air-t-music" aria-controls="air-p-music" aria-selected="false" tabindex="-1">موسیقی</button>
-    <button type="button" role="tab" id="air-t-accomp" aria-controls="air-p-accomp" aria-selected="false" tabindex="-1">همراهی</button>
+    <button type="button" role="tab" id="air-t-accomp" aria-controls="air-p-accomp" aria-selected="false" tabindex="-1">آکوردها</button>
     <button type="button" role="tab" id="air-t-adv" aria-controls="air-p-adv" aria-selected="false" tabindex="-1">پیشرفته</button>
   </div>
   <div class="air-panel-body">
@@ -151,7 +157,9 @@
       <h3 class="air-group">ساز ملودی</h3>
       <div class="air-inst air-inst--list" id="air-inst-panel" role="radiogroup" aria-label="ساز ملودی"></div>
       <details class="air-help"><summary>چرا نی، تار، سه‌تار و سنتور در فهرست نیستند؟</summary><p>برای این سازها هنوز نمونهٔ ضبط‌شده با مجوز مناسب نداریم. صداهای «سنتز» در مرورگر ساخته می‌شوند و تقلید هیچ ساز واقعی نیستند؛ «زخمه‌ای سنتزی» صدای تار یا سه‌تار نیست.</p></details>
+      <label class="air-range"><span>بلندی ملودی</span><input type="range" id="air-melvol" min="0" max="100" step="1"><output id="air-melvol-out"></output></label>
       <label class="air-range"><span>بلندی کلی</span><input type="range" id="air-volume" min="0" max="100" step="1"><output id="air-volume-out"></output></label>
+      <p class="air-fine">بلندی پد در بخش «آکوردها» است.</p>
     </section>
     <section class="air-tabpanel" id="air-p-music" role="tabpanel" aria-labelledby="air-t-music" hidden>
       <div class="air-seg" role="radiogroup" aria-label="نوع گام" id="air-system">
@@ -164,13 +172,27 @@
         <div class="air-seg air-seg--3" role="radiogroup" aria-labelledby="air-octave-label" id="air-octave">
           <label><input type="radio" name="air-octave" value="3"><span>بم</span></label><label><input type="radio" name="air-octave" value="4"><span>میانه</span></label><label><input type="radio" name="air-octave" value="5"><span>زیر</span></label>
         </div></div>
+      <h3 class="air-group">درجه‌های این گام (سنت از تونیک)</h3>
+      <div class="air-scale" id="air-scale"></div>
       <details class="air-help"><summary id="air-music-help-title">دربارهٔ کوک این گام‌ها</summary><p id="air-persian-note"></p></details>
     </section>
     <section class="air-tabpanel" id="air-p-accomp" role="tabpanel" aria-labelledby="air-t-accomp" hidden>
       <label class="air-switch"><input type="checkbox" role="switch" id="air-accomp"><span><b>همراهی (پد)</b><small id="air-accomp-hint"></small></span></label>
-      <label class="air-switch"><input type="checkbox" role="switch" id="air-hold"><span><b>نگه‌داشتن آکورد</b><small>هر نیشگون یا لمس، پد را روشن یا خاموش می‌کند؛ مشت و «قطع صداها» همیشه خاموشش می‌کنند.</small></span></label>
+      <div class="air-field"><span id="air-chordsrc-label">پنج خانهٔ همراهی</span>
+        <div class="air-seg" role="radiogroup" aria-labelledby="air-chordsrc-label" id="air-chordsrc">
+          <label><input type="radio" name="air-chordsrc" value="auto"><span id="air-chordsrc-auto">هماهنگ با گام</span></label>
+          <label><input type="radio" name="air-chordsrc" value="custom"><span>آکوردهای دلخواه</span></label>
+        </div></div>
+      <p class="air-fine" id="air-chordsrc-note"></p>
+      <div id="air-presets-box" hidden>
+        <h3 class="air-group" id="air-presets-title">چیدمان آماده</h3>
+        <div class="air-presets" id="air-presets" role="group" aria-labelledby="air-presets-title"></div>
+      </div>
       <h3 class="air-group" id="air-slots-title">انگشت‌ها و آکوردها</h3>
       <ol class="air-slots" id="air-slots" aria-labelledby="air-slots-title"></ol>
+      <label class="air-range"><span>نرمی تعویض آکورد</span><input type="range" id="air-trans" min="200" max="1200" step="50"><output id="air-trans-out"></output></label>
+      <label class="air-range"><span>مکث پیش از پذیرفتن ژست</span><input type="range" id="air-dwell" min="200" max="500" step="10"><output id="air-dwell-out"></output></label>
+      <label class="air-switch"><input type="checkbox" role="switch" id="air-quant"><span><b>تعویض آکورد روی ضرب</b><small id="air-quant-hint">فقط وقتی «ضرب همراه» روشن است: آکورد تازه روی ضرب بعدی عوض می‌شود.</small></span></label>
       <label class="air-range"><span>بلندی پد</span><input type="range" id="air-padvol" min="0" max="100" step="1"><output id="air-padvol-out"></output></label>
       <div class="air-field"><span id="air-bright-label">رنگ صدای پد</span>
         <div class="air-seg air-seg--3" role="radiogroup" aria-labelledby="air-bright-label" id="air-bright">
@@ -178,7 +200,7 @@
         </div></div>
       <label class="air-switch"><input type="checkbox" role="switch" id="air-rhythm"><span><b>ضرب همراه</b><small>الگوی دف‌گونهٔ ساخته‌شده در مرورگر</small></span></label>
       <label class="air-field air-field--inline"><span>تمپوی ضرب</span><input id="air-bpm" type="number" min="50" max="160" step="2" inputmode="numeric"></label>
-      <details class="air-help"><summary>بلندی پد با دوربین</summary><p>با دست همراهی، بالا بردن دست پد را بلندتر و پایین آوردنش آرام‌تر می‌کند؛ در محدوده‌ای امن که ملودی شنیده شود.</p></details>
+      <details class="air-help"><summary>دست چپ چطور آکورد را عوض می‌کند؟</summary><p>۱ تا ۵ انگشت نشان بده و کمی نگه دار؛ همان آکورد می‌ماند تا عدد دیگری نشان بدهی. شست هم یک انگشت حساب می‌شود. مشتِ بسته پد را آرام خاموش می‌کند. بالا بردن دست، پد را بلندتر و پایین آوردنش آرام‌تر می‌کند؛ در محدوده‌ای امن که ملودی شنیده شود.</p></details>
     </section>
     <section class="air-tabpanel" id="air-p-adv" role="tabpanel" aria-labelledby="air-t-adv" hidden>
       <h3 class="air-group">کوک</h3>
@@ -196,7 +218,7 @@
           <label><input type="radio" name="air-selection" value="zones"><span>جای دست</span></label><label><input type="radio" name="air-selection" value="fingers"><span>تعداد انگشت</span></label>
         </div></div>
       <label class="air-switch"><input type="checkbox" role="switch" id="air-lefty"><span><b>ملودی با دست چپ</b><small>نقش دو دست جابه‌جا می‌شود</small></span></label>
-      <label class="air-switch"><input type="checkbox" role="switch" id="air-single"><span><b>نوازندگی یک‌دستی</b><small>فقط ملودی؛ همراهی با لمس یا صفحه‌کلید</small></span></label>
+      <label class="air-switch"><input type="checkbox" role="switch" id="air-single"><span><b>نوازندگی یک‌دستی</b><small>فقط ملودی؛ همراهی با لمس حلقهٔ آکورد یا کلیدهای ۱ تا ۵</small></span></label>
       <label class="air-switch"><input type="checkbox" role="switch" id="air-swap"><span><b>اصلاح تشخیص چپ و راست</b><small>اگر دوربین دست‌ها را برعکس تشخیص داد</small></span></label>
       <button type="button" class="air-btn air-btn--ghost air-btn--small" id="air-recalibrate">کالیبره دوباره</button>
       <h3 class="air-group">اطلاعات فنی</h3>
@@ -231,6 +253,6 @@
   </div>
 </dialog>
 <noscript><p class="air-noscript">این تجربه برای پخش صدا به جاوااسکریپت نیاز دارد.</p></noscript>
-<script type="module" src="air/app.mjs?v=20261126n"></script>
+<script type="module" src="air/app.mjs?v=20261126r"></script>
 </body>
 </html>

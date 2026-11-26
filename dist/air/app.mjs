@@ -1,8 +1,8 @@
 // هزارآوا | دستانِ نوا — controller. One audio engine; camera gestures, touch and keyboard all drive the same
 // melody and pad logic. The interface is performance first: surface, indicators, instrument, transport; every
 // detailed setting lives in the settings panel.
-import { makeTuning, degreeFrequency, degreeLabel, rootFrequency, padSlots, voiceLead, WESTERN, PERSIAN, PERSIAN_NOTE, NOTE_NAMES_FA } from './tuning.mjs';
-import { HandMachine, HandRouter, handFeatures, makeTransform, DEFAULTS } from './gesture.mjs';
+import { makeTuning, degreeFrequency, degreeLabel, rootFrequency, accompSlots, suggestedChords, chordSymbol, voiceLead, WESTERN, PERSIAN, PERSIAN_NOTE, NOTE_NAMES, NOTE_NAMES_FA, QUALITIES, CHORD_PRESETS, DEFAULT_CHORDS } from './tuning.mjs';
+import { HandMachine, ChordHand, ChordDeck, HandRouter, handFeatures, makeTransform, DEFAULTS, CHORD_DEFAULTS } from './gesture.mjs';
 import { AudioEngine, INSTRUMENTS } from './engine.mjs';
 import { encodeWav, concatChunks, encodeMidi } from './export.mjs';
 import { Lifecycle } from './lifecycle.mjs';
@@ -21,15 +21,16 @@ const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls)
 // ---------------------------------------------------------------- settings
 const S = Object.assign({
   input: 'camera', system: 'persian', key: 'shur', rootPc: 7, octave: 4, refA4: 440, offsets: {}, instrument: 'soft', volume: 0.8,
-  accomp: true, hold: false, padVol: 0.45, bright: 'warm', rhythm: false, bpm: 84,
+  accomp: true, chordSrc: 'auto', chords: DEFAULT_CHORDS.map(c => [...c]), trans: 550, dwell: CHORD_DEFAULTS.dwellMs, quant: false, melVol: 1, padVol: 0.45, bright: 'warm', rhythm: false, bpm: 84,
   policy: 'hold', selection: 'zones', swap: false, lefty: false, single: false,
   koron: 60, diag: false, labelForRight: 'Left', pinchOn: DEFAULTS.pinchOn, pinchOff: DEFAULTS.pinchOff, calibrated: false, practiced: false,
 }, store.get('settings', {}));
+if (!Array.isArray(S.chords) || S.chords.length !== 5 || S.chords.some(c => !Array.isArray(c) || !(c[1] in QUALITIES))) S.chords = DEFAULT_CHORDS.map(c => [...c]);
 const save = () => store.set('settings', S);
 let tuning, slots;
 function rebuildTuning() {
   tuning = makeTuning({ system: S.system, key: S.key, rootPc: S.rootPc, octave: S.octave, refA4: S.refA4, offsets: S.offsets[S.system + ':' + S.key] || [] });
-  slots = padSlots(tuning);
+  slots = accompSlots(tuning, { source: S.chordSrc, chords: S.chords });   // five slots: the scale's own chords / modal textures, or five chosen chords
 }
 rebuildTuning();
 
@@ -37,15 +38,19 @@ rebuildTuning();
 const life = new Lifecycle();
 let engine = null, camera = null, tracker = null, router = null;
 const melody = new HandMachine({ columns: 7, octaves: 3 });
-const accomp = new HandMachine({ columns: 4, octaves: 1, selection: 'fingers' });
+const chordHand = new ChordHand();   // accompaniment hand: 1–5 fingers select a slot, the chord stays, a fist releases
 const held = { melody: null };
-const pad = { slot: null, source: null, voicing: null, candidate: null };
+// slot: the chord that is sounding (the audio state) · pending: a finger count still settling · queued: waiting for the next beat · lost: hand not seen
+const pad = { slot: null, source: null, voicing: null, pending: null, queued: null, lost: false };
+const deck = new ChordDeck(pad);     // the one place that decides which slot sounds, for camera, touch and keys
+let queueTimer = null;
 let sounding = new Set(), selected = null, padExpr = 0.6;
 let started = false, playing = false, paused = false, perform = false, events = [], takes = [], noteCount = 0;
 
 const els = {
   intro: $('#air-intro'), play: $('#air-play'), start: $('#air-start'), exit: $('#air-exit'), panic: $('#air-panic'), full: $('#air-full'), help: $('#air-help'),
-  video: $('#air-video'), canvas: $('#air-canvas'), pads: $('#air-pads'), chords: $('#air-chords'), status: $('#air-status'), surface: $('#air-surface'),
+  video: $('#air-video'), canvas: $('#air-canvas'), pads: $('#air-pads'), status: $('#air-status'), surface: $('#air-surface'),
+  ring: $('#air-ring'), ringSlots: $('#air-ring-slots'), ringHl: $('#air-ring-hl'), ringCore: $('#air-ring-core'), ringNow: $('#air-ring-now'), ringState: $('#air-ring-state'),
   coach: $('#air-coach'), coachTitle: $('#air-coach-title'), coachBody: $('#air-coach-body'), coachChecks: $('#air-coach-checks'), coachActions: $('#air-coach-actions'),
   overlay: $('#air-overlay'), overlayTitle: $('#air-overlay-title'), overlayBody: $('#air-overlay-body'), overlayActions: $('#air-overlay-actions'),
   mMelody: $('#air-m-melody'), mNote: $('#air-m-note'), mNoteState: $('#air-m-note-state'), mMelodyHand: $('#air-m-melody-hand'),
@@ -58,7 +63,9 @@ const els = {
   panel: $('#air-panel'), scrim: $('#air-scrim'), panelClose: $('#air-panel-close'),
   volume: $('#air-volume'), volumeOut: $('#air-volume-out'), scaleKey: $('#air-scale-key'), scaleKeyLabel: $('#air-scale-key-label'), root: $('#air-root'),
   persianNote: $('#air-persian-note'), musicHelpTitle: $('#air-music-help-title'),
-  accomp: $('#air-accomp'), accompHint: $('#air-accomp-hint'), hold: $('#air-hold'), slotList: $('#air-slots'), padVol: $('#air-padvol'), padVolOut: $('#air-padvol-out'),
+  accomp: $('#air-accomp'), accompHint: $('#air-accomp-hint'), slotList: $('#air-slots'), padVol: $('#air-padvol'), padVolOut: $('#air-padvol-out'),
+  melVol: $('#air-melvol'), melVolOut: $('#air-melvol-out'), srcAuto: $('#air-chordsrc-auto'), srcNote: $('#air-chordsrc-note'), presetsBox: $('#air-presets-box'), presets: $('#air-presets'),
+  trans: $('#air-trans'), transOut: $('#air-trans-out'), dwell: $('#air-dwell'), dwellOut: $('#air-dwell-out'), quant: $('#air-quant'), quantHint: $('#air-quant-hint'), introChords: $('#air-intro-chords'),
   rhythm: $('#air-rhythm'), bpm: $('#air-bpm'), ref: $('#air-ref'), koron: $('#air-koron'), tuningBox: $('#air-tuning'), reset: $('#air-reset-tuning'),
   swap: $('#air-swap'), lefty: $('#air-lefty'), single: $('#air-single'), recal: $('#air-recalibrate'), diag: $('#air-diag'), diagOut: $('#air-diag-out'),
   tut: $('#air-tut'), tutBody: $('#air-tut-body'), tutTitle: $('#air-tut-title'), tutCount: $('#air-tut-count'), tutPrev: $('#air-tut-prev'), tutNext: $('#air-tut-next'), tutDots: $('#air-tut-dots'),
@@ -100,40 +107,51 @@ function playNote(degree, band, source, velocity = 0.8) {
 function stopNote(id) { if (id != null) engine?.noteOff(id); }
 const melodySounding = () => held.melody != null || pointers.size > 0;
 
-// ---------------------------------------------------------------- pad (shared by camera, touch and keyboard)
+// ---------------------------------------------------------------- pad: five chord slots (shared by camera, touch and keyboard)
+// Melody and pad are separate: the pad owns its own voices on the accompaniment bus, so a chord change never
+// touches a melody note. A selected chord stays until another slot is selected or it is released.
 function padBase() { return rootFrequency(tuning.rootPc, tuning.octave - 1, tuning.refA4); }
+function clearQueue() { if (queueTimer) { clearTimeout(queueTimer); queueTimer = null; } pad.queued = null; }
 function padStart(slot, src) {
   const s = slots[slot]; if (!s || !engine) return;
-  pad.voicing = voiceLead(s.cents, pad.slot != null || pad.voicing ? pad.voicing : null);
+  pad.voicing = voiceLead(s.cents, pad.voicing);                       // common tones stay, the rest move by the smallest step
   const base = padBase();
-  engine.setPad(pad.voicing.map(c => base * Math.pow(2, c / 1200)), { slot, label: s.label, source: src.split(':')[0] });
-  pad.slot = slot; pad.source = src; renderMeters(); renderChordPads();
+  engine.setPad(pad.voicing.map(c => base * Math.pow(2, c / 1200)), { slot, label: s.label, source: src.split(':')[0], transition: S.trans / 1000 });
+  pad.slot = slot; pad.source = src; renderMeters(); renderRing();
 }
-function padStop() { if (!engine) return; engine.releasePad(); pad.slot = null; pad.source = null; renderMeters(); renderChordPads(); }
-/** A press from any input. In hold mode a press toggles (another slot switches chords smoothly). */
-function padPress(slot, src) {
-  if (!engine || !S.accomp) return;
-  if (S.hold && pad.slot === slot) { padStop(); return; }
-  padStart(slot, src);
+function padStop(tail) { clearQueue(); deck.release(); pad.source = null; engine?.releasePad(tail ? { tail } : undefined); renderMeters(); renderRing(); }
+/**
+ * Select a chord slot from any input. The chord that is already sounding is never started again. With «تعویض آکورد
+ * روی ضرب» and a running rhythm the change waits for the next beat; until then it is shown as waiting, not as sounding.
+ * tap: a deliberate touch or key on the sounding chord releases it.
+ */
+function chordSelect(slot, src, tap = false) {
+  if (!engine || !S.accomp || !slots[slot] || !playing || paused) return;
+  const wait = S.quant ? engine.timeToNextBeat() : null, o = { waitBeat: wait != null && wait > 0.03 };
+  const act = tap ? deck.tap(slot, o) : deck.select(slot, o);
+  if (act === 'none') return;
+  if (act === 'release') { padStop(); return; }
+  if (queueTimer) { clearTimeout(queueTimer); queueTimer = null; }
+  if (act === 'start') padStart(slot, src);
+  else if (act === 'queue') queueTimer = setTimeout(() => { queueTimer = null; if (!playing || paused || !S.accomp) { pad.queued = null; renderMeters(); renderRing(); return; } if (deck.beat() === 'start') padStart(pad.slot, src); }, wait * 1000);
+  renderMeters(); renderRing();
 }
-/** Release from the same input that started the pad (ignored in hold mode). */
-function padRelease(src) { if (S.hold) return; if (pad.slot != null && pad.source === src) padStop(); }
 
 function panic() {
   engine?.panic();
-  held.melody = null; pointers.releaseAll(); chordPointers.clear(); heldKeys.clear();
-  melody.silence('panic'); accomp.silence('panic'); pad.slot = null; pad.source = null; sounding.clear();
+  held.melody = null; pointers.releaseAll(); clearQueue();
+  melody.silence('panic'); chordHand.silence('panic'); pad.slot = null; pad.source = null; pad.pending = null; sounding.clear();
   if (S.rhythm) { S.rhythm = false; els.rhythm.checked = false; save(); }
-  markPads(); renderChordPads(); renderMeters(); renderScaleStrip();
+  markPads(); renderRing(); renderMeters(); renderScaleStrip();
 }
 els.panic.onclick = panic;
-function panicSoft() { if (held.melody != null) { stopNote(held.melody); held.melody = null; melody.silence('retune'); } pointers.releaseAll(); markPads(); if (pad.slot != null) padStop(); accomp.silence('retune'); }
+function panicSoft() { if (held.melody != null) { stopNote(held.melody); held.melody = null; melody.silence('retune'); } pointers.releaseAll(); markPads(); if (pad.slot != null || pad.queued != null) padStop(); chordHand.silence('retune'); pad.pending = null; }
 
 // ---------------------------------------------------------------- camera: gestures
 function applyGestureSettings() {
   const common = { pinchOn: S.pinchOn, pinchOff: S.pinchOff };
   melody.configure({ ...common, sustainPolicy: S.policy, selection: S.selection, columns: scaleLen(), octaves: 3 });
-  accomp.configure({ ...common, sustainPolicy: 'hold', selection: 'fingers', fingerHalves: false, freezeMargin: 0.15, columns: 4, octaves: 1 });
+  chordHand.configure({ dwellMs: S.dwell, slots: 5 });
 }
 let routeRole = {}, lastHands = [], lastHandsAt = 0;
 function handleHands(t, hands) {
@@ -149,8 +167,9 @@ function handleHands(t, hands) {
   for (const r of routed) if (!byRole[r.role]) byRole[r.role] = r;
   const m = byRole.melody ? { features: handFeatures(byRole.melody.det.landmarks), confidence: byRole.melody.det.score } : null;
   for (const e of melody.update(t, m)) applyMelody(e);
-  const a = byRole.accomp && !S.single ? { features: handFeatures(byRole.accomp.det.landmarks), confidence: byRole.accomp.det.score } : null;
-  for (const e of accomp.update(t, a)) applyAccomp(e);
+  const useChordHand = !S.single && S.accomp;
+  const a = byRole.accomp && useChordHand ? { features: handFeatures(byRole.accomp.det.landmarks), confidence: byRole.accomp.det.score } : null;
+  if (useChordHand) for (const e of chordHand.update(t, a)) applyChord(e);
   if (a) { const expr = Math.max(0, Math.min(1, (0.85 - a.features.center.y) / 0.6)); padExpr += (expr - padExpr) * 0.25; engine.setExpression(padExpr); els.mExpr.style.width = Math.round(padExpr * 100) + '%'; }
   status.hands = hands.length ? (hands.length === 2 ? 'دو دست' : 'یک دست') : 'دستی دیده نمی‌شود';
 }
@@ -161,12 +180,11 @@ function applyMelody(e) {
   else if (e.type === 'move') { engine.setFrequency(held.melody, freqFor(e.degree, e.octave)); selected = { degree: e.degree, octave: e.octave }; sounding = new Set([e.degree + ':' + e.octave]); renderScaleStrip(); renderMeters(); }
   else if (e.type === 'retrigger') { stopNote(held.melody); sounding.clear(); held.melody = playNote(e.degree, e.octave, 'camera'); }
 }
-function applyAccomp(e) {
-  if (e.type === 'select') { pad.candidate = e.degree % 4; renderMeters(); }
-  else if (e.type === 'on') padPress(e.degree % 4, 'camera');
-  else if (e.type === 'off' && e.reason === 'release') padRelease('camera');
-  else if (e.type === 'fist') { if (pad.slot != null) padStop(); }
-  else if ((e.type === 'lost' || (e.type === 'off' && e.reason === 'lost')) && !S.hold && pad.source === 'camera') padStop();
+function applyChord(e) {
+  if (e.type === 'pending') { pad.pending = e.slot; renderRing(); renderMeters(); }                 // a count is settling: shown, not sounding
+  else if (e.type === 'chord') { pad.pending = null; chordSelect(e.slot, 'camera'); }
+  else if (e.type === 'release') { pad.pending = null; if (e.reason === 'fist') padStop(); else if (e.reason === 'lost' && pad.source === 'camera') padStop(1.8); else { renderRing(); renderMeters(); } }
+  else if (e.type === 'tracking') { pad.lost = e.lost; renderRing(); renderMeters(); }
 }
 
 // ---------------------------------------------------------------- onboarding: calibration, then the two-hand practice
@@ -215,13 +233,13 @@ function practiceText() {
     melody: camera ? `نت با دست ${mh}` : 'نت ملودی',
     pad: camera ? `پد با دست ${ah}` : 'پد همراهی',
     both: 'هر دو با هم',
-    help: { melody: camera ? 'دست باز روی یک ستون، بعد شست و اشاره به هم.' : 'لمس کن و نگه دار.', pad: camera ? 'یک تا چهار انگشت باز، بعد شست و اشاره به هم.' : (S.hold ? 'یک بار بزن تا روشن بماند.' : 'نگهش دار.'), both: camera ? 'پد را با یک دست نگه دار و با دست دیگر نت بزن.' : 'با دو انگشت هم‌زمان.' },
+    switch: 'یک آکورد دیگر',
+    help: { melody: camera ? 'دست باز روی یک ستون، بعد شست و اشاره به هم.' : 'لمس کن و نگه دار.', pad: camera && !S.single ? `با دست ${ah} یک تا پنج انگشت نشان بده و کمی نگه دار؛ آکورد می‌ماند.` : 'یکی از پنج خانهٔ حلقهٔ آکورد را بزن؛ آکورد می‌ماند.', switch: camera && !S.single ? 'حالا عدد دیگری نشان بده؛ آکورد نرم عوض می‌شود.' : 'حالا خانهٔ دیگری از حلقه را بزن؛ آکورد نرم عوض می‌شود.', both: camera && !S.single ? 'آکورد می‌ماند؛ با دست دیگر روی آن نت بزن.' : 'آکورد می‌ماند؛ روی آن یک نت بزن.' },
   };
 }
 const camera_ = () => S.input === 'camera';
 function startPractice() {
-  const needPad = S.accomp && !(S.input === 'camera' && S.single);
-  practice = new PlayCheck({ needPad }); renderPractice();
+  practice = new PlayCheck({ needPad: S.accomp }); renderPractice();
 }
 function stopPractice() { practice = null; if (!learnMode) coach(null); }
 function renderPractice() {
@@ -231,7 +249,7 @@ function renderPractice() {
   if (practice.stage === 'done') {
     S.practiced = true; save();
     coach('عالی بود!', order.length > 1 ? 'ملودی و پد هم‌زمان شنیده شدند. حالا آزادانه بنواز.' : 'اولین نت را نواختی.', [['تکرار تمرین', () => startPractice()], ['ادامهٔ نوازندگی', () => { stopPractice(); if (learnMode) setLearn(false); }, true]], checks);
-  } else coach('تمرین: ' + ({ melody: camera_(T) ? 'یک نت بنواز' : 'یک نت را لمس کن', pad: 'پد را روشن کن', both: 'ملودی روی پد' })[practice.stage], T.help[practice.stage], [['رد کردن', () => { S.practiced = true; save(); stopPractice(); if (learnMode) setLearn(false); }], ['راهنمای تصویری', () => openTutorial()]], checks);
+  } else coach('تمرین: ' + ({ melody: camera_(T) ? 'یک نت بنواز' : 'یک نت را لمس کن', pad: 'یک آکورد انتخاب کن', switch: 'آکورد را عوض کن', both: 'ملودی روی پد' })[practice.stage], T.help[practice.stage], [['رد کردن', () => { S.practiced = true; save(); stopPractice(); if (learnMode) setLearn(false); }], ['راهنمای تصویری', () => openTutorial()]], checks);
 }
 
 // ---------------------------------------------------------------- touch & keyboard
@@ -258,23 +276,47 @@ els.pads.addEventListener('keydown', e => { const p = e.target.closest?.('.air-p
 els.pads.addEventListener('keyup', e => { const p = e.target.closest?.('.air-pad')?.dataset.pad; if (!p) return; pointers.up('k' + p); markPads(); });
 function markPads() { const on = new Set([...pointers.map.values()].map(v => v.pad)); els.pads.querySelectorAll('.air-pad').forEach(p => p.classList.toggle('is-on', on.has(p.dataset.pad))); }
 
-// chord pads: every pointer is tracked; only the pointer that started the pad can release it
-const chordPointers = new Map();
-function buildChordPads() {
-  els.chords.replaceChildren(...slots.map((s, i) => {
-    const b = el('button', 'air-chord'); b.type = 'button'; b.dataset.slot = i;
-    b.append(el('b', '', s.short || s.label), el('small', '', s.roman ? s.roman : fa(i + 1)));
-    b.setAttribute('aria-label', 'همراهی ' + fa(i + 1) + ': ' + (s.kind === 'texture' ? s.label : s.fa));
+// chord ring: five positions inside the performance surface. It shows the audio state (sounding / waiting / settling)
+// and is also the touch control: a tap selects a chord and it stays; the centre releases it.
+const RING_ANGLES = [-90, -18, 54, 126, 198];
+function buildRing() {
+  els.ringSlots.replaceChildren(...slots.map((s, i) => {
+    const b = el('button', 'air-ring-slot'); b.type = 'button'; b.dataset.slot = i;
+    const a = RING_ANGLES[i] * Math.PI / 180; b.style.setProperty('--x', (Math.cos(a) * 39).toFixed(2) + '%'); b.style.setProperty('--y', (Math.sin(a) * 39).toFixed(2) + '%');
+    b.append(el('i', '', fa(i + 1)), el('b', '', s.short || s.label));
+    b.setAttribute('aria-label', 'آکورد ' + fa(i + 1) + ': ' + (s.kind === 'texture' ? s.label : s.fa));
     return b;
   }));
-  renderChordPads();
+  els.ring.classList.toggle('air-ring--textures', slots.some(s => s.kind === 'texture'));
+  renderRing();
 }
-function renderChordPads() { els.chords.querySelectorAll('.air-chord').forEach(b => { b.setAttribute('aria-pressed', String(pad.slot === Number(b.dataset.slot))); b.disabled = !S.accomp; }); }
-els.chords.addEventListener('pointerdown', e => { const b = e.target.closest('.air-chord'); if (!b || b.disabled) return; e.preventDefault(); try { els.chords.setPointerCapture(e.pointerId); } catch {} chordPointers.set(e.pointerId, true); padPress(Number(b.dataset.slot), 'touch:' + e.pointerId); });
-for (const type of ['pointerup', 'pointercancel', 'lostpointercapture']) els.chords.addEventListener(type, e => { if (!chordPointers.delete(e.pointerId)) return; padRelease('touch:' + e.pointerId); });
-els.chords.addEventListener('contextmenu', e => e.preventDefault());
-els.chords.addEventListener('keydown', e => { const b = e.target.closest?.('.air-chord'); if (!b || e.repeat || !(e.key === 'Enter' || e.key === ' ')) return; e.preventDefault(); padPress(Number(b.dataset.slot), 'kbd:' + b.dataset.slot); });
-els.chords.addEventListener('keyup', e => { const b = e.target.closest?.('.air-chord'); if (!b || !(e.key === 'Enter' || e.key === ' ')) return; padRelease('kbd:' + b.dataset.slot); });
+function placeRingHighlight() {
+  const b = pad.slot != null ? els.ringSlots.children[pad.slot] : null;
+  if (!b || !b.offsetWidth) { els.ringHl.style.opacity = '0'; return; }
+  const r = b.getBoundingClientRect(), o = els.ring.getBoundingClientRect();
+  els.ringHl.style.opacity = '1'; els.ringHl.style.width = r.width + 'px'; els.ringHl.style.height = r.height + 'px';
+  els.ringHl.style.transform = `translate(${(r.left - o.left).toFixed(1)}px,${(r.top - o.top).toFixed(1)}px)`;
+}
+function renderRing() {
+  const wait = pad.queued ?? (S.input === 'camera' ? pad.pending : null);
+  for (const b of els.ringSlots.children) { const i = Number(b.dataset.slot);
+    b.setAttribute('aria-pressed', String(pad.slot === i)); b.disabled = !S.accomp;
+    b.classList.toggle('is-wait', wait === i && pad.slot !== i); b.classList.toggle('is-beat', pad.queued === i); }
+  els.ring.classList.toggle('is-on', pad.slot != null); els.ring.classList.toggle('is-lost', pad.lost && S.input === 'camera' && !S.single);
+  els.ring.style.setProperty('--dwell', (pad.queued != null ? 200 : S.dwell) + 'ms');
+  const s = pad.slot != null ? slots[pad.slot] : null;
+  els.ringNow.textContent = s ? (s.short || s.label) : '—'; els.ringNow.classList.toggle('is-long', !!s && (s.short || s.label).length > 4);
+  els.ringState.textContent = !S.accomp ? 'غیرفعال' : pad.queued != null ? 'بعدی: ' + (slots[pad.queued].short || slots[pad.queued].label) : s ? 'خاموش کن' : 'خاموش';
+  els.ringCore.disabled = !S.accomp || (pad.slot == null && pad.queued == null);
+  els.ringCore.setAttribute('aria-label', s ? 'آکورد در حال پخش: ' + (s.kind === 'texture' ? s.label : s.fa) + '. برای خاموش کردن بزن.' : 'همراهی خاموش است');
+  placeRingHighlight();
+}
+const chordTap = (slot, src) => chordSelect(slot, src, true);
+els.ringSlots.addEventListener('pointerdown', e => { const b = e.target.closest('.air-ring-slot'); if (!b || b.disabled) return; e.preventDefault(); chordTap(Number(b.dataset.slot), 'touch'); });
+els.ringSlots.addEventListener('contextmenu', e => e.preventDefault());
+els.ringSlots.addEventListener('keydown', e => { const b = e.target.closest?.('.air-ring-slot'); if (!b || e.repeat || !(e.key === 'Enter' || e.key === ' ')) return; e.preventDefault(); chordTap(Number(b.dataset.slot), 'kbd'); });
+els.ringCore.addEventListener('click', () => padStop());
+new ResizeObserver(() => placeRingHighlight()).observe(els.ring);
 
 const KEYROWS = [['z', 'x', 'c', 'v', 'b', 'n', 'm', ',', '.', '/', '', ''], ['a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ';', "'", ''], ['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', '[', ']']];
 function keyToPad(e) {
@@ -282,20 +324,19 @@ function keyToPad(e) {
   for (let band = 0; band < 3; band++) { const i = KEYROWS[band].indexOf(k); if (i >= 0 && i < scaleLen()) return i + ':' + band; }
   return null;
 }
-const heldKeys = new Set();
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape' && !els.panel.hidden) { closePanel(true); return; }
   if (!playing || paused || e.ctrlKey || e.metaKey || e.altKey) return;
   if (e.target.closest?.('input,select,textarea,dialog,.air-panel')) return;
   if (e.key === 'Escape') { panic(); return; }
-  if (/^Digit[1-4]$/.test(e.code) || /^Numpad[1-4]$/.test(e.code)) { if (!e.repeat) { heldKeys.add(e.code); padPress(Number(e.code.slice(-1)) - 1, 'key:' + e.code); } e.preventDefault(); return; }
+  if (/^Digit[1-5]$/.test(e.code) || /^Numpad[1-5]$/.test(e.code)) { if (!e.repeat) chordTap(Number(e.code.slice(-1)) - 1, 'key'); e.preventDefault(); return; }
   if (e.code === 'Digit0' || e.code === 'Backquote') { padStop(); return; }
   const p = keyToPad(e); if (!p || e.repeat) return;
-  if (e.target.closest?.('.air-pad,.air-chord')) return;
+  if (e.target.closest?.('.air-pad,.air-ring')) return;
   e.preventDefault(); pointers.down('key:' + e.code, p); markPads();
 });
-document.addEventListener('keyup', e => { if (heldKeys.delete(e.code)) padRelease('key:' + e.code); pointers.up('key:' + e.code); markPads(); });
-window.addEventListener('blur', () => { pointers.releaseAll(); markPads(); for (const c of heldKeys) padRelease('key:' + c); heldKeys.clear(); });
+document.addEventListener('keyup', e => { pointers.up('key:' + e.code); markPads(); });
+window.addEventListener('blur', () => { pointers.releaseAll(); markPads(); });
 
 // ---------------------------------------------------------------- indicators
 const octFa = b => BAND_FA[b] || '';
@@ -309,12 +350,17 @@ function renderMeters() {
   else { els.mNote.textContent = '—'; els.mNoteState.textContent = 'آماده'; }
   els.mMelody.classList.toggle('is-sounding', !!live); els.mMelody.classList.toggle('is-selected', !live && !!selected && cam);
   let chord = 'خاموش', st = '';
+  const camPad = cam && !S.single;
   if (!S.accomp) { chord = 'غیرفعال'; }
-  else if (pad.slot != null) { const s = slots[pad.slot]; chord = s.label + (s.roman ? ' · ' + s.roman : ''); st = S.hold ? 'نگه‌داشته' : 'در حال پخش'; }
-  else if (pad.candidate != null && cam && slots[pad.candidate]) { chord = slots[pad.candidate].label; st = fa(pad.candidate + 1) + ' انگشت'; }
+  else if (pad.slot != null) { const s = slots[pad.slot]; chord = s.label + (s.roman ? ' · ' + s.roman : '');
+    st = pad.queued != null ? 'بعدی روی ضرب: ' + (slots[pad.queued].short || slots[pad.queued].label) : pad.lost && camPad && pad.source === 'camera' ? 'دست دیده نمی‌شود؛ آکورد مانده' : pad.pending != null && camPad ? fa(pad.pending + 1) + ' انگشت…' : 'در حال پخش'; }
+  else if (pad.queued != null) { chord = slots[pad.queued].label; st = 'روی ضرب بعدی'; }
+  else if (pad.pending != null && camPad && slots[pad.pending]) { chord = slots[pad.pending].label; st = fa(pad.pending + 1) + ' انگشت…'; }
+  else if (pad.lost && camPad) { st = 'دست دیده نمی‌شود'; }
   els.mChord.textContent = chord; els.mChordState.textContent = st;
-  els.mPad.classList.toggle('is-sounding', pad.slot != null); els.mPad.classList.toggle('is-off', pad.slot == null && pad.candidate == null);
-  els.mPad.setAttribute('aria-label', 'پد همراهی: ' + chord + (st ? '، ' + st : '') + '. برای تنظیمات همراهی بزن.');
+  els.mPad.classList.toggle('is-sounding', pad.slot != null); els.mPad.classList.toggle('is-off', pad.slot == null && pad.pending == null && pad.queued == null);
+  els.mPad.classList.toggle('is-lost', pad.lost && camPad);
+  els.mPad.setAttribute('aria-label', 'پد همراهی: ' + chord + (st ? '، ' + st : '') + '. برای چیدن آکوردها بزن.');
 }
 function renderScaleStrip() {
   els.scale.replaceChildren(...tuning.cents.map((c, d) => {
@@ -330,7 +376,7 @@ function scaleName() {
   return S.system === 'persian' ? sc + 'ِ ' + root : root + ' ' + sc.replace(/ \(.*\)$/, '');
 }
 function renderSummary() {
-  els.summary.textContent = [INSTRUMENTS[S.instrument].fa, scaleName(), S.accomp ? 'همراهی روشن' + (S.hold ? ' (نگه‌داشتن)' : '') : 'همراهی خاموش'].join(' · ');
+  els.summary.textContent = [INSTRUMENTS[S.instrument].fa, scaleName(), !S.accomp ? 'همراهی خاموش' : S.chordSrc === 'custom' ? slots.map(c => c.short).join(' ') : S.system === 'persian' ? 'بافت‌های مُدال' : 'آکوردهای گام'].join(' · ');
 }
 
 // ---------------------------------------------------------------- instrument picker
@@ -422,16 +468,52 @@ function renderSettings() {
   fillSelect(els.scaleKey, Object.entries(S.system === 'persian' ? PERSIAN : WESTERN).map(([k, d]) => [k, d.fa]), S.key);
   fillSelect(els.root, NOTE_NAMES_FA.map((n, i) => [i, n]), S.rootPc);
   setRadio('air-octave', S.octave); setRadio('air-policy', S.policy); setRadio('air-selection', S.selection); setRadio('air-bright', S.bright);
-  els.accomp.checked = S.accomp; els.hold.checked = S.hold; els.rhythm.checked = S.rhythm; els.bpm.value = S.bpm; els.ref.value = S.refA4; els.koron.value = S.koron;
+  els.accomp.checked = S.accomp; els.quant.checked = S.quant; els.rhythm.checked = S.rhythm; els.bpm.value = S.bpm; els.ref.value = S.refA4; els.koron.value = S.koron;
   els.swap.checked = S.swap; els.lefty.checked = S.lefty; els.single.checked = S.single; els.diag.checked = S.diag; els.diagOut.hidden = !S.diag;
   els.volume.value = Math.round(S.volume * 100); els.volumeOut.textContent = fa(els.volume.value) + '٪';
   els.padVol.value = Math.round(S.padVol * 100); els.padVolOut.textContent = fa(els.padVol.value) + '٪';
+  els.melVol.value = Math.round(S.melVol * 100); els.melVolOut.textContent = fa(els.melVol.value) + '٪';
+  els.trans.value = S.trans; els.transOut.textContent = fa((S.trans / 1000).toFixed(2)) + ' ثانیه'; els.dwell.value = S.dwell; els.dwellOut.textContent = fa((S.dwell / 1000).toFixed(2)) + ' ثانیه';
   els.musicHelpTitle.textContent = S.system === 'persian' ? 'دربارهٔ کوک مقام‌ها' : 'دربارهٔ کوک گام‌های غربی';
   els.persianNote.textContent = S.system === 'persian' ? PERSIAN_NOTE : 'گام‌های غربی با کوک برابر (۱۲ نیم‌پردهٔ مساوی) محاسبه می‌شوند.';
   const mh = S.lefty ? 'راست' : 'چپ';
-  els.accompHint.textContent = S.single ? 'در حالت یک‌دستی با خانه‌های گرد یا کلیدهای ۱ تا ۴' : `با دست ${mh}، لمس خانه‌های گرد یا کلیدهای ۱ تا ۴`;
-  els.slotList.replaceChildren(...slots.map((s, i) => { const li = el('li'); li.append(el('span', 'n', fa(i + 1) + ' انگشت'), el('span', 'c', s.label), el('span', 'r', s.roman || (s.kind === 'texture' ? 'بافت مُدال' : ''))); li.title = s.fa; return li; }));
-  renderTuningEditor(); renderScaleStrip(); buildPads(); buildChordPads(); renderSummary(); renderMeters(); markInstruments();
+  els.accompHint.textContent = S.single ? 'در حالت یک‌دستی: با لمس حلقهٔ آکورد یا کلیدهای ۱ تا ۵' : `دست ${mh}: ۱ تا ۵ انگشت · یا لمس حلقهٔ آکورد · یا کلیدهای ۱ تا ۵`;
+  els.quantHint.textContent = S.rhythm ? 'آکورد تازه روی ضرب بعدیِ «ضرب همراه» عوض می‌شود؛ تا آن لحظه در حلقه «بعدی» دیده می‌شود.' : 'فقط وقتی «ضرب همراه» روشن است اثر دارد؛ بدون ضرب، آکورد بی‌درنگ عوض می‌شود.';
+  renderChordEditor(); renderTuningEditor(); renderScaleStrip(); buildPads(); buildRing(); renderSummary(); renderMeters(); markInstruments();
+}
+// five-chord setup: what each gesture (1–5 fingers) plays. Modal textures and chosen chords are kept apart.
+const sameChords = (a, b) => a.every((c, i) => c[0] === b[i][0] && c[1] === b[i][1]);
+function renderChordEditor() {
+  const persian = S.system === 'persian', custom = S.chordSrc === 'custom';
+  setRadio('air-chordsrc', S.chordSrc);
+  els.srcAuto.textContent = persian ? 'بافت‌های مُدالِ مقام' : 'آکوردهای خودِ گام';
+  els.srcNote.textContent = custom
+    ? (persian ? 'آکوردهای دلخواه با کوک برابرِ دوازده‌پرده‌ای ساخته می‌شوند و از ریزپرده‌های مقام جدا هستند؛ شاید با ملودی مقام هم‌خوان نباشند.' : 'پنج آکورد را خودت می‌چینی. گام ملودی جدا می‌ماند و عوض نمی‌شود.')
+    : (persian ? 'پیش‌فرض مقام‌ها «بافت مُدال» است: واخوان و فاصله‌های خودِ مقام با همان ریزپرده‌ها؛ آکورد غربی نیستند.' : 'این پنج آکورد از نت‌های خودِ همین گام ساخته می‌شوند. برای تغییر، «آکوردهای دلخواه» را انتخاب کن.');
+  els.presetsBox.hidden = !custom;
+  if (custom) {
+    const sug = suggestedChords(tuning), items = CHORD_PRESETS.map(p => [p.label, p.fa, p.chords]);
+    if (sug) items.push(['هماهنگ با ' + scaleName(), 'از نت‌های گام ملودی', sug]);
+    els.presets.replaceChildren(...items.map(([label, hint, chords]) => { const b = el('button', 'air-preset'); b.type = 'button'; b.append(el('b', '', label), el('small', '', hint)); b.setAttribute('aria-pressed', String(sameChords(chords, S.chords))); b.onclick = () => { S.chords = chords.map(c => [...c]); applyChords(); }; return b; }));
+  }
+  els.slotList.classList.toggle('air-slots--edit', custom);
+  els.slotList.replaceChildren(...slots.map((s, i) => {
+    const li = el('li'); li.append(el('span', 'n', fa(i + 1) + ' انگشت'));
+    if (!custom) { li.append(el('span', 'c', s.label), el('span', 'r', s.kind === 'texture' ? 'بافت مُدال' : (s.roman || 'آکورد'))); li.title = s.fa; return li; }
+    const root = el('select'), qual = el('select');
+    fillSelect(root, NOTE_NAMES.map((n, k) => [k, n + ' · ' + NOTE_NAMES_FA[k]]), S.chords[i][0]); root.setAttribute('aria-label', 'نت پایهٔ آکورد ' + fa(i + 1));
+    fillSelect(qual, Object.entries(QUALITIES).map(([q, d]) => [q, d.fa]), S.chords[i][1]); qual.setAttribute('aria-label', 'نوع آکورد ' + fa(i + 1));
+    const sym = el('span', 'c', s.short); sym.title = s.fa;
+    root.onchange = qual.onchange = () => { S.chords[i] = [Number(root.value), qual.value]; applyChords(); };
+    li.append(root, qual, sym, el('small', 'd', chordSymbol(S.chords[i][0], S.chords[i][1]).fa));
+    return li;
+  }));
+}
+/** The five slots changed (source, preset or one chord). Melody is untouched; a sounding slot moves smoothly to its new chord. */
+function applyChords() {
+  save(); slots = accompSlots(tuning, { source: S.chordSrc, chords: S.chords });
+  if (pad.slot != null && engine) padStart(pad.slot, pad.source || 'touch');
+  renderChordEditor(); buildRing(); renderSummary(); renderMeters();
 }
 function renderTuningEditor() {
   const key = S.system + ':' + S.key, offs = S.offsets[key] || [];
@@ -449,7 +531,7 @@ function renderTuningEditor() {
   }));
 }
 function setOffset(i, v) { const key = S.system + ':' + S.key; const offs = [...(S.offsets[key] || [])]; offs[i] = Math.max(-100, Math.min(100, v)); S.offsets[key] = offs; save(); retune(); }
-function retune() { panicSoft(); rebuildTuning(); pad.voicing = null; pad.candidate = null; applyGestureSettings(); renderSettings(); }
+function retune() { panicSoft(); rebuildTuning(); pad.voicing = null; pad.pending = null; applyGestureSettings(); renderSettings(); }
 const onRadio = (name, fn) => radios(name).forEach(r => r.addEventListener('change', () => { if (r.checked) fn(r.value); }));
 onRadio('air-system', v => { S.system = v; S.key = Object.keys(v === 'persian' ? PERSIAN : WESTERN)[0]; save(); retune(); });
 onRadio('air-octave', v => { S.octave = Number(v); save(); retune(); });
@@ -462,22 +544,27 @@ els.ref.onchange = () => { S.refA4 = Math.max(415, Math.min(466, Number(els.ref.
 els.koron.onchange = () => { S.koron = Math.max(20, Math.min(90, Number(els.koron.value) || 60)); els.koron.value = S.koron; save(); };
 els.reset.onclick = () => { delete S.offsets[S.system + ':' + S.key]; save(); retune(); };
 els.swap.onchange = () => { S.swap = els.swap.checked; save(); panicSoft(); };
-els.lefty.onchange = () => { S.lefty = els.lefty.checked; save(); panicSoft(); renderSettings(); };
+els.lefty.onchange = () => { S.lefty = els.lefty.checked; save(); panicSoft(); els.ring.dataset.side = S.lefty ? 'right' : 'left'; renderSettings(); };
 els.single.onchange = () => { S.single = els.single.checked; save(); panicSoft(); renderSettings(); };
-els.accomp.onchange = () => { S.accomp = els.accomp.checked; save(); if (!S.accomp && pad.slot != null) padStop(); renderChordPads(); renderSummary(); renderMeters(); };
-els.hold.onchange = () => { S.hold = els.hold.checked; save(); if (!S.hold && pad.slot != null && pad.source && !pad.source.startsWith('camera')) padStop(); renderSummary(); renderMeters(); };
+els.accomp.onchange = () => { S.accomp = els.accomp.checked; save(); if (!S.accomp) { padStop(); chordHand.silence('off'); pad.pending = null; } renderRing(); renderSummary(); renderMeters(); };
+onRadio('air-chordsrc', v => { S.chordSrc = v; applyChords(); });
+els.trans.oninput = () => { S.trans = Number(els.trans.value); els.transOut.textContent = fa((S.trans / 1000).toFixed(2)) + ' ثانیه'; }; els.trans.onchange = save;
+els.dwell.oninput = () => { S.dwell = Number(els.dwell.value); els.dwellOut.textContent = fa((S.dwell / 1000).toFixed(2)) + ' ثانیه'; applyGestureSettings(); }; els.dwell.onchange = save;
+els.quant.onchange = () => { S.quant = els.quant.checked; save(); if (!S.quant && pad.queued != null) { if (queueTimer) { clearTimeout(queueTimer); queueTimer = null; } if (deck.beat() === 'start') padStart(pad.slot, pad.source || 'touch'); } };
+els.melVol.oninput = () => { S.melVol = Number(els.melVol.value) / 100; els.melVolOut.textContent = fa(els.melVol.value) + '٪'; engine?.setMelodyVolume(S.melVol); }; els.melVol.onchange = save;
+els.introChords.onclick = () => openPanel('accomp');
 els.volume.oninput = () => { S.volume = Number(els.volume.value) / 100; els.volumeOut.textContent = fa(els.volume.value) + '٪'; engine?.setMasterVolume(S.volume); };
 els.volume.onchange = save;
 els.padVol.oninput = () => { S.padVol = Number(els.padVol.value) / 100; els.padVolOut.textContent = fa(els.padVol.value) + '٪'; engine?.setPadVolume(S.padVol); };
 els.padVol.onchange = save;
 els.bpm.onchange = () => { S.bpm = Math.max(50, Math.min(160, Number(els.bpm.value) || 84)); els.bpm.value = S.bpm; save(); if (engine?.rhythm) { engine.stopRhythm(); engine.startRhythm({ bpm: S.bpm }); } };
-els.rhythm.onchange = () => { S.rhythm = els.rhythm.checked; save(); if (!engine) return; if (S.rhythm) engine.startRhythm({ bpm: S.bpm }); else engine.stopRhythm(); };
+els.rhythm.onchange = () => { S.rhythm = els.rhythm.checked; save(); renderSettings(); if (!engine) return; if (S.rhythm) engine.startRhythm({ bpm: S.bpm }); else engine.stopRhythm(); };
 els.diag.onchange = () => { S.diag = els.diag.checked; save(); els.diagOut.hidden = !S.diag; };
 els.recal.onclick = () => { if (S.input !== 'camera' || !tracker) { setInstNote('کالیبره فقط در حالت دوربین ممکن است.'); return; } S.calibrated = false; save(); closePanel(false); onboarding.go('right'); };
 
 // ---------------------------------------------------------------- visual tutorial
 let tutStep = 0, tutMode = 'camera', tutReturn = null;
-function tutorialContext() { return { melodyHand: S.lefty ? 'left' : 'right', single: S.single, hold: S.hold, input: tutMode, slots }; }
+function tutorialContext() { return { melodyHand: S.lefty ? 'left' : 'right', single: S.single, input: tutMode, slots, custom: S.chordSrc === 'custom', persian: S.system === 'persian' }; }
 function openTutorial(mode) {
   tutMode = mode || (S.input === 'touch' || !navigator.mediaDevices?.getUserMedia ? 'touch' : 'camera');
   setRadio('air-tut-mode', tutMode); tutStep = 0; tutReturn = document.activeElement;
@@ -657,7 +744,7 @@ async function startPlaying() {
   try { await engine.start(); }
   catch { started = false; els.start.disabled = false; engine = null; alertIntro('مرورگر اجازهٔ پخش صدا نداد. دوباره «شروع نوازندگی» را بزن.'); return; }
   life.add('engine', () => engine.dispose());
-  engine.setMasterVolume(S.volume); engine.setPadVolume(S.padVol); engine.setPadBrightness(S.bright);
+  engine.setMasterVolume(S.volume); engine.setMelodyVolume(S.melVol); engine.setPadVolume(S.padVol); engine.setPadBrightness(S.bright);
   engine.on(onEngineEvent);
   playing = true; paused = false; els.intro.hidden = true; els.play.hidden = false; els.exit.hidden = false; els.full.hidden = false; window.scrollTo(0, 0);
   rebuildTuning(); applyGestureSettings(); renderInstruments(); renderSettings(); resizeCanvas(); setToggle();
@@ -677,12 +764,12 @@ function onEngineEvent(e) {
 }
 function alertIntro(msg) { let p = els.intro.querySelector('.air-error'); if (!p) { p = el('p', 'air-error'); $('.air-intro-actions').after(p); } p.textContent = msg; p.setAttribute('role', 'alert'); }
 function startTouch(reason) {
-  S.input = 'touch'; els.pads.hidden = false; els.chords.hidden = false; els.video.hidden = true; els.surface.classList.add('is-touch');
+  S.input = 'touch'; els.pads.hidden = false; els.ring.hidden = false; els.video.hidden = true; els.surface.classList.add('is-touch'); pad.lost = false; pad.pending = null; chordHand.reset(); renderRing();
   status.camera = reason || ''; status.model = ''; status.hands = ''; renderStatus(); renderMeters();
   if (pendingPractice || !S.practiced) { pendingPractice = false; setLearn(true, 'practice'); }
 }
 async function startCamera() {
-  els.pads.hidden = true; els.chords.hidden = true; els.video.hidden = false; els.surface.classList.remove('is-touch');
+  els.pads.hidden = true; els.ring.hidden = false; els.ring.dataset.side = S.lefty ? 'right' : 'left'; els.video.hidden = false; els.surface.classList.remove('is-touch'); renderRing();
   const { Camera, HandTracker, frameBrightness } = await import('./tracker.mjs');
   if (!camera) camera = new Camera(els.video);
   status.camera = 'درخواست دسترسی به دوربین…'; renderStatus();
@@ -773,7 +860,7 @@ function updateDiagnostics() {
     'AudioContext: ' + (engine?.state || '-'),
     'صداهای فعال: ' + (engine?.activeVoices ?? 0) + ' · صداهای پد: ' + (engine?.pad.ids.length ?? 0),
     st ? `تشخیص: ${st.hz} بار در ثانیه · ${st.ms.toFixed(1)} میلی‌ثانیه · ${st.dropped} فریم رد شده · ${st.delegate}` : 'تشخیص: -',
-    'دست ملودی: ' + melody.state + ' / ' + melody.stability + ' · دست همراهی: ' + accomp.state,
+    'دست ملودی: ' + melody.state + ' / ' + melody.stability + ' · دست آکورد: ' + chordHand.state + ' (' + (chordHand.count ?? '؟') + ' انگشت)',
     'برچسب مدل: ' + (lastHands.map(h => h.label + ' ' + (h.score ?? 0).toFixed(2)).join(' / ') || '-'),
     'زمان فریم رسم: ' + frameAvg.toFixed(1) + ' میلی‌ثانیه',
     'این اعداد تأخیر واقعی صدا از دست تا گوش نیستند.',
@@ -793,6 +880,6 @@ if (!canCam) $('input[name="air-input"][value="camera"]').disabled = true;
 // test hook for automated browser checks (no effect on normal use)
 window.__air = {
   feed: (t, hands) => router && handleHands(t, hands), pauseTracking: () => tracker?.stop(), get step() { return onboarding.step; },
-  get engine() { return engine; }, get life() { return life; }, get pad() { return { ...pad }; }, get practice() { return practice && practice.stage; },
+  get engine() { return engine; }, get life() { return life; }, get pad() { return { ...pad }; }, get practice() { return practice && practice.stage; }, get slots() { return slots; }, get chordHand() { return chordHand; }, select: chordSelect, get settings() { return S; },
   get tracker() { return tracker; }, get camera() { return camera; }, panic, stopPlaying, startPlaying, get events() { return events; },
 };

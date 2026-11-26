@@ -57,3 +57,10 @@ MediaPipe WebAssembly runtime).
 - تصویرهای دست در راهنمای تصویری و آیکون‌های شیشه‌ای ساز، SVGهای ساخته‌شده برای همین پروژه‌اند.
 - خروجی MIDI: ملودی با برنامهٔ 0 و پد با GM 89 (Pad 2 – warm)؛ در حالت «گردشده» ملودی کانال ۱ و پد کانال ۲.
 - سطح نمونه‌های FluidR3_GM هنگام بارگیری با ضریب محدود (حداکثر ۸ برابر) هم‌سطح می‌شود؛ فایل‌ها تغییر نمی‌کنند.
+
+## Five-chord performance system
+- The accompaniment hand selects one of five slots by showing 1–5 digits (the thumb counts; an open hand is five). A count becomes the chord after a dwell (default 320 ms, adjustable 200–500 ms) and stays without a pinch; another count changes it; a closed fist releases it. Half-way shapes, low-confidence frames and gaps shorter than 450 ms change nothing; after 1.6 s without the hand the pad fades out.
+- Slots come from the melody scale (Western: chords built from the scale; Persian presets: modal textures in the mode's own tuning, never Western triads) or from five chords the player chooses (major, minor, sus2, sus4, 7, m7, maj7, diminished, open fifth). Chosen chords are twelve-tone equal tempered whatever the melody tuning is; the interface says so when a Persian mode is selected.
+- Chord changes crossfade: common tones keep sounding as the same voices, the others fade out over the transition time (default 0.55 s, adjustable 0.2–1.2 s) while new tones fade in, and fading tails are bounded. With «ضرب همراه» running, changes can wait for the next beat; the waiting chord is shown apart from the sounding one.
+- The chord ring in the performance view shows the audio state and is the touch control; keys 1–5 select and 0 releases.
+- **Limits of what was tested:** all of this was exercised with automated tests on simulated landmarks and in headless Chrome with a fake camera. Finger and thumb thresholds, the dwell time, sound quality and latency have not been checked with real hands, a real camera or real speakers.

@@ -47,11 +47,13 @@ export function handFeatures(lm) {
     return r > 1.45 ? 1 : r < 1.12 ? -1 : 0; // 1 extended, −1 curled, 0 ambiguous
   });
   const thumbOut = d2(lm[4], lm[17]) / palm > 1.05;
+  // thumb: tip distance from the little-finger knuckle and from the index knuckle, in palm lengths (mirror-invariant)
+  const thumbSpan = d2(lm[4], lm[17]) / palm, thumbReach = d2(lm[4], lm[5]) / palm;
   const extended = ext.filter(v => v === 1).length;
   const curled = ext.filter(v => v === -1).length;
   const center = { x: (lm[0].x + lm[5].x + lm[17].x) / 3, y: (lm[0].y + lm[5].y + lm[17].y) / 3 };
   const pinchPoint = { x: (lm[4].x + lm[8].x) / 2, y: (lm[4].y + lm[8].y) / 2 };
-  return { palm, pinch, ext, extended, curled, thumbOut, fist: curled === 4, center, pinchPoint, wrist: lm[0] };
+  return { palm, pinch, ext, extended, curled, thumbOut, thumbSpan, thumbReach, fist: curled === 4, center, pinchPoint, wrist: lm[0] };
 }
 
 /** Zone index with hysteresis: stays in `current` until the value moves `h` past its boundary. */
@@ -191,6 +193,101 @@ export class HandMachine {
     }
     return out;
   }
+}
+
+// ======================================================================= chord hand: show 1–5 fingers, the chord stays
+export const CHORD_DEFAULTS = {
+  dwellMs: 320,       // a finger count must be shown this long before it becomes the chord
+  fistMs: 220,        // a closed fist must be held this long to release the pad
+  graceMs: 450,       // tracking may drop out this long with nothing changing (and nothing shown)
+  lossMs: 1600,       // after this long without the hand the pad is released (the caller fades it)
+  restartMs: 180,     // a candidate that was not seen for this long starts its dwell again
+  minConfidence: 0.5, // detections below this score count as "not seen"
+  thumbOut: 1.15, thumbIn: 0.95,   // thumbSpan above/below: thumb extended / tucked; between: uncertain
+  thumbReach: 0.5,                 // an extended thumb is also at least this far from the index knuckle
+  slots: 5,
+};
+/**
+ * How many digits a hand shows. The thumb counts: four fingers with the thumb tucked is 4, an open hand is 5.
+ * Returns { count: 0…5 or null, fist }. null means the frame is uncertain (a finger or the thumb is half-way) and
+ * must not change anything. Only distances are used, so the result is the same for either hand and for a mirrored image.
+ */
+export function digitCount(f, o = CHORD_DEFAULTS) {
+  const thumb = f.thumbSpan > o.thumbOut && f.thumbReach > o.thumbReach ? 1 : (f.thumbSpan < o.thumbIn || f.thumbReach < o.thumbReach * 0.8) ? -1 : 0;
+  if (f.curled === 4 && thumb !== 1) return { count: 0, fist: true, thumb };
+  if (f.ext.includes(0) || thumb === 0) return { count: null, fist: false, thumb };
+  return { count: f.extended + (thumb === 1 ? 1 : 0), fist: false, thumb };
+}
+/**
+ * Accompaniment hand. Feed `update(t, frame)` with frame = null (hand not seen) or { features, confidence }.
+ * Events:
+ *   {type:'pending', slot}        — a different finger count is being shown (slot null: it was withdrawn)
+ *   {type:'chord', slot}          — the count was held for dwellMs: this slot is now selected and stays selected
+ *   {type:'release', reason}      — 'fist' (closed fist held), 'lost' (hand gone for lossMs) or 'panic'
+ *   {type:'tracking', lost}       — the hand went missing beyond the grace period / came back
+ * The selected slot survives uncertain frames, low-confidence frames and short gaps; showing the same count again
+ * never produces a second 'chord' event.
+ */
+export class ChordHand {
+  constructor(opts = {}) { this.o = { ...CHORD_DEFAULTS, ...opts }; this.reset(); }
+  configure(opts) { Object.assign(this.o, opts); }
+  reset() { this.slot = null; this.cand = null; this.candSince = 0; this.candLast = 0; this.fistSince = null; this.lastSeen = -Infinity; this.lost = false; this.count = null; this.ignore = null; this.stability = 'none'; }
+  get state() { return this.stability; }
+  _drop(out) { if (this.cand != null) { this.cand = null; out.push({ type: 'pending', slot: null }); } }
+  /** Force-release (panic, pause, retune). The finger count that is still being shown is ignored until it changes, so a stop is never undone by the hand that is still up. */
+  silence(reason = 'panic') { const out = []; this._drop(out); this.fistSince = null; this.ignore = this.slot ?? this.ignore; if (this.slot != null) { this.slot = null; out.push({ type: 'release', reason }); } return out; }
+  update(t, frame) {
+    const o = this.o, out = [];
+    if (!frame || (frame.confidence ?? 1) < o.minConfidence) {
+      const gap = t - this.lastSeen; this.fistSince = null; this.count = null;
+      if (gap > o.restartMs) this._drop(out);
+      if (gap > o.lossMs) this.ignore = null;
+      if (gap > o.graceMs && !this.lost && this.lastSeen > -Infinity) { this.lost = true; out.push({ type: 'tracking', lost: true }); }
+      if (gap > o.lossMs && this.slot != null) { this.slot = null; out.push({ type: 'release', reason: 'lost' }); }
+      this.stability = this.lost ? 'lost' : 'gap';
+      return out;
+    }
+    this.lastSeen = t;
+    if (this.lost) { this.lost = false; out.push({ type: 'tracking', lost: false }); }
+    const d = digitCount(frame.features, o); this.count = d.count;
+    if (d.fist) {
+      this.fistSince ??= t; this._drop(out); this.stability = 'fist'; this.ignore = null;
+      if (t - this.fistSince >= o.fistMs && this.slot != null) { this.slot = null; out.push({ type: 'release', reason: 'fist' }); }
+      return out;
+    }
+    this.fistSince = null;
+    if (d.count == null || d.count < 1) { this.stability = this.slot != null ? 'held' : 'uncertain'; return out; }   // half-way shapes change nothing
+    const slot = Math.min(o.slots, d.count) - 1;
+    if (slot === this.slot) { this._drop(out); this.stability = 'held'; return out; }                              // same chord: never retriggered
+    if (slot === this.ignore) { this._drop(out); this.stability = 'stopped'; return out; }                         // stopped by hand: wait for a different count
+    this.ignore = null;
+    if (slot !== this.cand || t - this.candLast > o.restartMs) { this.cand = slot; this.candSince = t; out.push({ type: 'pending', slot, dwellMs: o.dwellMs }); }
+    this.candLast = t; this.stability = 'settling';
+    if (t - this.candSince >= o.dwellMs) { this.slot = slot; this.cand = null; this.stability = 'held'; out.push({ type: 'chord', slot }); }
+    return out;
+  }
+}
+
+/**
+ * Which chord slot sounds, for every input (camera gestures, touch on the chord ring, keys). It owns no audio: the
+ * caller applies the returned action. `state` may be an existing object; `slot` and `queued` are kept on it.
+ *   select(slot, {waitBeat}) → 'start' (sound this slot now) | 'queue' (wait for the next beat) |
+ *                              'unqueue' (back to the sounding chord) | 'none' (already sounding: never restarted)
+ *   tap(slot, {waitBeat})    → like select, but a deliberate tap on the sounding chord returns 'release'
+ *   beat()                   → 'start' when a queued slot becomes the sounding one, else 'none'
+ *   release()                → 'release' if anything was sounding or queued, else 'none'
+ */
+export class ChordDeck {
+  constructor(state = {}) { this.state = state; state.slot ??= null; state.queued ??= null; }
+  select(slot, { waitBeat = false } = {}) {
+    const s = this.state;
+    if (slot === s.slot) { if (s.queued != null) { s.queued = null; return 'unqueue'; } return 'none'; }
+    if (waitBeat) { s.queued = slot; return 'queue'; }
+    s.queued = null; s.slot = slot; return 'start';
+  }
+  tap(slot, o) { const s = this.state; if (slot === s.slot && s.queued == null) return this.release(); return this.select(slot, o); }
+  beat() { const s = this.state; if (s.queued == null) return 'none'; s.slot = s.queued; s.queued = null; return 'start'; }
+  release() { const s = this.state, had = s.slot != null || s.queued != null; s.slot = null; s.queued = null; return had ? 'release' : 'none'; }
 }
 
 /**

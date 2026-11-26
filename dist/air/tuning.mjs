@@ -120,9 +120,9 @@ export function makeTuning({ system = 'persian', key = 'shur', rootPc = 7, octav
   return { ...s, rootPc, octave, refA4, offsets: s.cents.map((_, i) => offsets[i] || 0) };
 }
 
-// ======================================================================= pad slots (four per scale, one per finger count)
+// ======================================================================= pad slots (five per scale, one per finger count)
 /**
- * Explicit accompaniment rules, four slots per scale (1–4 extended fingers on the accompaniment hand):
+ * Explicit accompaniment rules, five slots per scale (1–5 fingers shown by the accompaniment hand):
  *  • Heptatonic Western scales (major, minors, dorian, phrygian): triads stacked in thirds from the scale itself on
  *    scale degrees 1, 4, 5 and 6. Quality and name are computed from the resulting intervals, so harmonic minor
  *    gives a major V and phrygian a minor v without special cases.
@@ -134,7 +134,7 @@ export function makeTuning({ system = 'persian', key = 'shur', rootPc = 7, octav
  * Cents are relative to the tonic; the caller chooses the register and voicing.
  */
 const CHORD_TYPES = [
-  [[0, 4, 7, 10], '7'], [[0, 3, 7, 10], 'm7'], [[0, 4, 7], ''], [[0, 3, 7], 'm'], [[0, 3, 6], '°'], [[0, 4, 8], '+'],
+  [[0, 4, 7, 11], 'maj7'], [[0, 4, 7, 10], '7'], [[0, 3, 7, 10], 'm7'], [[0, 4, 7], ''], [[0, 3, 7], 'm'], [[0, 3, 6], '°'], [[0, 4, 8], '+'],
   [[0, 5, 7], 'sus4'], [[0, 2, 7], 'sus2'], [[0, 7], '5'], [[0, 7, 12], '5'], [[0, 12], ''],
 ];
 /** Name of a 12-TET chord given its root pitch class and the intervals (semitones) above that root. */
@@ -142,7 +142,7 @@ export function chordName(rootPc, semis) {
   const set = [...new Set(semis.map(s => ((Math.round(s) % 12) + 12) % 12))].sort((a, b) => a - b);
   for (const [iv, suffix] of CHORD_TYPES) {
     const want = [...new Set(iv.map(x => x % 12))].sort((a, b) => a - b);
-    if (want.length === set.length && want.every((x, i) => x === set[i])) return { name: NOTE_NAMES[rootPc] + suffix, fa: NOTE_NAMES_FA[rootPc] + ({ '': ' ماژور', m: ' مینور', '°': ' کاسته', '+': ' افزوده', '7': ' هفت', m7: ' مینور هفت', sus4: ' ساس‌۴', sus2: ' ساس‌۲', 5: ' پنجم' }[suffix] ?? ''), suffix };
+    if (want.length === set.length && want.every((x, i) => x === set[i])) return { name: NOTE_NAMES[rootPc] + suffix, fa: NOTE_NAMES_FA[rootPc] + ({ '': ' ماژور', m: ' مینور', '°': ' کاسته', '+': ' افزوده', '7': ' هفت', m7: ' مینور هفت', maj7: ' ماژور هفت', sus4: ' ساس‌۴', sus2: ' ساس‌۲', 5: ' پنجم' }[suffix] ?? ''), suffix };
   }
   return { name: NOTE_NAMES[rootPc], fa: NOTE_NAMES_FA[rootPc], suffix: '?' };
 }
@@ -170,21 +170,23 @@ export function padSlots(tuning) {
       { kind: 'texture', short: 'با درجهٔ ۵', label: 'تونیک و درجهٔ ۵', fa: 'فاصلهٔ باز تونیک با درجهٔ پنجم همین مقام', roman: '', cents: [0, c(4), 1200] },
       { kind: 'texture', short: 'با درجهٔ ۴', label: 'تونیک و درجهٔ ۴', fa: 'فاصلهٔ باز تونیک با درجهٔ چهارم همین مقام', roman: '', cents: [0, c(3), 1200] },
       { kind: 'texture', short: '۱–۳–۵', label: 'بافت ۱–۳–۵', fa: 'درجه‌های ۱، ۳ و ۵ همین مقام با کوک خودش', roman: '', cents: [0, c(2), c(4)] },
+      { kind: 'texture', short: 'واخوان ۴', label: 'واخوان درجهٔ ۴', fa: 'واخوان روی درجهٔ چهارم همین مقام و اکتاو آن', roman: '', cents: [c(3), c(3) + 1200] },
     ];
   }
-  if (tuning.chords === 'diatonic' && cents.length === 7) return [0, 3, 4, 5].map(d => make(d, tertian(d)));
+  if (tuning.chords === 'diatonic' && cents.length === 7) return [0, 3, 4, 5, 1].map(d => make(d, tertian(d)));
   if (tuning.key === 'pentatonicMajor') return [
     make(0, [cents[0], cents[2], cents[3]]),          // I: 1–3–5
     make(4, [cents[3], cents[0] + 1200, cents[1] + 1200]), // sus4 on the 5th
     make(5, [cents[4], cents[0] + 1200, cents[2] + 1200]), // vi: 6–1–3
     make(1, [cents[1], cents[3], cents[4]]),          // sus4 on the 2nd
+    make(5, [cents[4], cents[1] + 1200, cents[2] + 1200]), // sus4 on the 6th: 6–2–3
   ];
   if (tuning.key === 'bluesMinor') return [
     make(0, [0, 300, 700, 1000], { blues: true }), make(3, [500, 800, 1200, 1500], { blues: true }),
-    make(4, [700, 1000, 1400, 1700], { blues: true }), make(6, [1000, 1400, 1700], { blues: true }),
+    make(4, [700, 1000, 1400, 1700], { blues: true }), make(6, [1000, 1400, 1700], { blues: true }), make(2, [300, 700, 1000], { blues: true }),
   ];
   // chromatic: open fifths, no implied key
-  return [make(0, [0, 700, 1200]), make(3, [500, 1200, 1700]), make(4, [700, 1400, 1900]), { kind: 'chord', label: NOTE_NAMES[tuning.rootPc] + ' (اکتاو)', fa: 'تونیک و اکتاو', roman: '', cents: [0, 1200] }];
+  return [make(0, [0, 700, 1200]), make(3, [500, 1200, 1700]), make(4, [700, 1400, 1900]), { kind: 'chord', label: NOTE_NAMES[tuning.rootPc] + ' (اکتاو)', short: NOTE_NAMES[tuning.rootPc] + '8', fa: 'تونیک و اکتاو', roman: '', cents: [0, 1200] }, make(6, [1000, 1700, 2200])];
 }
 
 /**
@@ -194,7 +196,8 @@ export function padSlots(tuning) {
  */
 export function voiceLead(tones, prev = null, { low = -300, high = 1900 } = {}) {
   const pcs = [...new Set(tones.map(c => ((c % 1200) + 1200) % 1200))];
-  if (!prev || !prev.length) return tones.map(c => Math.max(low, Math.min(high, c))).sort((a, b) => a - b);
+  const fit = c => { while (c < low) c += 1200; while (c > high) c -= 1200; return c; };   // octave shifts only: a tone is never bent into range
+  if (!prev || !prev.length) return tones.map(fit).sort((a, b) => a - b);
   const used = new Set(), out = [];
   for (const pc of pcs) {
     let best = null;
@@ -208,4 +211,47 @@ export function voiceLead(tones, prev = null, { low = -300, high = 1900 } = {}) 
   // keep an octave-doubled tonic texture (e.g. [0, 1200]) instead of collapsing it to one pitch
   if (out.length < tones.length && pcs.length < tones.length) for (const c of tones) if (!out.includes(c) && c >= low && c <= high) out.push(c);
   return out.sort((a, b) => a - b);
+}
+
+// ======================================================================= five-chord setup (manual chords and presets)
+/** Chord qualities the pad can render exactly in twelve-tone equal temperament (intervals in semitones above the root). */
+export const QUALITIES = {
+  '': { iv: [0, 4, 7], fa: 'ماژور' }, m: { iv: [0, 3, 7], fa: 'مینور' },
+  sus2: { iv: [0, 2, 7], fa: 'ساس‌۲ (معلق)' }, sus4: { iv: [0, 5, 7], fa: 'ساس‌۴ (معلق)' },
+  7: { iv: [0, 4, 7, 10], fa: 'هفت' }, m7: { iv: [0, 3, 7, 10], fa: 'مینور هفت' }, maj7: { iv: [0, 4, 7, 11], fa: 'ماژور هفت' },
+  dim: { iv: [0, 3, 6], fa: 'کاسته' }, 5: { iv: [0, 7, 12], fa: 'پنجم باز' },
+};
+const QSUFFIX = { dim: '°' };
+/** Five-chord presets: [root pitch class, quality] per gesture 1–5. */
+export const CHORD_PRESETS = [
+  { id: 'am-f-c-g-em', label: 'Am – F – C – G – Em', fa: 'لا مینور و خویشاوندانش', chords: [[9, 'm'], [5, ''], [0, ''], [7, ''], [4, 'm']] },
+  { id: 'c-g-am-f-dm', label: 'C – G – Am – F – Dm', fa: 'دو ماژور و خویشاوندانش', chords: [[0, ''], [7, ''], [9, 'm'], [5, ''], [2, 'm']] },
+  { id: 'dm-bb-f-c-gm', label: 'Dm – B♭ – F – C – Gm', fa: 'ر مینور و خویشاوندانش', chords: [[2, 'm'], [10, ''], [5, ''], [0, ''], [7, 'm']] },
+  { id: 'em-c-g-d-am', label: 'Em – C – G – D – Am', fa: 'می مینور و خویشاوندانش', chords: [[4, 'm'], [0, ''], [7, ''], [2, ''], [9, 'm']] },
+];
+export const DEFAULT_CHORDS = CHORD_PRESETS[0].chords;
+export function chordSymbol(rootPc, quality) {
+  const q = QUALITIES[quality] ? quality : '', pc = ((Math.round(rootPc) % 12) + 12) % 12;
+  return { name: NOTE_NAMES[pc] + (QSUFFIX[q] ?? q), fa: NOTE_NAMES_FA[pc] + ' ' + QUALITIES[q].fa, quality: q, rootPc: pc };
+}
+/** A manually chosen chord as a pad slot. Its tones are twelve-tone equal tempered, placed around the tonic of `tuning`. */
+export function customSlot(chord, tuning) {
+  const [root, quality] = chord, sym = chordSymbol(root, quality);
+  let base = (((sym.rootPc - tuning.rootPc) % 12) + 12) % 12 * 100; if (base >= 700) base -= 1200;   // roots stay within a fifth of the tonic
+  return { kind: 'chord', manual: true, label: sym.name, short: sym.name, fa: sym.fa, roman: '', rootPc: sym.rootPc, quality: sym.quality, cents: QUALITIES[sym.quality].iv.map(i => base + i * 100) };
+}
+/** Chords that fit a Western scale, as editable [root, quality] pairs (null where the scale's own chord has no listed quality). */
+export function suggestedChords(tuning) {
+  if (tuning.system === 'persian') return null;
+  const map = { '': '', m: 'm', '°': 'dim', 7: '7', m7: 'm7', maj7: 'maj7', sus4: 'sus4', sus2: 'sus2', 5: '5' };
+  return padSlots(tuning).map(s => { const root = s.cents[0], pc = ((tuning.rootPc + Math.round(root / 100)) % 12 + 12) % 12, n = chordName(pc, s.cents.map(c => (c - root) / 100)); return [pc, map[n.suffix] ?? '']; });
+}
+/**
+ * The five slots that the accompaniment hand selects. source 'auto': what the melody scale itself suggests — chords built
+ * from a Western scale, or modal textures for a Persian preset (never Western triads). source 'custom': five chords the
+ * player chose; these are always twelve-tone equal tempered, whatever the melody tuning is.
+ */
+export function accompSlots(tuning, { source = 'auto', chords = DEFAULT_CHORDS } = {}) {
+  if (source === 'custom') return Array.from({ length: 5 }, (_, i) => customSlot(chords[i] || DEFAULT_CHORDS[i], tuning));
+  return padSlots(tuning);
 }

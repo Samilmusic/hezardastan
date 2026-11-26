@@ -101,7 +101,7 @@ export class AudioEngine {
     const env = c.createGain(); env.gain.value = 0; env.connect(this.buses[bus]);
     const v = { id, bus, key, freq, env, nodes: [], start: t, releasing: false, release: 0.3 };
     const peak = key === 'pad' ? Math.max(0.01, Math.min(0.5, velocity)) : Math.max(0.05, Math.min(1, velocity));
-    if (key === 'pad') this._padVoice(v, freq, t, peak, meta.pan || 0);
+    if (key === 'pad') this._padVoice(v, freq, t, peak, meta.pan || 0, meta.attack);
     else {
       const def = INSTRUMENTS[key];
       v.release = def.release;
@@ -168,7 +168,7 @@ export class AudioEngine {
     P.driftInv = c.createGain(); P.driftInv.gain.value = -4; P.drift.connect(P.driftAmt); P.drift.connect(P.driftInv); P.drift.start(); P.lfos.push(P.drift);
     this.setPadVolume(this.padSettings.volume); this.setPadBrightness(this.padSettings.brightness);
   }
-  _padVoice(v, freq, t, peak, pan = 0) {
+  _padVoice(v, freq, t, peak, pan = 0, attack = 0.55) {
     const c = this.ctx, P = this.padNodes;
     const vf = c.createBiquadFilter(); vf.type = 'lowpass'; vf.frequency.value = Math.min(5200, freq * 5); vf.Q.value = 0.3;
     const sp = c.createStereoPanner ? c.createStereoPanner() : null; if (sp) sp.pan.value = pan;
@@ -176,7 +176,7 @@ export class AudioEngine {
     const o1 = mk('sawtooth', -7, 0.32), o2 = mk('sawtooth', 7, 0.32), o3 = mk('triangle', 0, 0.55);
     P.driftAmt.connect(o1.detune); P.driftInv.connect(o2.detune);
     vf.connect(v.env); v.env.disconnect(); v.env.connect(sp || P.in); if (sp) sp.connect(P.in);
-    v.env.gain.setValueAtTime(0, t); v.env.gain.linearRampToValueAtTime(peak, t + 0.55);
+    v.peak = peak; v.env.gain.setValueAtTime(0, t); v.env.gain.linearRampToValueAtTime(peak, t + Math.max(0.05, attack));
     [o1, o2, o3].forEach(o => o.start(t)); v.nodes.push(o1, o2, o3, vf); if (sp) v.nodes.push(sp); v.oscs = [o1, o2, o3]; v.release = 1.1;
     v.disconnectDrift = () => { try { P.driftAmt.disconnect(o1.detune); P.driftInv.disconnect(o2.detune); } catch {} };
   }
@@ -184,20 +184,25 @@ export class AudioEngine {
   setPadVolume(v) { this.padSettings.volume = Math.max(0, Math.min(1, v)); if (this.ctx) this.buses.accomp.gain.setTargetAtTime(1.4 * this.padSettings.volume, this.ctx.currentTime, 0.05); }
   setPadBrightness(b) { this.padSettings.brightness = b; if (this.ctx) this.padNodes.tone.frequency.setTargetAtTime({ soft: 900, warm: 1500, bright: 2400 }[b] || 1500, this.ctx.currentTime, 0.1); }
   /**
-   * Sound a chord/texture on the pad (Hz). Voices whose pitch is already sounding (±8 cents) are kept, the rest
-   * fade with a short tail, and new tones fade in — so chord changes are smooth and tails cannot pile up.
+   * Sound a chord/texture on the pad (Hz). This is a crossfade, not a restart: voices whose pitch is already sounding
+   * (±8 cents) are kept, the others fade out over the transition time while the new tones fade in over the same time.
+   * Per-voice level follows the number of tones, so a four-note chord is not louder than a triad, and the number of
+   * fading tails is bounded. meta.transition: seconds (0.08 … 2, default 0.55).
    */
   setPad(freqs, meta = {}) {
     if (!this.ctx || this.ctx.state !== 'running') return [];
+    const tr = Math.max(0.08, Math.min(2, meta.transition ?? 0.55)), now = this.ctx.currentTime;
     const keep = [], fresh = [];
     const live = this.pad.ids.map(id => this.voices.get(id)).filter(v => v && !v.releasing);
     for (const f of freqs) { const hit = live.find(v => !keep.includes(v) && Math.abs(1200 * Math.log2(f / v.freq)) < 8); if (hit) keep.push(hit); else fresh.push(f); }
-    for (const v of live) if (!keep.includes(v)) this.noteOff(v.id, { release: 0.55 });
+    for (const v of live) if (!keep.includes(v)) this.noteOff(v.id, { release: tr * 1.3 });
     this._trimPadTails(6);
     const peak = 0.6 / Math.sqrt(Math.max(1, freqs.length));
-    const ids = fresh.map((f, i) => this.noteOn(f, { bus: 'accomp', velocity: peak, meta: { ...meta, pan: ((i % 2) ? 1 : -1) * 0.28 } })).filter(id => id != null);
+    for (const v of keep) if (Math.abs((v.peak ?? peak) - peak) > 1e-3) { // common tones stay, only their level settles to the new chord size
+      const g = v.env.gain; g.cancelScheduledValues(now); g.setValueAtTime(Math.max(0.0001, g.value), now); g.linearRampToValueAtTime(peak, now + tr); v.peak = peak; }
+    const ids = fresh.map((f, i) => this.noteOn(f, { bus: 'accomp', velocity: peak, meta: { ...meta, attack: tr, pan: ((i % 2) ? 1 : -1) * 0.28 } })).filter(id => id != null);
     this.pad = { ids: [...keep.map(v => v.id), ...ids], label: meta.label ?? null, slot: meta.slot ?? null };
-    this.emit({ type: 'pad', on: true, label: this.pad.label, slot: this.pad.slot, voices: this.pad.ids.length, source: meta.source || null });
+    this.emit({ type: 'pad', on: true, label: this.pad.label, slot: this.pad.slot, voices: this.pad.ids.length, kept: keep.length, source: meta.source || null });
     return this.pad.ids;
   }
   releasePad({ tail = 1.1 } = {}) {
@@ -270,6 +275,8 @@ export class AudioEngine {
     this.padSettings.expression = Math.max(0, Math.min(1, value));
     if (this.ctx) this.padNodes.expr.gain.setTargetAtTime(0.35 + 0.65 * this.padSettings.expression, this.ctx.currentTime, 0.12);
   }
+  /** Melody level 0..1, independent of the pad volume. */
+  setMelodyVolume(v) { this.melodyVolume = Math.max(0, Math.min(1, v)); if (this.ctx) this.buses.melody.gain.setTargetAtTime(this.melodyVolume, this.ctx.currentTime, 0.05); }
   setMasterVolume(v) { if (this.ctx) this.master.gain.setTargetAtTime(Math.max(0, Math.min(1, v)) * 0.95, this.ctx.currentTime, 0.05); }
 
   // ---------------------------------------------------------------- synthesized frame-drum pattern
@@ -290,8 +297,14 @@ export class AudioEngine {
       }
     };
     const tick = () => { while (next < c.currentTime + 0.12) { const s = pattern[i % pattern.length]; if (s !== '.') hit(next, s === 'x'); else if (i % 2 === 1) hit(next, false); next += step; i++; } };
-    tick(); this.rhythm = { timer: setInterval(tick, 25), bpm };
+    const origin = next; tick(); this.rhythm = { timer: setInterval(tick, 25), bpm, origin, beat: 60 / bpm };
     this.emit({ type: 'rhythm', on: true });
+  }
+  /** Seconds until the next beat of the running rhythm (the only musical clock); null when no clock is running. */
+  timeToNextBeat() {
+    if (!this.ctx || !this.rhythm) return null;
+    const { origin, beat } = this.rhythm, c = this.ctx.currentTime, k = Math.max(0, Math.ceil((c - origin) / beat - 1e-6));
+    return Math.max(0, origin + k * beat - c);
   }
   stopRhythm() { if (!this.rhythm) return; clearInterval(this.rhythm.timer); this.rhythm = null; this.emit({ type: 'rhythm', on: false }); }
 
