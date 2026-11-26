@@ -15,13 +15,26 @@ const SAMPLE_NOTES = [];
 for (let o = 1; o <= 7; o++) for (const [n, pc] of [['C', 0], ['Eb', 3], ['Gb', 6], ['A', 9]]) SAMPLE_NOTES.push({ file: n + o, midi: (o + 1) * 12 + pc });
 const BASE = new URL('./samples/', import.meta.url);
 
+/**
+ * Pad sounds: all synthesized in the browser (none is a recording or an imitation of a named instrument).
+ * tone: how far the shared low-pass opens for this sound; level: trim so the sounds are equally loud in a chord.
+ */
+export const PAD_SOUNDS = {
+  warm: { fa: 'پد گرم', hint: 'نرم و پُر', tone: 1, level: 1 },
+  strings: { fa: 'زهی نرم', hint: 'گروه زهیِ ساخته‌شده', tone: 1.7, level: 1.75 },
+  choir: { fa: 'آوای کُر', hint: 'مثل «آ»ی کشیده', tone: 1.6, level: 2.0 },
+  organ: { fa: 'ارگ ملایم', hint: 'صاف و ثابت', tone: 1.5, level: 1.02 },
+  epiano: { fa: 'پیانو برقی', hint: 'زنگ‌دار و نرم', tone: 1.9, level: 1.1 },
+  glass: { fa: 'شیشه‌ای', hint: 'روشن و هوادار', tone: 2.6, level: 1.35 },
+};
+
 export class AudioEngine {
   constructor({ maxMelody = 10, maxAccomp = 6, recordLimitSec = 300 } = {}) {
     this.ctx = null; this.maxMelody = maxMelody; this.maxAccomp = maxAccomp; this.recordLimitSec = recordLimitSec;
     this.voices = new Map(); this.nextId = 1; this.listeners = new Set();
     this.instrument = 'soft'; this.cache = new Map(); this.loading = null;
     this.pad = { ids: [], label: null, slot: null }; this.rhythm = null; this.recording = null; this.disposed = false;
-    this.padSettings = { volume: 0.45, brightness: 'warm', expression: 0.6 };
+    this.padSettings = { volume: 0.45, brightness: 'warm', expression: 0.6, sound: 'warm' };
   }
   get accompIds() { return this.pad.ids; }
   on(fn) { this.listeners.add(fn); return () => this.listeners.delete(fn); }
@@ -168,21 +181,56 @@ export class AudioEngine {
     P.driftInv = c.createGain(); P.driftInv.gain.value = -4; P.drift.connect(P.driftAmt); P.drift.connect(P.driftInv); P.drift.start(); P.lfos.push(P.drift);
     this.setPadVolume(this.padSettings.volume); this.setPadBrightness(this.padSettings.brightness);
   }
+  /** One pad tone in the current pad sound. Every source goes through a per-voice low-pass and the voice envelope into the pad chain. */
   _padVoice(v, freq, t, peak, pan = 0, attack = 0.55) {
-    const c = this.ctx, P = this.padNodes;
-    const vf = c.createBiquadFilter(); vf.type = 'lowpass'; vf.frequency.value = Math.min(5200, freq * 5); vf.Q.value = 0.3;
+    const c = this.ctx, P = this.padNodes, kind = PAD_SOUNDS[this.padSettings.sound] ? this.padSettings.sound : 'warm', lvl = PAD_SOUNDS[kind].level;
+    const vf = c.createBiquadFilter(); vf.type = 'lowpass'; vf.Q.value = 0.3;
     const sp = c.createStereoPanner ? c.createStereoPanner() : null; if (sp) sp.pan.value = pan;
-    const mk = (type, detune, gain) => { const o = c.createOscillator(), g = c.createGain(); o.type = type; o.frequency.value = freq; o.detune.value = detune; g.gain.value = gain; o.connect(g).connect(vf); return o; };
-    const o1 = mk('sawtooth', -7, 0.32), o2 = mk('sawtooth', 7, 0.32), o3 = mk('triangle', 0, 0.55);
-    P.driftAmt.connect(o1.detune); P.driftInv.connect(o2.detune);
-    vf.connect(v.env); v.env.disconnect(); v.env.connect(sp || P.in); if (sp) sp.connect(P.in);
+    const oscs = [], extra = [];
+    const osc = (type, ratio, detune, gain, to = vf) => { const o = c.createOscillator(), g = c.createGain(); o.type = type; o.frequency.value = freq * ratio; o.detune.value = detune; g.gain.value = gain * lvl; o.connect(g).connect(to); oscs.push(o); extra.push(g); return { o, g }; };
+    const lfo = (rate, depth, param) => { const o = c.createOscillator(), g = c.createGain(); o.frequency.value = rate; g.gain.value = depth; o.connect(g).connect(param); oscs.push(o); extra.push(g); return o; };
+    let drift = null;
+    if (kind === 'strings') {            // three detuned saws and a quiet octave, gentle vibrato
+      vf.frequency.value = Math.min(7500, freq * 9);
+      const a = osc('sawtooth', 1, -11, 0.27), b = osc('sawtooth', 1, 11, 0.27), m = osc('sawtooth', 1, 0, 0.2); osc('sawtooth', 2, 4, 0.07);
+      for (const x of [a, b, m]) lfo(5.1, 5, x.o.detune); drift = [a.o, b.o];
+    } else if (kind === 'choir') {       // saws through three vowel formants ("ah")
+      vf.frequency.value = 5200;
+      const mix = c.createGain(); mix.gain.value = 1; extra.push(mix);
+      const a = osc('sawtooth', 1, -6, 0.5, mix), b = osc('sawtooth', 1, 6, 0.5, mix);
+      for (const [f0, q, g0] of [[680, 5, 1.5], [1120, 7, 1.0], [2650, 9, 0.45]]) { const bp = c.createBiquadFilter(), g = c.createGain(); bp.type = 'bandpass'; bp.frequency.value = f0; bp.Q.value = q; g.gain.value = g0; mix.connect(bp).connect(g).connect(vf); extra.push(bp, g); }
+      const body = c.createGain(); body.gain.value = 0.22; mix.connect(body).connect(vf); extra.push(body);
+      lfo(4.7, 6, a.o.detune); lfo(4.7, 6, b.o.detune); drift = [a.o, b.o];
+    } else if (kind === 'organ') {       // drawbar-like sines
+      vf.frequency.value = 6500;
+      osc('sine', 1, 0, 0.5); const h2 = osc('sine', 2, 2, 0.26); osc('sine', 3, 0, 0.12); osc('sine', 4, -2, 0.06); osc('sine', 0.5, 0, 0.14);
+      drift = [h2.o];
+    } else if (kind === 'epiano') {      // sine body with a bell partial that settles, slow tremolo
+      vf.frequency.value = Math.min(6000, freq * 10);
+      osc('sine', 1, 0, 0.56); osc('sine', 2, 3, 0.22); osc('sine', 3, 0, 0.05);
+      const tine = osc('sine', 4, 0, 0.0001); tine.g.gain.setValueAtTime(0.22 * lvl, t); tine.g.gain.exponentialRampToValueAtTime(0.05 * lvl, t + 0.7);
+      const trem = c.createGain(); trem.gain.value = 1; extra.push(trem); lfo(4.2, 0.1, trem.gain); v.tremolo = trem;
+    } else if (kind === 'glass') {       // triangle with airy upper partials that shimmer
+      vf.frequency.value = 9500;
+      osc('triangle', 1, 0, 0.4); const u = osc('sine', 2, 4, 0.28), w = osc('sine', 3, -3, 0.15), x = osc('sine', 5, 0, 0.07);
+      lfo(0.7, 0.12, u.g.gain); lfo(0.93, 0.08, w.g.gain); lfo(1.3, 0.04, x.g.gain); drift = [u.o];
+    } else {                             // warm: two detuned saws and a triangle
+      vf.frequency.value = Math.min(5200, freq * 5);
+      const a = osc('sawtooth', 1, -7, 0.32), b = osc('sawtooth', 1, 7, 0.32); osc('triangle', 1, 0, 0.55); drift = [a.o, b.o];
+    }
+    if (drift) { P.driftAmt.connect(drift[0].detune); if (drift[1]) P.driftInv.connect(drift[1].detune); }
+    if (v.tremolo) vf.connect(v.tremolo).connect(v.env); else vf.connect(v.env);
+    v.env.disconnect(); v.env.connect(sp || P.in); if (sp) sp.connect(P.in);
     v.peak = peak; v.env.gain.setValueAtTime(0, t); v.env.gain.linearRampToValueAtTime(peak, t + Math.max(0.05, attack));
-    [o1, o2, o3].forEach(o => o.start(t)); v.nodes.push(o1, o2, o3, vf); if (sp) v.nodes.push(sp); v.oscs = [o1, o2, o3]; v.release = 1.1;
-    v.disconnectDrift = () => { try { P.driftAmt.disconnect(o1.detune); P.driftInv.disconnect(o2.detune); } catch {} };
+    oscs.forEach(o => o.start(t)); v.nodes.push(...oscs, ...extra, vf); if (sp) v.nodes.push(sp); v.oscs = oscs; v.release = 1.1; v.sound = kind;
+    v.disconnectDrift = () => { if (!drift) return; try { P.driftAmt.disconnect(drift[0].detune); if (drift[1]) P.driftInv.disconnect(drift[1].detune); } catch {} };
   }
   /** Pad volume 0..1 (bounded so the pad stays under the melody). */
   setPadVolume(v) { this.padSettings.volume = Math.max(0, Math.min(1, v)); if (this.ctx) this.buses.accomp.gain.setTargetAtTime(1.4 * this.padSettings.volume, this.ctx.currentTime, 0.05); }
-  setPadBrightness(b) { this.padSettings.brightness = b; if (this.ctx) this.padNodes.tone.frequency.setTargetAtTime({ soft: 900, warm: 1500, bright: 2400 }[b] || 1500, this.ctx.currentTime, 0.1); }
+  setPadBrightness(b) { this.padSettings.brightness = b; this._padTone(); }
+  _padTone() { if (!this.ctx) return; const base = { soft: 900, warm: 1500, bright: 2400 }[this.padSettings.brightness] || 1500; this.padNodes.tone.frequency.setTargetAtTime(Math.min(9000, base * (PAD_SOUNDS[this.padSettings.sound]?.tone || 1)), this.ctx.currentTime, 0.1); }
+  /** Choose the pad sound. Tones that are already sounding keep their old sound until the chord is set again (pass meta.revoice to setPad to crossfade them now). */
+  setPadSound(key) { this.padSettings.sound = PAD_SOUNDS[key] ? key : 'warm'; this._padTone(); return this.padSettings.sound; }
   /**
    * Sound a chord/texture on the pad (Hz). This is a crossfade, not a restart: voices whose pitch is already sounding
    * (±8 cents) are kept, the others fade out over the transition time while the new tones fade in over the same time.
@@ -195,7 +243,7 @@ export class AudioEngine {
     const tr = Math.max(0.08, Math.min(2, meta.transition ?? 0.35)), now = this.ctx.currentTime, rise = Math.max(0.05, Math.min(tr, 0.05 + tr * 0.3));
     const keep = [], fresh = [];
     const live = this.pad.ids.map(id => this.voices.get(id)).filter(v => v && !v.releasing);
-    for (const f of freqs) { const hit = live.find(v => !keep.includes(v) && Math.abs(1200 * Math.log2(f / v.freq)) < 8); if (hit) keep.push(hit); else fresh.push(f); }
+    for (const f of freqs) { const hit = meta.revoice ? null : live.find(v => !keep.includes(v) && Math.abs(1200 * Math.log2(f / v.freq)) < 8); if (hit) keep.push(hit); else fresh.push(f); }   // revoice: every tone starts again in the current pad sound
     for (const v of live) if (!keep.includes(v)) this.noteOff(v.id, { release: tr * 1.2 });
     this._trimPadTails(6);
     const peak = 0.6 / Math.sqrt(Math.max(1, freqs.length));
@@ -277,7 +325,7 @@ export class AudioEngine {
     if (this.ctx) this.padNodes.expr.gain.setTargetAtTime(0.35 + 0.65 * this.padSettings.expression, this.ctx.currentTime, 0.12);
   }
   /** Melody level 0..1, independent of the pad volume. */
-  setMelodyVolume(v) { this.melodyVolume = Math.max(0, Math.min(1, v)); if (this.ctx) this.buses.melody.gain.setTargetAtTime(this.melodyVolume, this.ctx.currentTime, 0.05); }
+  setMelodyVolume(v) { this.melodyVolume = Math.max(0, Math.min(1, v)); if (this.ctx) this.buses.melody.gain.setTargetAtTime(1.3 * this.melodyVolume, this.ctx.currentTime, 0.05); }   // the melody sits clearly above the pad; the limiter guards the sum
   setMasterVolume(v) { if (this.ctx) this.master.gain.setTargetAtTime(Math.max(0, Math.min(1, v)) * 0.95, this.ctx.currentTime, 0.05); }
 
   // ---------------------------------------------------------------- synthesized frame-drum pattern

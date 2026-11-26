@@ -3,7 +3,7 @@
 // detailed setting lives in the settings panel.
 import { makeTuning, degreeFrequency, degreeLabel, rootFrequency, accompSlots, suggestedChords, chordSymbol, voiceLead, WESTERN, PERSIAN, PERSIAN_NOTE, NOTE_NAMES, NOTE_NAMES_FA, QUALITIES, CHORD_PRESETS, DEFAULT_CHORDS } from './tuning.mjs';
 import { HandMachine, ChordHand, ChordDeck, HandRouter, SideLearner, sides, handFeatures, makeTransform, DEFAULTS, CHORD_DEFAULTS } from './gesture.mjs';
-import { AudioEngine, INSTRUMENTS } from './engine.mjs';
+import { AudioEngine, INSTRUMENTS, PAD_SOUNDS } from './engine.mjs';
 import { encodeWav, concatChunks, encodeMidi } from './export.mjs';
 import { Lifecycle } from './lifecycle.mjs';
 import { PointerVoices } from './touch.mjs';
@@ -22,7 +22,7 @@ const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls)
 const SAVED = store.get('settings', {});
 const S = Object.assign({
   input: 'camera', system: 'persian', key: 'shur', rootPc: 7, octave: 4, refA4: 440, offsets: {}, instrument: 'soft', volume: 0.8,
-  accomp: true, chordSrc: 'auto', chords: DEFAULT_CHORDS.map(c => [...c]), trans: 350, dwell: CHORD_DEFAULTS.dwellMs, quant: false, melVol: 1, padVol: 0.45, bright: 'warm', rhythm: false, bpm: 84,
+  accomp: true, chordSrc: 'auto', chords: DEFAULT_CHORDS.map(c => [...c]), trans: 350, dwell: CHORD_DEFAULTS.dwellMs, quant: false, melVol: 1, padVol: 0.45, padSound: 'warm', bright: 'warm', rhythm: false, bpm: 84,
   policy: 'hold', selection: 'zones', swap: false, lefty: false, single: false,
   koron: 60, diag: false, labelForRight: 'Right', v: 3, pinchOn: DEFAULTS.pinchOn, pinchOff: DEFAULTS.pinchOff, calibrated: false, practiced: false,
 }, SAVED);
@@ -53,6 +53,7 @@ let started = false, playing = false, paused = false, perform = false, events = 
 const els = {
   intro: $('#air-intro'), play: $('#air-play'), start: $('#air-start'), exit: $('#air-exit'), panic: $('#air-panic'), full: $('#air-full'), help: $('#air-help'),
   video: $('#air-video'), canvas: $('#air-canvas'), pads: $('#air-pads'), status: $('#air-status'), surface: $('#air-surface'),
+  hint: $('#air-hint'), padSound: $('#air-padsound'), padSoundPanel: $('#air-padsound-panel'),
   ring: $('#air-ring'), ringSlots: $('#air-ring-slots'), ringHl: $('#air-ring-hl'), ringCore: $('#air-ring-core'), ringNow: $('#air-ring-now'), ringState: $('#air-ring-state'),
   coach: $('#air-coach'), coachTitle: $('#air-coach-title'), coachBody: $('#air-coach-body'), coachChecks: $('#air-coach-checks'), coachActions: $('#air-coach-actions'),
   overlay: $('#air-overlay'), overlayTitle: $('#air-overlay-title'), overlayBody: $('#air-overlay-body'), overlayActions: $('#air-overlay-actions'),
@@ -157,6 +158,16 @@ function applyGestureSettings() {
   chordHand.configure({ dwellMs: S.dwell, slots: 5 });
 }
 let routeRole = {}, lastHands = [], lastHandsAt = 0;
+/** Where the note columns are, as a fraction of the surface width: beside the chord list when both hands play. */
+function melodyZone() { return S.input === 'camera' && !S.single && S.accomp ? (S.lefty ? [0, 0.7] : [0.3, 1]) : [0, 1]; }
+/** The part of the camera picture that is on screen (the preview is cropped to fill the surface), in picture fractions. */
+function visiblePart() {
+  const vw = els.video.videoWidth, vh = els.video.videoHeight, W = els.surface.clientWidth, H = els.surface.clientHeight;
+  if (!vw || !vh || !W || !H) return { x0: 0, x1: 1, y0: 0, y1: 1 };
+  const sc = Math.max(W / vw, H / vh), sx = W / (vw * sc), sy = H / (vh * sc);
+  return { x0: (1 - sx) / 2, x1: (1 + sx) / 2, y0: (1 - sy) / 2, y1: (1 + sy) / 2 };
+}
+const cursor = { x: 0, y: 0, pinch: 1, at: -Infinity };   // the melody hand as drawn: where it is and how close thumb and index are
 const sideLearner = new SideLearner();
 function handleHands(t, hands) {
   const transform = makeTransform({ mirrored: true, swap: S.swap, labelForRight: S.labelForRight });
@@ -174,12 +185,32 @@ function handleHands(t, hands) {
   const byRole = { melody: null, accomp: null };
   for (const r of routed) if (!byRole[r.role]) byRole[r.role] = r;
   const m = byRole.melody ? { features: handFeatures(byRole.melody.det.landmarks), confidence: byRole.melody.det.score } : null;
+  if (m) { const [z0, z1] = melodyZone(), f = m.features; cursor.x = f.pinchPoint.x; cursor.y = f.pinchPoint.y; cursor.pinch = f.pinch; cursor.at = t;
+    const vp = visiblePart(), sx = (f.center.x - vp.x0) / (vp.x1 - vp.x0), sy = (f.center.y - vp.y0) / (vp.y1 - vp.y0), cl = v => Math.max(0, Math.min(0.9999, v));
+    f.center = { x: cl((sx - z0) / (z1 - z0)), y: cl(sy) }; }   // columns and octave bands always lie inside what is on screen
   for (const e of melody.update(t, m)) applyMelody(e);
   const useChordHand = !S.single && S.accomp;
   const a = byRole.accomp && useChordHand ? { features: handFeatures(byRole.accomp.det.landmarks), confidence: byRole.accomp.det.score } : null;
   if (useChordHand) for (const e of chordHand.update(t, a)) applyChord(e);
   if (a) { const expr = Math.max(0, Math.min(1, (0.85 - a.features.center.y) / 0.6)); padExpr += (expr - padExpr) * 0.25; engine.setExpression(padExpr); els.mExpr.style.width = Math.round(padExpr * 100) + '%'; }
   status.hands = hands.length ? (hands.length === 2 ? 'دو دست' : 'یک دست') : 'دستی دیده نمی‌شود';
+  renderHint(t);
+}
+// one line that always says what the melody hand should do next
+let hintText = '', hintAt = 0;
+function renderHint(t = performance.now()) {
+  let text = '';
+  if (S.input === 'camera' && playing && !paused && onboarding.step !== 'right' && onboarding.step !== 'pinch') {
+    const mh = S.lefty ? 'چپ' : 'راست', seen = performance.now() - lastHandsAt < 500 && Object.values(routeRole).includes('melody');
+    if (!seen) text = `دست ${mh}ت را باز، این سمت بیاور`;
+    else if (held.melody != null) text = 'نگه دار · برای قطع، انگشت‌ها را باز کن';
+    else if (melody.state === 'fist') text = 'مشت = سکوت · دستت را باز کن';
+    else if (selected) text = `شست و اشاره را به هم بزن ← «${label(selected.degree)}»`;
+    else text = 'دست را روی یک ستون نگه دار';
+  }
+  if (text === hintText || (text && t - hintAt < 250)) return;       // no flicker
+  hintText = text; hintAt = t; els.hint.textContent = text; els.hint.hidden = !text;
+  const [z0, z1] = melodyZone(); els.hint.style.left = (z0 * 100 + 2) + '%'; els.hint.style.right = ((1 - z1) * 100 + 2) + '%';
 }
 function applyMelody(e) {
   if (e.type === 'select') { selected = { degree: e.degree, octave: e.octave }; renderScaleStrip(); renderMeters(); }
@@ -295,7 +326,8 @@ function buildRing() {
   els.ringSlots.replaceChildren(...slots.map((s, i) => {
     const b = el('button', 'air-ring-slot'); b.type = 'button'; b.dataset.slot = i;
     const a = RING_ANGLES[i] * Math.PI / 180; b.style.setProperty('--x', (Math.cos(a) * 39).toFixed(2) + '%'); b.style.setProperty('--y', (Math.sin(a) * 39).toFixed(2) + '%');
-    b.append(el('i', '', fa(i + 1)), el('b', '', s.short || s.label));
+    const name = el('b', '', s.short || s.label); if ((s.short || s.label).length > 4) name.className = 'is-long';
+    b.append(el('i', '', fa(i + 1)), name);
     b.setAttribute('aria-label', 'آکورد ' + fa(i + 1) + ': ' + (s.kind === 'texture' ? s.label : s.fa));
     return b;
   }));
@@ -373,6 +405,7 @@ function renderMeters() {
   els.mPad.classList.toggle('is-sounding', pad.slot != null); els.mPad.classList.toggle('is-off', pad.slot == null && pad.pending == null && pad.queued == null);
   els.mPad.classList.toggle('is-lost', pad.lost && camPad);
   els.mPad.setAttribute('aria-label', 'پد همراهی: ' + chord + (st ? '، ' + st : '') + '. برای چیدن آکوردها بزن.');
+  renderHint();
 }
 function renderScaleStrip() {
   els.scale.replaceChildren(...tuning.cents.map((c, d) => {
@@ -446,6 +479,26 @@ async function chooseInstrument(key) {
   }
   markInstruments(); renderSummary(); updateNextLink();
 }
+// pad sound: chosen in the performance view (chips under the instruments) or in the settings
+function renderPadSounds() {
+  for (const box of [els.padSound, els.padSoundPanel]) {
+    const list = box === els.padSoundPanel;
+    box.replaceChildren(...(list ? [] : [el('span', 'air-padsound-label', 'صدای پد')]), ...Object.entries(PAD_SOUNDS).map(([k, d]) => {
+      const b = el('button', 'air-padchip'); b.type = 'button'; b.dataset.sound = k; b.setAttribute('role', 'radio'); b.setAttribute('aria-checked', String(k === S.padSound)); b.tabIndex = k === S.padSound ? 0 : -1;
+      b.append(el('b', '', d.fa)); if (list) b.append(el('small', '', d.hint)); return b;
+    }));
+  }
+}
+function choosePadSound(key) {
+  if (!PAD_SOUNDS[key] || key === S.padSound) return;
+  S.padSound = key; save(); engine?.setPadSound(key); renderPadSounds();
+  // the chord that is sounding moves to the new sound with the usual crossfade
+  if (engine && pad.slot != null && pad.voicing) { const s = slots[pad.slot], base = padBase(); engine.setPad(pad.voicing.map(c => base * Math.pow(2, c / 1200)), { slot: pad.slot, label: s.label, source: (pad.source || 'touch').split(':')[0], transition: S.trans / 1000, revoice: true }); }
+}
+for (const box of [els.padSound, els.padSoundPanel]) {
+  box.addEventListener('click', e => { const b = e.target.closest('.air-padchip'); if (b) choosePadSound(b.dataset.sound); });
+  box.addEventListener('keydown', e => { const k = { ArrowLeft: 1, ArrowRight: -1, ArrowDown: 1, ArrowUp: -1 }[e.key]; if (!k) return; e.preventDefault(); const all = $$('.air-padchip', box), j = (all.indexOf(document.activeElement) + k + all.length) % all.length; choosePadSound(all[j].dataset.sound); $$('.air-padchip', box)[j].focus(); });
+}
 function setInstNote(text, error = false) { els.instNote.textContent = text; els.instNote.classList.toggle('is-error', error); }
 
 // ---------------------------------------------------------------- settings panel
@@ -491,7 +544,7 @@ function renderSettings() {
   const mh = S.lefty ? 'راست' : 'چپ';
   els.accompHint.textContent = S.single ? 'در حالت یک‌دستی: با لمس حلقهٔ آکورد یا کلیدهای ۱ تا ۵' : `دست ${mh}: ۱ تا ۵ انگشت · یا لمس حلقهٔ آکورد · یا کلیدهای ۱ تا ۵`;
   els.quantHint.textContent = S.rhythm ? 'آکورد تازه روی ضرب بعدیِ «ضرب همراه» عوض می‌شود؛ تا آن لحظه در حلقه «بعدی» دیده می‌شود.' : 'فقط وقتی «ضرب همراه» روشن است اثر دارد؛ بدون ضرب، آکورد بی‌درنگ عوض می‌شود.';
-  renderChordEditor(); renderTuningEditor(); renderScaleStrip(); buildPads(); buildRing(); renderSummary(); renderMeters(); markInstruments();
+  renderChordEditor(); renderTuningEditor(); renderScaleStrip(); buildPads(); buildRing(); renderPadSounds(); renderSummary(); renderMeters(); markInstruments();
 }
 // five-chord setup: what each gesture (1–5 fingers) plays. Modal textures and chosen chords are kept apart.
 const sameChords = (a, b) => a.every((c, i) => c[0] === b[i][0] && c[1] === b[i][1]);
@@ -706,7 +759,7 @@ let particles = [], frameAvg = 16, lastFrame = performance.now(), raf = 0;
 const goldLines = [[0, 1, 2, 3, 4], [0, 5, 6, 7, 8], [5, 9, 10, 11, 12], [9, 13, 14, 15, 16], [13, 17, 18, 19, 20], [0, 17]];
 function burst(degree, band) {
   if (reduceMotion.matches || frameAvg > 26 || S.input !== 'camera') return;
-  const W = els.canvas.width, H = els.canvas.height, x = (degree + 0.5) / scaleLen() * W, y = (1 - (band + 0.5) / 3) * H;
+  const W = els.canvas.width, H = els.canvas.height, [z0, z1] = melodyZone(), x = (z0 + (degree + 0.5) / scaleLen() * (z1 - z0)) * W, y = (1 - (band + 0.5) / 3) * H;
   for (let i = 0; i < 12 && particles.length < 48; i++) particles.push({ x, y, vx: (Math.random() - 0.5) * 2, vy: -Math.random() * 2 - 0.5, life: 1 });
 }
 function resizeCanvas() { const r = els.surface.getBoundingClientRect(), dpr = Math.min(2, devicePixelRatio || 1); els.canvas.width = Math.round(r.width * dpr); els.canvas.height = Math.round(r.height * dpr); }
@@ -719,21 +772,45 @@ function draw(now) {
   const cols = scaleLen(), dpr = W / (els.canvas.clientWidth || 1);
   const vw = els.video.videoWidth || 4, vh = els.video.videoHeight || 3, sc = Math.max(W / vw, H / vh), ox = (W - vw * sc) / 2, oy = (H - vh * sc) / 2;
   const X = x => ox + x * vw * sc, Y = y => oy + y * vh * sc;
-  g.lineWidth = dpr;
-  for (let b = 0; b < 3; b++) { if (b % 2) { g.fillStyle = 'rgba(20,48,45,.12)'; g.fillRect(0, Y((2 - b) / 3), W, Y((3 - b) / 3) - Y((2 - b) / 3)); } }
+  // the melody zone: note columns beside the chord list; height picks the octave band
+  const [z0, z1] = melodyZone(), ZX = u => (z0 + u * (z1 - z0)) * W, BY = v => v * H, zl = ZX(0), zr = ZX(1), zoned = z0 > 0 || z1 < 1;
+  const font = (px, w = 600) => `${w} ${px * dpr}px Vazir, Tahoma`;
+  g.lineWidth = dpr; g.textAlign = 'center';
+  if (zoned) { g.fillStyle = 'rgba(9,30,28,.34)'; if (z0 > 0) g.fillRect(0, 0, zl, H); else g.fillRect(zr, 0, W - zr, H); }      // the chord side is dimmed: it is not a place for notes
+  for (let b = 0; b < 3; b++) { if (b % 2) { g.fillStyle = 'rgba(20,48,45,.14)'; g.fillRect(zl, BY((2 - b) / 3), zr - zl, BY((3 - b) / 3) - BY((2 - b) / 3)); } }
+  const live = [...sounding][0], liveBand = live ? Number(live.split(':')[1]) : selected?.octave;
   for (let c = 0; c < cols; c++) {
-    const x0 = X(c / cols), w = X((c + 1) / cols) - x0;
+    const x0 = ZX(c / cols), w = ZX((c + 1) / cols) - x0;
     const isSel = selected?.degree === c, isOn = [...sounding].some(s => s.startsWith(c + ':'));
-    if (isSel || isOn) { g.fillStyle = isOn ? 'rgba(233,214,166,.30)' : 'rgba(233,214,166,.12)'; g.fillRect(x0, 0, w, H); }
-    g.strokeStyle = 'rgba(244,231,198,.2)'; g.beginPath(); g.moveTo(x0, 0); g.lineTo(x0, H); g.stroke();
-    g.fillStyle = 'rgba(253,247,234,.92)'; g.font = `600 ${12.5 * dpr}px Vazir, Tahoma`; g.textAlign = 'center'; g.fillText(label(c), x0 + w / 2, H - 14 * dpr);
+    if (isSel || isOn) {
+      g.fillStyle = isOn ? 'rgba(233,214,166,.26)' : 'rgba(233,214,166,.12)'; g.fillRect(x0, 0, w, H);
+      if (liveBand != null) { const y0 = BY((2 - liveBand) / 3), bh = BY((3 - liveBand) / 3) - y0; g.fillStyle = isOn ? 'rgba(240,214,150,.5)' : 'rgba(233,214,166,.2)'; g.fillRect(x0, y0, w, bh); }   // the exact cell: column × octave
+    }
+    g.strokeStyle = 'rgba(244,231,198,.26)'; g.beginPath(); g.moveTo(x0, 0); g.lineTo(x0, H); g.stroke();
+    g.fillStyle = isSel || isOn ? '#fff8e6' : 'rgba(253,247,234,.9)'; g.font = font(isSel || isOn ? 15 : 12.5, isSel || isOn ? 700 : 600); g.fillText(label(c), x0 + w / 2, H - (14 + (w < 50 * dpr && c % 2 ? 15 : 0)) * dpr);   // narrow columns: names on two lines
   }
-  for (let b = 1; b < 3; b++) { g.strokeStyle = 'rgba(244,231,198,.16)'; g.setLineDash([4 * dpr, 6 * dpr]); g.beginPath(); g.moveTo(0, Y(b / 3)); g.lineTo(W, Y(b / 3)); g.stroke(); g.setLineDash([]); }
+  g.strokeStyle = 'rgba(244,231,198,.26)'; g.beginPath(); g.moveTo(zr, 0); g.lineTo(zr, H); g.stroke();
+  for (let b = 1; b < 3; b++) { g.strokeStyle = 'rgba(244,231,198,.2)'; g.setLineDash([4 * dpr, 6 * dpr]); g.beginPath(); g.moveTo(zl, BY(b / 3)); g.lineTo(zr, BY(b / 3)); g.stroke(); g.setLineDash([]); }
+  g.font = font(11.5, 700); g.textAlign = z0 > 0 ? 'right' : 'left';
+  for (let b = 0; b < 3; b++) { g.fillStyle = b === liveBand ? '#f6e2b0' : 'rgba(253,247,234,.55)'; g.fillText(BAND_FA[b], z0 > 0 ? zr - 6 * dpr : zl + 6 * dpr, BY((2 - b) / 3) + 16 * dpr); }
+  g.textAlign = 'center';
   if (now - lastHandsAt < 300) for (const [i, h] of lastHands.entries()) {
     const P = h.landmarks.map(p => [X(p.x), Y(p.y)]), role = Object.values(routeRole)[i];
     g.strokeStyle = role === 'accomp' ? 'rgba(143,212,198,.95)' : 'rgba(214,183,120,.95)'; g.lineWidth = 2.2 * dpr; g.lineCap = 'round';
     for (const line of goldLines) { g.beginPath(); line.forEach((k, j) => j ? g.lineTo(...P[k]) : g.moveTo(...P[k])); g.stroke(); }
     for (const k of [4, 8, 12, 16, 20]) { g.fillStyle = k === 4 || k === 8 ? '#fdf3dc' : 'rgba(253,243,220,.7)'; g.beginPath(); g.arc(...P[k], (k === 4 || k === 8 ? 5 : 3.5) * dpr, 0, 7); g.fill(); }
+  }
+  // the melody hand's pointer: a ring between thumb and index that closes as they approach; it fills when the note sounds
+  if (performance.now() - lastHandsAt < 300 && Object.values(routeRole).includes('melody') && lastHandsAt - cursor.at < 120) {
+    const cx = X(cursor.x), cy = Y(cursor.y), on = held.melody != null, open = Math.max(0, Math.min(1, (cursor.pinch - S.pinchOn) / (0.9 - S.pinchOn)));
+    const r = (on ? 15 : 13 + open * 22) * dpr;
+    g.lineWidth = (on ? 4 : 3) * dpr; g.strokeStyle = on ? '#f6dc9c' : 'rgba(255,248,230,.95)'; g.beginPath(); g.arc(cx, cy, r, 0, 7); g.stroke();
+    if (on) { g.fillStyle = 'rgba(246,220,156,.45)'; g.beginPath(); g.arc(cx, cy, r, 0, 7); g.fill(); }
+    else { g.strokeStyle = 'rgba(246,220,156,.75)'; g.lineWidth = 1.5 * dpr; g.setLineDash([3 * dpr, 4 * dpr]); g.beginPath(); g.arc(cx, cy, 13 * dpr, 0, 7); g.stroke(); g.setLineDash([]); }   // the dashed circle is where the ring has to shrink to
+    const name = live ? label(Number(live.split(':')[0])) : selected ? label(selected.degree) : '';
+    if (name) { g.font = font(on ? 22 : 17, 700); const tw = g.measureText(name).width + 18 * dpr, ty = Math.max(30 * dpr, cy - r - 12 * dpr), cxl = Math.max(tw / 2 + 4 * dpr, Math.min(W - tw / 2 - 4 * dpr, cx));
+      g.fillStyle = on ? 'rgba(246,220,156,.96)' : 'rgba(15,43,40,.82)'; g.beginPath(); g.roundRect ? g.roundRect(cxl - tw / 2, ty - 21 * dpr, tw, 30 * dpr, 10 * dpr) : g.rect(cxl - tw / 2, ty - 21 * dpr, tw, 30 * dpr); g.fill();
+      g.fillStyle = on ? '#33240f' : '#fff8e6'; g.fillText(name, cxl, ty); }
   }
   if (pad.slot != null) {
     g.strokeStyle = 'rgba(143,212,198,.75)'; g.lineWidth = 2 * dpr; g.beginPath();
@@ -756,7 +833,7 @@ async function startPlaying() {
   try { await engine.start(); }
   catch { started = false; els.start.disabled = false; engine = null; alertIntro('مرورگر اجازهٔ پخش صدا نداد. دوباره «شروع نوازندگی» را بزن.'); return; }
   life.add('engine', () => engine.dispose());
-  engine.setMasterVolume(S.volume); engine.setMelodyVolume(S.melVol); engine.setPadVolume(S.padVol); engine.setPadBrightness(S.bright);
+  engine.setMasterVolume(S.volume); engine.setMelodyVolume(S.melVol); engine.setPadVolume(S.padVol); engine.setPadSound(S.padSound); engine.setPadBrightness(S.bright);
   engine.on(onEngineEvent);
   playing = true; paused = false; els.intro.hidden = true; els.play.hidden = false; els.exit.hidden = false; els.full.hidden = false; window.scrollTo(0, 0);
   rebuildTuning(); applyGestureSettings(); renderInstruments(); renderSettings(); resizeCanvas(); setToggle();

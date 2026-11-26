@@ -427,3 +427,39 @@
 .air-ring-core b.is-long{font-size:13.5px}
 .tut-svg--ring{width:min(250px,78%);height:auto}
 .air-tut-frame:has(.tut-svg--ring){flex-basis:100%}
+/* ---- pad sound chips (performance view and settings) */
+.air-padsound{display:flex;align-items:center;gap:6px;overflow-x:auto;scrollbar-width:none;padding:4px 2px 2px}
+.air-padsound::-webkit-scrollbar{display:none}
+.air-padsound-label{flex:none;font-size:12.5px;font-weight:700;color:var(--muted);padding-inline:6px 2px}
+.air-padchip{flex:none;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;min-height:44px;padding:0 14px;border:0;border-radius:22px;background:var(--paper);box-shadow:0 0 0 1px var(--line);color:var(--walnut);cursor:pointer;line-height:1.3}
+.air-padchip b{font-size:14px;white-space:nowrap}.air-padchip small{font-size:12px;color:var(--muted)}
+.air-padchip[aria-checked="true"]{background:#e9f3ef;box-shadow:0 0 0 2px #1d4a46;color:#123532}
+.air-padchip:focus-visible{outline:2px solid #3f8a80;outline-offset:2px}
+.air-padsound--list{display:grid;grid-template-columns:repeat(auto-fit,minmax(132px,1fr));overflow:visible;padding:0}
+.air-padsound--list .air-padchip{min-height:52px;border-radius:12px;padding:6px 12px}
+@media (min-width:900px) and (min-height:501px){.air-padsound{flex-wrap:wrap;overflow:visible;padding-top:10px}.air-padsound-label{flex-basis:100%}}
+.is-perform .air-padsound{display:none}
+/* ---- what the melody hand should do next */
+.air-hint{position:absolute;z-index:2;bottom:38px;margin:0 auto;width:fit-content;max-width:calc(100% - 16px);padding:5px 14px;border-radius:16px;background:#0f2b28d9;border:1px solid #f4e7c633;color:#fff8e6;font-size:14.5px;font-weight:600;line-height:1.6;text-align:center;pointer-events:none}
+.air-hint[hidden]{display:none}
+/* ---- chord list on narrow phones: a clear panel, the sounding chord large on top */
+@media (max-width:620px){
+  .air-surface:not(.is-touch) .air-ring{width:28%;min-width:96px;max-width:118px;gap:5px;padding:5px;border-radius:18px;background:#0b2422cc;border:1px solid #f4e7c62e;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);align-items:stretch!important;left:6px}
+  .air-surface:not(.is-touch) .air-ring[data-side="right"]{left:auto;right:6px}
+  .air-surface:not(.is-touch) .air-ring-slots{gap:5px;align-items:stretch}
+  .air-surface:not(.is-touch) .air-ring .air-ring-slot{margin:0!important;min-width:0;width:100%;min-height:44px;justify-content:flex-start;gap:5px;padding:0 5px;border-color:#f4e7c640;background:#17403b}
+  .air-surface:not(.is-touch) .air-ring-slot i{flex:none;display:grid;place-items:center;width:20px;height:20px;border-radius:50%;background:#e9d6a6;color:#33240f;font-size:13px}
+  .air-surface:not(.is-touch) .air-ring-slot b{font-size:16px;overflow:hidden;text-overflow:clip}
+  .air-surface:not(.is-touch) .air-ring-slot[aria-pressed="true"] i{background:#33240f;color:#f6e2b0}
+  .air-surface:not(.is-touch) .air-ring .air-ring-slot[aria-pressed="true"]{background:linear-gradient(180deg,#f8eac6,#d9b97f);border-color:#fdf3dc;color:#33240f;box-shadow:0 6px 18px -6px #000c}
+  .air-surface:not(.is-touch) .air-ring-hl{display:none}
+  .air-surface:not(.is-touch) .air-ring-slot b.is-long{font-size:13.5px}
+  .air-surface:not(.is-touch) .air-ring .air-ring-slot.is-wait{border-color:#8fd4c6;background:#1d5750}
+  .air-surface:not(.is-touch) .air-ring-core{order:-1;min-width:0;width:100%;min-height:58px;flex-direction:column;gap:0;padding:4px;border-radius:13px;background:#06181799;border-color:#f4e7c655}
+  .air-surface:not(.is-touch) .air-ring-core b{font-size:22px}.air-surface:not(.is-touch) .air-ring-core b.is-long{font-size:16px}
+  .air-surface:not(.is-touch) .air-ring-core small{font-size:11.5px}
+  .air-surface:not(.is-touch) .air-ring--textures .air-ring-slot b{font-size:12.5px;white-space:normal}
+}
+/* short phones: the sounding chord is the highlighted row; the separate header is dropped so the list fits */
+@media (max-width:620px) and (max-height:720px){.air-surface:not(.is-touch) .air-ring-core{display:none}.air-surface:not(.is-touch) .air-ring{gap:4px;padding:4px}.air-surface:not(.is-touch) .air-ring-slots{gap:4px}.air-padsound-label{display:none}}
+@media (max-width:620px) and (max-height:600px){.air-inst-note:empty{display:none}.air-hint{bottom:34px;font-size:13.5px;padding:3px 10px}}

@@ -622,13 +622,34 @@ test('audio engine: fast chord changes keep the voice count bounded; separate vo
   assert.ok(mostLive <= 4, 'never more sounding pad voices than chord tones (' + mostLive + ')');
   assert.ok(most <= 4 + 6, 'fading tails are bounded (' + most + ')');
   const m0 = engine.buses.melody.gain.value; engine.setPadVolume(0.2); assert.equal(engine.buses.melody.gain.value, m0, 'pad volume does not move the melody bus');
-  const a0 = engine.buses.accomp.gain.value; engine.setMelodyVolume(0.4); assert.equal(engine.buses.accomp.gain.value, a0, 'melody volume does not move the pad bus'); assert.equal(engine.buses.melody.gain.value, 0.4);
+  const a0 = engine.buses.accomp.gain.value; engine.setMelodyVolume(0.4); assert.equal(engine.buses.accomp.gain.value, a0, 'melody volume does not move the pad bus'); near(engine.buses.melody.gain.value, 0.52, 1e-9);
   assert.equal(engine.timeToNextBeat(), null, 'no musical clock unless the rhythm runs');
   engine.noteOn(hz(72)[0], { bus: 'melody' });
   engine.panic(); assert.equal(engine.activeVoices, 0, 'emergency stop: nothing left sounding'); assert.equal(engine.pad.ids.length, 0);
   engine.setPad(chords[0], { slot: 0 }); await engine.suspend(); assert.equal(engine.activeVoices, 0, 'pause releases everything'); assert.equal(engine.pad.slot, null);
   assert.deepEqual(engine.setPad(chords[0], { slot: 0 }), [], 'nothing starts while paused');
   await new Promise(r => setTimeout(r, 400)); await engine.dispose(); assert.equal(engine.voices.size, 0);
+});
+
+test('pad sounds: several synthesized sounds; changing the sound re-voices the sounding chord without piling up voices', async () => {
+  const { PAD_SOUNDS } = await import('../dist/air/engine.mjs');
+  assert.ok(Object.keys(PAD_SOUNDS).length >= 5 && PAD_SOUNDS.warm && PAD_SOUNDS.strings && PAD_SOUNDS.choir, 'a choice of pad sounds');
+  for (const d of Object.values(PAD_SOUNDS)) assert.ok(d.fa && d.level > 0 && d.tone > 0);
+  const { engine, ctx, log } = await startEngine(); const melodyId = engine.noteOn(hz(79)[0], { bus: 'melody' });
+  const chord = hz(45, 48, 52, 55); let most = 0;
+  for (const key of Object.keys(PAD_SOUNDS)) {
+    ctx.currentTime += 0.5; assert.equal(engine.setPadSound(key), key);
+    engine.setPad(chord, { slot: 0, label: 'Am7', transition: 0.3, revoice: true });
+    const now = live(engine, 'accomp'); assert.equal(now.length, 4, key + ': four tones sound');
+    assert.ok(now.every(v => v.sound === key), key + ': every sounding tone uses the chosen sound');
+    most = Math.max(most, [...engine.voices.values()].filter(v => v.bus === 'accomp' && !v.trimmed).length);
+  }
+  assert.ok(most <= 4 + 6, 'old tones fade and are bounded (' + most + ')');
+  assert.equal(engine.setPadSound('nonsense'), 'warm', 'unknown sound falls back to the warm pad');
+  log.length = 0; engine.setPad(chord, { slot: 0, label: 'Am7' });
+  assert.equal(log.filter(e => e.type === 'on').length, 0, 'without revoice the same chord is still never restarted');
+  assert.deepEqual(live(engine, 'melody').map(v => v.id), [melodyId], 'the melody note was never touched');
+  engine.panic(); await new Promise(r => setTimeout(r, 900)); await engine.dispose();
 });
 
 test('recording data: the event stream carries both parts, and the MIDI export keeps them on separate channels', async () => {

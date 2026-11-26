@@ -10,7 +10,7 @@
 <meta property="og:title" content="هزارآوا | دستانِ نوا"><meta property="og:description" content="دست‌هایت را حرکت بده؛ موسیقی بساز."><meta property="og:url" content="https://avayehezardastan.com/air.html">
 <link rel="icon" href="logo.png">
 <link rel="stylesheet" href="fonts.css">
-<link rel="stylesheet" href="air/air.css?v=20261126s">
+<link rel="stylesheet" href="air/air.css?v=20261126t">
 </head>
 <body class="air">
 <a class="air-skip" href="#air-main">رفتن به محتوای اصلی</a>
@@ -93,6 +93,7 @@
           <button type="button" class="air-ring-core" id="air-ring-core"><b id="air-ring-now">—</b><small id="air-ring-state">خاموش</small></button>
         </div>
         <div class="air-status" id="air-status" aria-live="polite"></div>
+        <p class="air-hint" id="air-hint" hidden></p>
         <div class="air-overlay" id="air-overlay" hidden role="alertdialog" aria-labelledby="air-overlay-title" aria-describedby="air-overlay-body">
           <div><b id="air-overlay-title"></b><p id="air-overlay-body"></p><div class="air-overlay-actions" id="air-overlay-actions"></div></div>
         </div>
@@ -112,7 +113,8 @@
 
     <div class="air-side">
       <button type="button" class="air-summary" id="air-summary" aria-label="تنظیمات فعلی؛ برای تغییر بزن"></button>
-      <div class="air-inst" id="air-inst" role="radiogroup" aria-label="ساز"></div>
+      <div class="air-inst" id="air-inst" role="radiogroup" aria-label="ساز ملودی"></div>
+      <div class="air-padsound" id="air-padsound" role="radiogroup" aria-label="صدای پد"></div>
       <p class="air-inst-note" id="air-inst-note" role="status"></p>
     </div>
 
@@ -194,7 +196,10 @@
       <label class="air-range"><span>مکث پیش از پذیرفتن ژست</span><input type="range" id="air-dwell" min="120" max="500" step="10"><output id="air-dwell-out"></output></label>
       <label class="air-switch"><input type="checkbox" role="switch" id="air-quant"><span><b>تعویض آکورد روی ضرب</b><small id="air-quant-hint">فقط وقتی «ضرب همراه» روشن است: آکورد تازه روی ضرب بعدی عوض می‌شود.</small></span></label>
       <label class="air-range"><span>بلندی پد</span><input type="range" id="air-padvol" min="0" max="100" step="1"><output id="air-padvol-out"></output></label>
-      <div class="air-field"><span id="air-bright-label">رنگ صدای پد</span>
+      <h3 class="air-group" id="air-padsound-title">صدای پد</h3>
+      <div class="air-padsound air-padsound--list" id="air-padsound-panel" role="radiogroup" aria-labelledby="air-padsound-title"></div>
+      <p class="air-fine">همهٔ این صداها در مرورگر ساخته می‌شوند و تقلید ساز واقعی نیستند.</p>
+      <div class="air-field"><span id="air-bright-label">روشنی صدای پد</span>
         <div class="air-seg air-seg--3" role="radiogroup" aria-labelledby="air-bright-label" id="air-bright">
           <label><input type="radio" name="air-bright" value="soft"><span>نرم</span></label><label><input type="radio" name="air-bright" value="warm"><span>گرم</span></label><label><input type="radio" name="air-bright" value="bright"><span>روشن</span></label>
         </div></div>
@@ -253,6 +258,6 @@
   </div>
 </dialog>
 <noscript><p class="air-noscript">این تجربه برای پخش صدا به جاوااسکریپت نیاز دارد.</p></noscript>
-<script type="module" src="air/app.mjs?v=20261126s"></script>
+<script type="module" src="air/app.mjs?v=20261126t"></script>
 </body>
 </html>
