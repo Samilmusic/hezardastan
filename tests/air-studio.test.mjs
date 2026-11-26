@@ -3,7 +3,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as T from '../dist/air/tuning.mjs';
-import { HandMachine, HandRouter, ChordHand, ChordDeck, digitCount, CHORD_DEFAULTS, handFeatures, makeTransform, zoneWithHysteresis } from '../dist/air/gesture.mjs';
+import { HandMachine, HandRouter, ChordHand, ChordDeck, SideLearner, sides, digitCount, CHORD_DEFAULTS, handFeatures, makeTransform, zoneWithHysteresis } from '../dist/air/gesture.mjs';
 import { encodeWav, encodeMidi, parseMidi, concatChunks } from '../dist/air/export.mjs';
 import { PointerVoices } from '../dist/air/touch.mjs';
 import { Lifecycle } from '../dist/air/lifecycle.mjs';
@@ -480,6 +480,55 @@ test('mirrored image and handedness: the count is the same for either hand; role
   const lefty = new HandRouter({ transform: tf, leftHanded: true });
   for (let t = 0; t < 400; t += 33) routed = lefty.route(t, [{ landmarks: melodyHand, label: 'Left', score: 0.95 }, { landmarks: chordHandLm, label: 'Right', score: 0.95 }]);
   assert.equal(routed.find(r => r.hand === 'left').role, 'melody', 'left-handed: the left hand plays the melody');
+});
+
+test('left and right come from where the hands are: wrong or swapped model labels cannot reverse the hands', () => {
+  // display space (already mirrored): the player's right hand is on the right of the screen
+  const R = shown(4, { cx: 0.75, thumb: 'out' }), L = shown(2, { cx: 0.25 });
+  assert.deepEqual(sides([{ landmarks: R }, { landmarks: L }]), ['right', 'left']);
+  assert.deepEqual(sides([{ landmarks: L }, { landmarks: R }]), ['left', 'right']);
+  assert.deepEqual(sides([{ landmarks: R }]), [null], 'one hand: position alone does not decide');
+  assert.deepEqual(sides([{ landmarks: shown(4, { cx: 0.5 }) }, { landmarks: shown(4, { cx: 0.56 }) }]), [null, null], 'hands on top of each other: not decidable');
+  for (const [labelR, labelL] of [['Left', 'Right'], ['Right', 'Left'], ['Right', 'Right']]) {      // whatever the model calls them
+    const router = new HandRouter({ transform: makeTransform({ labelForRight: 'Right' }) }); let out;
+    const dets = () => { const d = [{ landmarks: R, label: labelR, score: 0.9 }, { landmarks: L, label: labelL, score: 0.9 }]; sides(d).forEach((sd, i) => { d[i].side = sd; }); return d; };
+    out = router.route(0, dets());
+    assert.equal(out.find(r => r.det.landmarks === R).role, 'melody', 'right-hand side plays the melody from the first frame (labels ' + labelR + '/' + labelL + ')');
+    assert.equal(out.find(r => r.det.landmarks === L).role, 'accomp');
+  }
+  // an earlier wrong guess from a label is corrected as soon as both hands are apart, even while a chord is held
+  const router = new HandRouter({ transform: makeTransform({ labelForRight: 'Right' }) }); let out;
+  for (let t = 0; t < 300; t += 33) out = router.route(t, [{ landmarks: L, label: 'Right', score: 0.9 }]);
+  assert.equal(out[0].role, 'melody', 'alone, the left hand was taken for the right one (label only)');
+  const two = [{ landmarks: L, label: 'Right', score: 0.9, side: 'left' }, { landmarks: R, label: 'Left', score: 0.9, side: 'right' }];
+  out = router.route(333, two, () => true);
+  assert.equal(out.find(r => r.det.landmarks === L).role, 'accomp'); assert.equal(out.find(r => r.det.landmarks === R).role, 'melody');
+  // once known, a tracked hand keeps its side when the hands cross
+  let x = 0.75; for (let t = 366; t < 1400; t += 33) { x = Math.max(0.1, x - 0.03); const Rm = shown(4, { cx: x, thumb: 'out' }); const d = [{ landmarks: L, label: 'Right', score: 0.9 }, { landmarks: Rm, label: 'Left', score: 0.9 }]; sides(d).forEach((sd, i) => { d[i].side = sd; }); out = router.route(t, d); 
+    assert.equal(out.find(r => r.det.landmarks === Rm).role, 'melody', 'melody hand at x=' + x.toFixed(2)); }
+  // the label mapping for a single hand is learned from two hands, after a steady moment, and not from a flicker
+  const learner = new SideLearner({ holdMs: 350 }); let learned = null;
+  const wrong = [{ landmarks: R, label: 'Left' }, { landmarks: L, label: 'Right' }];
+  assert.equal(learner.learn(0, wrong, 'Right'), null); assert.equal(learner.learn(200, wrong, 'Right'), null);
+  learned = learner.learn(400, wrong, 'Right'); assert.equal(learned, 'Left', 'the model calls the right hand "Left" on this device: learned');
+  assert.equal(learner.learn(450, wrong, 'Left'), null, 'already right: nothing to change');
+  const flick = new SideLearner({ holdMs: 350 }); flick.learn(0, wrong, 'Right'); flick.learn(100, [{ landmarks: R, label: 'Right' }, { landmarks: L, label: 'Left' }], 'Right');
+  assert.equal(flick.learn(380, wrong, 'Right'), null, 'evidence must be continuous');
+  assert.equal(new SideLearner().learn(0, [{ landmarks: R, label: 'Right' }, { landmarks: L, label: 'Right' }], 'Left'), null, 'same label on both hands teaches nothing');
+});
+
+test('chord changes are quick: short default dwell, and new tones come in faster than old ones leave', async () => {
+  assert.ok(CHORD_DEFAULTS.dwellMs <= 220, 'default dwell ' + CHORD_DEFAULTS.dwellMs + ' ms');
+  const h = new ChordHand(); feed(h, 400, show(1)); const r = feed(h, 400, show(4), 500);
+  assert.ok(r.out.find(e => e.type === 'chord').t - 500 <= 270, 'a new count is the chord within about a quarter of a second');
+  const { engine, ctx } = await startEngine(); const seen = [];
+  const orig = engine._padVoice.bind(engine); engine._padVoice = (v, f, t, peak, pan, attack) => { seen.push(attack); return orig(v, f, t, peak, pan, attack); };
+  engine.setPad(hz(48, 52, 55), { slot: 0, transition: 0.35 }); ctx.currentTime = 1; seen.length = 0;
+  engine.setPad(hz(41, 45, 48), { slot: 1, transition: 0.35 });
+  assert.ok(seen.length === 2 && seen.every(a => a > 0.04 && a <= 0.2), 'incoming tones (F and A; C is kept) rise in ' + seen.map(a => a.toFixed(2)).join(', ') + ' s');
+  const out = [...engine.voices.values()].filter(v => v.bus === 'accomp' && v.releasing);
+  assert.equal(out.length, 2, 'the outgoing tones are still fading while the new ones are already up (overlap, no gap)');
+  engine.panic(); await new Promise(r => setTimeout(r, 900)); await engine.dispose();
 });
 
 test('five-chord setup: presets, editing, qualities, and modal textures kept apart from chosen chords', () => {

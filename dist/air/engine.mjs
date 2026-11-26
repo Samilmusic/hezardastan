@@ -187,20 +187,21 @@ export class AudioEngine {
    * Sound a chord/texture on the pad (Hz). This is a crossfade, not a restart: voices whose pitch is already sounding
    * (±8 cents) are kept, the others fade out over the transition time while the new tones fade in over the same time.
    * Per-voice level follows the number of tones, so a four-note chord is not louder than a triad, and the number of
-   * fading tails is bounded. meta.transition: seconds (0.08 … 2, default 0.55).
+   * fading tails is bounded. meta.transition: seconds (0.08 … 2, default 0.35). The new tones come in faster than the old
+   * ones leave (about a third of the transition), so a change is heard at once and still overlaps smoothly.
    */
   setPad(freqs, meta = {}) {
     if (!this.ctx || this.ctx.state !== 'running') return [];
-    const tr = Math.max(0.08, Math.min(2, meta.transition ?? 0.55)), now = this.ctx.currentTime;
+    const tr = Math.max(0.08, Math.min(2, meta.transition ?? 0.35)), now = this.ctx.currentTime, rise = Math.max(0.05, Math.min(tr, 0.05 + tr * 0.3));
     const keep = [], fresh = [];
     const live = this.pad.ids.map(id => this.voices.get(id)).filter(v => v && !v.releasing);
     for (const f of freqs) { const hit = live.find(v => !keep.includes(v) && Math.abs(1200 * Math.log2(f / v.freq)) < 8); if (hit) keep.push(hit); else fresh.push(f); }
-    for (const v of live) if (!keep.includes(v)) this.noteOff(v.id, { release: tr * 1.3 });
+    for (const v of live) if (!keep.includes(v)) this.noteOff(v.id, { release: tr * 1.2 });
     this._trimPadTails(6);
     const peak = 0.6 / Math.sqrt(Math.max(1, freqs.length));
     for (const v of keep) if (Math.abs((v.peak ?? peak) - peak) > 1e-3) { // common tones stay, only their level settles to the new chord size
-      const g = v.env.gain; g.cancelScheduledValues(now); g.setValueAtTime(Math.max(0.0001, g.value), now); g.linearRampToValueAtTime(peak, now + tr); v.peak = peak; }
-    const ids = fresh.map((f, i) => this.noteOn(f, { bus: 'accomp', velocity: peak, meta: { ...meta, attack: tr, pan: ((i % 2) ? 1 : -1) * 0.28 } })).filter(id => id != null);
+      const g = v.env.gain; g.cancelScheduledValues(now); g.setValueAtTime(Math.max(0.0001, g.value), now); g.linearRampToValueAtTime(peak, now + rise); v.peak = peak; }
+    const ids = fresh.map((f, i) => this.noteOn(f, { bus: 'accomp', velocity: peak, meta: { ...meta, attack: this.pad.ids.length || keep.length ? rise : Math.max(rise, 0.18), pan: ((i % 2) ? 1 : -1) * 0.28 } })).filter(id => id != null);
     this.pad = { ids: [...keep.map(v => v.id), ...ids], label: meta.label ?? null, slot: meta.slot ?? null };
     this.emit({ type: 'pad', on: true, label: this.pad.label, slot: this.pad.slot, voices: this.pad.ids.length, kept: keep.length, source: meta.source || null });
     return this.pad.ids;

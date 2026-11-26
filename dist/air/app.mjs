@@ -2,7 +2,7 @@
 // melody and pad logic. The interface is performance first: surface, indicators, instrument, transport; every
 // detailed setting lives in the settings panel.
 import { makeTuning, degreeFrequency, degreeLabel, rootFrequency, accompSlots, suggestedChords, chordSymbol, voiceLead, WESTERN, PERSIAN, PERSIAN_NOTE, NOTE_NAMES, NOTE_NAMES_FA, QUALITIES, CHORD_PRESETS, DEFAULT_CHORDS } from './tuning.mjs';
-import { HandMachine, ChordHand, ChordDeck, HandRouter, handFeatures, makeTransform, DEFAULTS, CHORD_DEFAULTS } from './gesture.mjs';
+import { HandMachine, ChordHand, ChordDeck, HandRouter, SideLearner, sides, handFeatures, makeTransform, DEFAULTS, CHORD_DEFAULTS } from './gesture.mjs';
 import { AudioEngine, INSTRUMENTS } from './engine.mjs';
 import { encodeWav, concatChunks, encodeMidi } from './export.mjs';
 import { Lifecycle } from './lifecycle.mjs';
@@ -19,13 +19,16 @@ const store = { get(k, d) { try { const v = localStorage.getItem('air:' + k); re
 const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
 
 // ---------------------------------------------------------------- settings
+const SAVED = store.get('settings', {});
 const S = Object.assign({
   input: 'camera', system: 'persian', key: 'shur', rootPc: 7, octave: 4, refA4: 440, offsets: {}, instrument: 'soft', volume: 0.8,
-  accomp: true, chordSrc: 'auto', chords: DEFAULT_CHORDS.map(c => [...c]), trans: 550, dwell: CHORD_DEFAULTS.dwellMs, quant: false, melVol: 1, padVol: 0.45, bright: 'warm', rhythm: false, bpm: 84,
+  accomp: true, chordSrc: 'auto', chords: DEFAULT_CHORDS.map(c => [...c]), trans: 350, dwell: CHORD_DEFAULTS.dwellMs, quant: false, melVol: 1, padVol: 0.45, bright: 'warm', rhythm: false, bpm: 84,
   policy: 'hold', selection: 'zones', swap: false, lefty: false, single: false,
-  koron: 60, diag: false, labelForRight: 'Left', pinchOn: DEFAULTS.pinchOn, pinchOff: DEFAULTS.pinchOff, calibrated: false, practiced: false,
-}, store.get('settings', {}));
+  koron: 60, diag: false, labelForRight: 'Right', v: 3, pinchOn: DEFAULTS.pinchOn, pinchOff: DEFAULTS.pinchOff, calibrated: false, practiced: false,
+}, SAVED);
 if (!Array.isArray(S.chords) || S.chords.length !== 5 || S.chords.some(c => !Array.isArray(c) || !(c[1] in QUALITIES))) S.chords = DEFAULT_CHORDS.map(c => [...c]);
+// settings saved by an earlier version: faster chord changes, and left/right is learned again from where the hands are
+if (SAVED.v !== 3) { S.v = 3; S.dwell = CHORD_DEFAULTS.dwellMs; S.trans = 350; S.labelForRight = 'Right'; S.swap = false; }
 const save = () => store.set('settings', S);
 let tuning, slots;
 function rebuildTuning() {
@@ -154,10 +157,15 @@ function applyGestureSettings() {
   chordHand.configure({ dwellMs: S.dwell, slots: 5 });
 }
 let routeRole = {}, lastHands = [], lastHandsAt = 0;
+const sideLearner = new SideLearner();
 function handleHands(t, hands) {
   const transform = makeTransform({ mirrored: true, swap: S.swap, labelForRight: S.labelForRight });
   router.transform = transform; router.leftHanded = S.lefty; router.mode = S.single ? 'single' : 'two';
   const dets = hands.map(h => ({ landmarks: h.landmarks.map(transform.point), label: h.label, score: h.score }));
+  // left and right come from where the hands are in the mirror image; the model's own labels are only a fallback for one hand
+  const sd = sides(dets); dets.forEach((d, i) => { if (sd[i]) d.side = S.swap ? (sd[i] === 'right' ? 'left' : 'right') : sd[i]; });
+  const learned = sideLearner.learn(t, dets, S.labelForRight);
+  if (learned) { S.labelForRight = learned; save(); router.transform = makeTransform({ mirrored: true, swap: S.swap, labelForRight: learned }); }
   lastHands = dets; lastHandsAt = t;
   if (onboarding.handle(t, dets)) return;
   const locked = id => (routeRole[id] === 'melody' && held.melody != null) || (routeRole[id] === 'accomp' && pad.slot != null && pad.source === 'camera');
@@ -195,12 +203,16 @@ const onboarding = {
     this.step = step; this.since = performance.now(); this.cand = null;
     const skip = ['رد کردن', () => this.go(step === 'right' ? 'pinch' : 'practice')];
     const mh = S.lefty ? 'چپ' : 'راست';
-    if (step === 'right') coach(`دست ${mh}ت را بالا بیاور`, `فقط دست ${mh}ت را باز جلوی دوربین نگه دار تا چپ و راست را بشناسیم.`, [skip]);
+    if (step === 'right') { if (S.single) coach(`دست ${mh}ت را بالا بیاور`, `فقط دست ${mh}ت را باز جلوی دوربین نگه دار تا چپ و راست را بشناسیم.`, [skip]); else coach('هر دو دست را بالا بیاور', 'دو دستت را باز و با فاصله از هم جلوی دوربین نگه دار. چپ و راست از جای دست‌ها در تصویر شناخته می‌شود.', [skip]); }
     else if (step === 'pinch') { this.pinch = { min: 9, max: 0, n: 0 }; coach('چند بار نیشگون بگیر', 'نوک شست و اشاره را چند بار به هم برسان و باز کن تا اندازهٔ دستت را بشناسیم.', [skip]); }
     else if (step === 'practice') { if (!practice) startPractice(); }
     else if (step === 'free') { if (!practice && !learnMode) coach(null); }
   },
   handle(t, dets) {
+    if (this.step === 'right' && !S.single) {   // two hands apart: sides are known from their positions (and the label mapping is learned from them)
+      if (sides(dets)[0]) { this.cand ??= { at: t }; if (t - this.cand.at > 600) this.go('pinch'); } else this.cand = null;
+      return true;
+    }
     if (this.step === 'right') {
       if (dets.length === 1) {
         if (!this.cand || this.cand.label !== dets[0].label) this.cand = { label: dets[0].label, at: t };
@@ -543,7 +555,7 @@ els.root.onchange = () => { S.rootPc = Number(els.root.value); save(); retune();
 els.ref.onchange = () => { S.refA4 = Math.max(415, Math.min(466, Number(els.ref.value) || 440)); els.ref.value = S.refA4; save(); retune(); };
 els.koron.onchange = () => { S.koron = Math.max(20, Math.min(90, Number(els.koron.value) || 60)); els.koron.value = S.koron; save(); };
 els.reset.onclick = () => { delete S.offsets[S.system + ':' + S.key]; save(); retune(); };
-els.swap.onchange = () => { S.swap = els.swap.checked; save(); panicSoft(); };
+els.swap.onchange = () => { S.swap = els.swap.checked; save(); panicSoft(); router?.setTransform(makeTransform({ mirrored: true, swap: S.swap, labelForRight: S.labelForRight })); };
 els.lefty.onchange = () => { S.lefty = els.lefty.checked; save(); panicSoft(); els.ring.dataset.side = S.lefty ? 'right' : 'left'; renderSettings(); };
 els.single.onchange = () => { S.single = els.single.checked; save(); panicSoft(); renderSettings(); };
 els.accomp.onchange = () => { S.accomp = els.accomp.checked; save(); if (!S.accomp) { padStop(); chordHand.silence('off'); pad.pending = null; } renderRing(); renderSummary(); renderMeters(); };

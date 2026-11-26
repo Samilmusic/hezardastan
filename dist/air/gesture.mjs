@@ -27,7 +27,7 @@ const d2 = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
  * preview is mirrored. Handedness labels are NOT trusted blindly: `labelToRole` comes from calibration
  * («دست راستت را بالا بیاور») and can be swapped manually.
  */
-export function makeTransform({ mirrored = true, swap = false, labelForRight = 'Left' } = {}) {
+export function makeTransform({ mirrored = true, swap = false, labelForRight = 'Right' } = {}) {
   return {
     mirrored, swap, labelForRight,
     point: p => ({ x: mirrored ? 1 - p.x : p.x, y: p.y, z: p.z || 0 }),
@@ -197,8 +197,8 @@ export class HandMachine {
 
 // ======================================================================= chord hand: show 1–5 fingers, the chord stays
 export const CHORD_DEFAULTS = {
-  dwellMs: 320,       // a finger count must be shown this long before it becomes the chord
-  fistMs: 220,        // a closed fist must be held this long to release the pad
+  dwellMs: 200,       // a finger count must be shown this long before it becomes the chord (fast enough to follow a song)
+  fistMs: 180,        // a closed fist must be held this long to release the pad
   graceMs: 450,       // tracking may drop out this long with nothing changing (and nothing shown)
   lossMs: 1600,       // after this long without the hand the pad is released (the caller fades it)
   restartMs: 180,     // a candidate that was not seen for this long starts its dwell again
@@ -291,6 +291,34 @@ export class ChordDeck {
 }
 
 /**
+ * Left and right from where the hands are, not from what the model calls them. The preview is a mirror, so with two
+ * hands in view the one further right on screen is the player's right hand. Model labels ("Left"/"Right") differ
+ * between library versions and devices; they are only used when a single hand is in view, with a mapping that is
+ * learned here whenever two hands are clearly apart.
+ *   sides(dets)        → ['left'|'right'|null, …] per detection (display space, already mirrored); null = not decidable
+ *   SideLearner.learn  → feeds the label mapping; returns the model label of the player's right hand when it changes
+ */
+export function sides(dets, minGap = 0.14) {
+  if (dets.length !== 2) return dets.map(() => null);
+  const dx = dets[0].landmarks[0].x - dets[1].landmarks[0].x;
+  if (Math.abs(dx) < minGap) return [null, null];
+  return dx > 0 ? ['right', 'left'] : ['left', 'right'];
+}
+export class SideLearner {
+  constructor({ holdMs = 350 } = {}) { this.holdMs = holdMs; this.cand = null; this.since = 0; }
+  /** t: ms; dets with model labels; current: the label now taken for the right hand. Returns a new label or null. */
+  learn(t, dets, current) {
+    const sd = sides(dets);
+    if (sd[0] == null || dets[0].label === dets[1].label) { this.cand = null; return null; }
+    const seen = dets[sd[0] === 'right' ? 0 : 1].label;
+    if (seen === current) { this.cand = null; return null; }
+    if (this.cand !== seen) { this.cand = seen; this.since = t; return null; }
+    if (t - this.since < this.holdMs) return null;
+    this.cand = null; return seen;
+  }
+}
+
+/**
  * Assigns detections to two persistent slots by wrist proximity, and gives each slot a role ('melody'/'accomp')
  * from a smoothed vote of the transformed handedness. A slot that is sounding keeps its role, so a one-frame
  * label flip can never move a sustained voice to the other hand.
@@ -300,8 +328,8 @@ export class HandRouter {
     this.transform = transform; this.mode = mode; this.leftHanded = leftHanded; this.voteMs = voteMs;
     this.slots = [this._slot(0), this._slot(1)];
   }
-  _slot(i) { return { id: i, wrist: null, seen: -Infinity, vote: 0, role: null }; }
-  setTransform(t) { this.transform = t; this.slots.forEach(s => { s.vote = 0; if (!s.locked) s.role = null; }); }
+  _slot(i) { return { id: i, wrist: null, seen: -Infinity, vote: 0, role: null, sure: false }; }
+  setTransform(t) { this.transform = t; this.slots.forEach(s => { s.vote = 0; s.sure = false; if (!s.locked) s.role = null; }); }
   roleForHand(hand) {
     if (this.mode === 'single') return 'melody';
     const melodyHand = this.leftHanded ? 'left' : 'right';
@@ -322,20 +350,21 @@ export class HandRouter {
       usedDet.add(p.di); free.delete(p.si);
       const s = this.slots[p.si], d = detections[p.di];
       const dt = Math.max(1, t - (s.seen === -Infinity ? t - 33 : s.seen));
+      if (s.seen === -Infinity || t - s.seen > 800) s.sure = false;                 // a hand that was gone is a new hand
       s.wrist = d.landmarks[0]; s.seen = t;
-      const vote = this.transform.hand(d.label) === 'right' ? 1 : -1;
-      const a = 1 - Math.exp(-dt / this.voteMs);
-      s.vote += (vote * (d.score ?? 1) - s.vote) * a;
-      const hand = s.vote >= 0 ? 'right' : 'left';
-      const wanted = this.roleForHand(hand);
-      if (!isLocked(s.id) || s.role == null) s.role = wanted;
-      result.push({ slot: s.id, role: s.role, hand, det: d });
+      if (d.side && !s.sure) { s.sure = true; s.vote = d.side === 'right' ? 1 : -1; s.role = this.roleForHand(d.side); }   // position decides, once, and overrides an earlier guess from a label
+      else if (!s.sure) {
+        const vote = this.transform.hand(d.label) === 'right' ? 1 : -1, a = 1 - Math.exp(-dt / this.voteMs);
+        s.vote += (vote * (d.score ?? 1) - s.vote) * a;
+        if (!isLocked(s.id) || s.role == null) s.role = this.roleForHand(s.vote >= 0 ? 'right' : 'left');
+      }                                                                             // once sure, a tracked hand keeps its side even if the hands cross
+      result.push({ slot: s.id, role: s.role, hand: s.vote >= 0 ? 'right' : 'left', det: d });
     }
     // in two-hand mode never give both slots the same role in one frame: the stronger vote keeps it
     if (this.mode !== 'single' && result.length === 2 && result[0].role === result[1].role) {
       const [a, b] = result, sa = this.slots[a.slot], sb = this.slots[b.slot];
-      const loser = isLocked(a.slot) ? b : isLocked(b.slot) ? a : Math.abs(sa.vote) >= Math.abs(sb.vote) ? b : a;
-      if (!isLocked(loser.slot)) { loser.role = loser.role === 'melody' ? 'accomp' : 'melody'; this.slots[loser.slot].role = loser.role; }
+      const loser = sa.sure !== sb.sure ? (sa.sure ? b : a) : isLocked(a.slot) ? b : isLocked(b.slot) ? a : Math.abs(sa.vote) >= Math.abs(sb.vote) ? b : a;
+      if (!isLocked(loser.slot) || sa.sure !== sb.sure) { loser.role = loser.role === 'melody' ? 'accomp' : 'melody'; this.slots[loser.slot].role = loser.role; }
     }
     if (this.mode === 'single' && result.length === 2) {
       // single-hand melody: only the slot that is already playing (or the first) is used
