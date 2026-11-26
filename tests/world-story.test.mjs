@@ -2,7 +2,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, existsSync, statSync } from 'node:fs';
-import { buildScene, studentAt, cameraAt, perchFor, storyState, drawScene, PERCHES } from '../dist/world/scene.mjs';
+import { buildScene, studentAt, cameraAt, birdAt, birdFaces, storyState, drawScene } from '../dist/world/scene.mjs';
 
 const read = f => readFileSync(new URL('../dist/' + f, import.meta.url), 'utf8');
 const html = read('world.html');
@@ -32,16 +32,31 @@ test('the timeline is continuous: camera and student never jump between neighbou
 
 test('the story opens from above and ends on the whole world', () => {
   const a = cameraAt(0, false), z = cameraAt(5, false);
-  assert.equal(a.e, 90); assert.ok(z.e < 70, 'the last view is angled');
+  assert.equal(a.e, 90); assert.ok(z.e > cameraAt(4.15, false).e, 'the view rises at the end');
   assert.ok(z.w > cameraAt(2.2, false).w * 2, 'the last view is much wider than the classroom view');
   assert.ok(studentAt(0)[1] > studentAt(2.2)[1], 'the learner walks in from the gate to the classroom');
   assert.ok(studentAt(3.3)[0] > 26, 'by chapter four the learner is at home');
 });
 
-test('the bird always has a perch and only moves forward through them', () => {
-  let last = -1;
-  for (let p = 0; p <= 5; p += 0.05) { const i = perchFor(p); assert.ok(i >= last, 'perch order at p=' + p.toFixed(2)); last = i; }
-  assert.equal(last, PERCHES.length - 1);
+test('the viewer is the bird: its flight is continuous, it rests at every stop and the camera travels with it', () => {
+  let b0 = birdAt(0).pos;
+  for (let p = 0.005; p <= 5.0001; p += 0.005) { const b = birdAt(p).pos; assert.ok(b.every(Number.isFinite)); assert.ok(Math.hypot(b[0] - b0[0], b[1] - b0[1], b[2] - b0[2]) < 0.9, 'bird jumps at p=' + p.toFixed(3)); b0 = b; }
+  for (const p of [0.5, 1, 1.45, 2.2, 3.3]) assert.equal(birdAt(p).fly, 0, 'perched at p=' + p);
+  for (const p of [0.2, 2.75, 4.15, 5]) assert.ok(birdAt(p).fly > 0.5, 'in the air at p=' + p);
+  for (const phone of [false, true]) for (let p = 0; p <= 5; p += 0.05) { const c = cameraAt(p, phone), b = birdAt(p).pos;
+    assert.ok(Math.abs(c.tx - b[0]) < c.w * 0.62 && Math.abs(c.ty - b[1]) < c.h * 0.62, 'the bird stays in the frame at p=' + p.toFixed(2)); }
+  assert.ok(Math.hypot(birdAt(2.75).pos[0] - studentAt(2.75)[0], birdAt(2.75).pos[1] - studentAt(2.75)[1]) < 1.5, 'it flies home beside the learner');
+  assert.equal(typeof birdFaces(2.75, (x, y) => [x, y], 1), 'boolean');
+});
+
+test('the story ends with everything tied to the bird', () => {
+  assert.equal(storyState(4.2).connect, 0); assert.equal(storyState(5).connect, 1);
+  const S = buildScene(); assert.ok(S.nodes.length >= 6, 'reception, management, classes, courtyard and home');
+  const lines = []; const g = { poly() {}, polys() {}, ellipse() {}, glow() {}, rect() {}, lin: () => '#000', rad: () => '#000', line(pts, color) { lines.push(color); } };
+  const view = { W: 1200, H: 800, cx: 600, cy: 400, fitW: 1100, fitH: 740 };
+  drawScene(g, S, cameraAt(4.2, false), view, storyState(4.2), 0); const before = lines.length; lines.length = 0;
+  drawScene(g, S, cameraAt(5, false), view, storyState(5), 0);
+  assert.ok(lines.length >= before + S.nodes.length * 2, 'threads are drawn to every place');
 });
 
 test('every chapter draws with finite geometry at desktop and phone sizes', () => {

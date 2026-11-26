@@ -191,6 +191,7 @@ export function buildScene() {
   for (const [lx, ly] of [[14.9, 14.3], [21.5, 16.5], [28.6, 14.3]]) { prism(ngon(lx, ly, 0.06, 6), 0, 0.75, PAL.walnutD); box(lx - 0.14, ly - 0.14, lx + 0.14, ly + 0.14, 0.75, 1.02, PAL.glow, { bias: 0.02, top: PAL.brass }); S.pools.push({ x: lx, y: ly, r: 1.3, key: 'way' }); }
   for (const [bx, by, r] of [[17.5, 17.6, 0.55], [24, 17.3, 0.7], [25.2, 3, 0.6], [34.5, 3.4, 0.75], [4, 16.8, 0.7], [9, 17.2, 0.55], [35.5, 15, 0.7]]) ball(bx, by, r * 0.8, r, PAL.leaf);
   for (const [tx, ty, r, h] of [[22.8, 16.9, 0.5, 2.6], [31.8, 3.6, 0.55, 3], [36.2, 13.6, 0.5, 2.7], [1.5, 16.3, 0.5, 2.6], [26.6, 3.4, 0.45, 2.4]]) cone(tx, ty, r, h, PAL.cypress);
+  S.nodes = [[3, 2.6], [3, 8.4], [8.7, 2.8], [13.5, 2.8], [18.5, 2.8], [13.5, 9], [29.6, 9.2]]; // management, reception, three classes, courtyard, home
   S.WAY = WAY; S.rooms = { court: [13.5, 9], reception: [3, 8.4], management: [3, 2.6], classes: [13.5, 2.6], home: [29.9, 9] };
   return S;
 }
@@ -216,49 +217,79 @@ export function studentAt(p) {
   if (p < 2.5) return along(ROUTES.toClass, ss((p - 1.45) / 0.35));
   return along(ROUTES.toHome, ss((p - 2.5) / 0.48));
 }
-/** Camera keys. w/h: world units that must fit; e elevation, a azimuth (degrees); dim: spotlight strength. m: phone overrides. */
+/**
+ * The bird is the viewer: scrolling flies it through the story and the camera travels with it.
+ * Keys: p, then either a fixed spot `at` [x, y, z] or `follow` [dx, dy, dz] (an offset from the student).
+ * air: hovering (wings keep moving). flip: which way it faces while perched.
+ */
+const BIRD = [
+  { p: 0, at: [13.5, 14.4, 2.4], air: 1 },                                   // arriving over the gate
+  { p: 0.42, at: [14.72, 9.95, 0.3] }, { p: 0.6, at: [14.72, 9.95, 0.3] },   // rim of the pool
+  { p: 0.86, at: [3.62, 7.9, 0.78], flip: true }, { p: 1.12, at: [3.62, 7.9, 0.78], flip: true },   // reception desk
+  { p: 1.36, at: [4.05, 2.9, 0.78], flip: true }, { p: 1.54, at: [4.05, 2.9, 0.78], flip: true },   // management desk
+  { p: 1.84, at: [10.35, 0.25, 0.95], flip: true }, { p: 2.46, at: [10.35, 0.25, 0.95], flip: true }, // shelf in the classroom
+  { p: 2.62, follow: [0.55, -0.5, 1.7], air: 1 }, { p: 2.9, follow: [0.55, -0.5, 1.7], air: 1 },    // flying home with the learner
+  { p: 3.04, at: [30.6, 9.9, 1.36], flip: true }, { p: 3.52, at: [30.6, 9.9, 1.36], flip: true },   // on the music stand at home
+  { p: 3.92, at: [21.5, 7.4, 5], air: 1 }, { p: 4.4, at: [18.4, 6.6, 5.4], air: 1 },               // riding the sound back to class
+  { p: 4.84, at: [15.4, -4.6, 4.2], air: 1 }, { p: 5, at: [15.4, -4.6, 4.2], air: 1 },               // above everything, holding it together
+];
+const spot = (k, p) => { if (!k.follow) return k.at; const s = studentAt(p); return [s[0] + k.follow[0], s[1] + k.follow[1], k.follow[2]]; };
+/** Where the bird is at story position p. Returns { pos: [x, y, z], fly: 0…1 (in the air), flip }. */
+export function birdAt(p) {
+  p = Math.max(0, Math.min(5, p)); let i = 0; while (i < BIRD.length - 2 && p > BIRD[i + 1].p) i++;
+  const A = BIRD[i], B = BIRD[i + 1], t = ss((p - A.p) / (B.p - A.p)), a = spot(A, p), b = spot(B, p);
+  const d = Math.hypot(b[0] - a[0], b[1] - a[1], b[2] - a[2]), arc = Math.sin(Math.PI * t), lift = A.air && B.air ? 0 : Math.min(3.2, d * 0.17);
+  const air = lerp(A.air || 0, B.air || 0, t), moving = d > 0.01 ? Math.min(1, arc * 3) : 0;
+  return { pos: [lerp(a[0], b[0], t), lerp(a[1], b[1], t), lerp(a[2], b[2], t) + arc * lift], fly: Math.max(air, moving), flip: !!(t < 0.5 ? A.flip : B.flip) };
+}
+/** Does the bird face left on screen? P: the projection returned by drawScene; dir: +1 scrolling forward, −1 back. */
+export function birdFaces(p, P, dir = 1) {
+  const a = birdAt(Math.max(0, p - 0.012)).pos, b = birdAt(Math.min(5, p + 0.012)).pos, dx = (P(b[0], b[1], b[2])[0] - P(a[0], a[1], a[2])[0]) * dir;
+  const far = Math.hypot(b[0] - a[0], b[1] - a[1]);
+  return far > 0.03 && Math.abs(dx) > 0.2 ? dx < 0 : birdAt(p).flip;
+}
+
+/** Camera keys. w/h: world units that must fit; e elevation, a azimuth (degrees); dim: spotlight strength. m: phone overrides.
+ *  tx, ty say how the stop is framed; between stops the camera keeps its place relative to the bird (rel: explicit offset). */
 const KEYS = [
   { p: 0, tx: 10.4, ty: 6.3, w: 27, h: 17.5, e: 90, a: 0, dim: 0, m: { w: 24, h: 15.5 } },
-  { p: 0.38, tx: 11.2, ty: 6.6, w: 30, h: 20, e: 55, a: 32, dim: 0, m: { tx: 12.4, ty: 7.6, w: 19, h: 14.5 } },
-  { p: 0.58, tx: 11.2, ty: 6.6, w: 30, h: 20, e: 55, a: 32, dim: 0, m: { tx: 12.4, ty: 7.6, w: 19, h: 14.5 } },
+  { p: 0.38, tx: 11.2, ty: 6.6, w: 30, h: 20, e: 55, a: 32, dim: 0, m: { tx: 12.6, ty: 8, w: 15.5, h: 12 } },
+  { p: 0.6, tx: 11.2, ty: 6.6, w: 30, h: 20, e: 55, a: 32, dim: 0, m: { tx: 12.6, ty: 8, w: 15.5, h: 12 } },
   { p: 0.86, tx: 3.1, ty: 8.6, w: 11.5, h: 8.2, e: 50, a: 34, dim: 0.3, m: { w: 9.5, h: 7 } },
-  { p: 1.1, tx: 3.1, ty: 8.6, w: 11.5, h: 8.2, e: 50, a: 34, dim: 0.3, m: { w: 9.5, h: 7 } },
-  { p: 1.36, tx: 3.2, ty: 6, w: 13.5, h: 10.5, e: 52, a: 34, dim: 0.26, m: { w: 11.5, h: 9.5 } },
-  { p: 1.5, tx: 3.2, ty: 6, w: 13.5, h: 10.5, e: 52, a: 34, dim: 0.26, m: { w: 11.5, h: 9.5 } },
+  { p: 1.12, tx: 3.1, ty: 8.6, w: 11.5, h: 8.2, e: 50, a: 34, dim: 0.3, m: { w: 9.5, h: 7 } },
+  { p: 1.36, tx: 3.1, ty: 3.4, w: 11.5, h: 8.6, e: 52, a: 34, dim: 0.28, m: { w: 9.5, h: 7.4 } },
+  { p: 1.54, tx: 3.1, ty: 3.4, w: 11.5, h: 8.6, e: 52, a: 34, dim: 0.28, m: { w: 9.5, h: 7.4 } },
   { p: 1.84, tx: 8.6, ty: 2.9, w: 9.2, h: 7, e: 48, a: 36, dim: 0.32, m: { w: 7.6, h: 6 } },
   { p: 2.46, tx: 8.6, ty: 2.9, w: 9.2, h: 7, e: 48, a: 36, dim: 0.32, m: { w: 7.6, h: 6 } },
-  { p: 2.62, follow: 1, w: 15, h: 10.5, e: 52, a: 33, dim: 0.14, m: { w: 12, h: 9 } },
-  { p: 2.86, follow: 1, w: 16, h: 11, e: 54, a: 31, dim: 0.14, m: { w: 12.5, h: 9 } },
-  { p: 3.02, tx: 29.9, ty: 9, w: 10, h: 7.6, e: 48, a: 34, dim: 0.32, m: { w: 8.2, h: 6.4 } },
-  { p: 3.5, tx: 29.9, ty: 9, w: 10, h: 7.6, e: 48, a: 34, dim: 0.32, m: { w: 8.2, h: 6.4 } },
-  { p: 3.86, tx: 16.8, ty: 8.8, w: 32.5, h: 18, e: 56, a: 30, dim: 0, m: { w: 31.5, h: 19 } },
-  { p: 4.4, tx: 16.8, ty: 8.8, w: 32.5, h: 18, e: 56, a: 30, dim: 0, m: { w: 31.5, h: 19 } },
-  { p: 4.8, tx: 15.6, ty: 9.4, w: 37, h: 22, e: 58, a: 27, dim: 0, m: { w: 34, h: 21 } },
-  { p: 5, tx: 15.6, ty: 9.4, w: 37, h: 22, e: 58, a: 27, dim: 0, m: { w: 34, h: 21 } },
+  { p: 2.62, rel: [-0.4, 0.5], w: 15, h: 10.5, e: 52, a: 33, dim: 0.14, m: { w: 11.5, h: 8.6 } },
+  { p: 2.9, rel: [-0.4, 0.5], w: 16, h: 11, e: 54, a: 31, dim: 0.14, m: { w: 12, h: 8.8 } },
+  { p: 3.04, tx: 29.9, ty: 9, w: 10, h: 7.6, e: 48, a: 34, dim: 0.32, m: { w: 8.2, h: 6.4 } },
+  { p: 3.52, tx: 29.9, ty: 9, w: 10, h: 7.6, e: 48, a: 34, dim: 0.32, m: { w: 8.2, h: 6.4 } },
+  { p: 3.92, tx: 17.2, ty: 8.6, w: 32.5, h: 18, e: 56, a: 30, dim: 0, m: { w: 31, h: 18.5 } },
+  { p: 4.4, tx: 17, ty: 8.6, w: 32.5, h: 18, e: 56, a: 30, dim: 0, m: { w: 31, h: 18.5 } },
+  { p: 4.84, tx: 16.2, ty: 6.2, w: 36, h: 25, e: 68, a: 14, dim: 0, m: { tx: 16.2, ty: 5.6, w: 34, h: 27 } },   // the view rises
+  { p: 5, tx: 16.2, ty: 6.2, w: 36, h: 25, e: 68, a: 14, dim: 0, m: { tx: 16.2, ty: 5.6, w: 34, h: 27 } },
 ];
+const framed = phone => KEYS.map(k => { const b = phone && k.m ? { ...k, ...k.m } : { ...k }; if (!k.rel) { const g = birdAt(k.p).pos; b.rel = [b.tx - g[0], b.ty - g[1]]; } return b; });
+const KD = framed(false), KM = framed(true);
 export function cameraAt(p, phone = false) {
-  const val = k => { const b = phone && k.m ? { ...k, ...k.m } : k; if (b.follow) { const s = studentAt(k.p); return { ...b, tx: s[0], ty: s[1] }; } return b; };
-  let i = 0; while (i < KEYS.length - 2 && p > KEYS[i + 1].p) i++;
-  const A = val(KEYS[i]), B = val(KEYS[i + 1]), t = ss((p - KEYS[i].p) / (KEYS[i + 1].p - KEYS[i].p)), out = {};
-  if (KEYS[i].follow && KEYS[i + 1].follow) { const s = studentAt(p); A.tx = B.tx = s[0]; A.ty = B.ty = s[1]; }
-  for (const k of ['tx', 'ty', 'w', 'h', 'e', 'a', 'dim']) out[k] = lerp(A[k], B[k], t);
+  const K = phone ? KM : KD; let i = 0; while (i < K.length - 2 && p > K[i + 1].p) i++;
+  const A = K[i], B = K[i + 1], t = ss((p - A.p) / (B.p - A.p)), out = {}, g = birdAt(p).pos;
+  for (const k of ['w', 'h', 'e', 'a', 'dim']) out[k] = lerp(A[k], B[k], t);
+  out.tx = g[0] + lerp(A.rel[0], B.rel[0], t); out.ty = g[1] + lerp(A.rel[1], B.rel[1], t);
   return out;
 }
-/** Bird perches (world) and the story position from which each one applies. */
-export const PERCHES = [
-  { from: -1, at: [14.72, 9.95, 0.3] }, { from: 0.72, at: [3.62, 7.9, 0.78], flip: true }, { from: 1.72, at: [10.35, 0.25, 0.95], flip: true },
-  { from: 2.56, at: [30.6, 9.9, 1.36], flip: true }, { from: 4.62, at: [13.5, 9, 0.72] },
-];
-export const perchFor = p => { let k = 0; for (let i = 0; i < PERCHES.length; i++) if (p >= PERCHES[i].from) k = i; return k; };
-export const BIRD_START = [5, -7, 9];
 /** Reveal amounts (0…1) of everything that changes with the story. */
 export function storyState(p) {
+  const b = birdAt(p);
   return {
-    reveal: ss(p / 0.34), labels: Math.max(1 - ss((p - 0.6) / 0.12), ss((p - 4.75) / 0.2)),
+    reveal: ss(p / 0.34), labels: Math.max(1 - ss((p - 0.28) / 0.14), ss((p - 4.72) / 0.2)),
     admin: ss((p - 1.08) / 0.3) * (1 - ss((p - 1.7) / 0.15)) + ss((p - 4.7) / 0.25),
     lesson: ss((p - 1.86) / 0.14) * (1 - ss((p - 2.5) / 0.08)),
     way: ss((p - 2.5) / 0.5), wayFade: 1 - 0.45 * ss((p - 3.1) / 0.3) + 0.45 * ss((p - 4.6) / 0.3),
     back: ss((p - 3.85) / 0.45), home: ss((p - 2.75) / 0.3), student: studentAt(p), withGuitar: p > 1.76,
+    connect: ss((p - 4.5) / 0.42),
+    bird: { gx: b.pos[0], gy: b.pos[1], gz: b.fly > 0.05 ? 0.02 : b.pos[2], x: b.pos[0], y: b.pos[1], z: b.pos[2], shadow: Math.max(0.3, 1 - b.pos[2] / 9) * (b.fly > 0.05 ? 0.85 : 1) },
   };
 }
 
@@ -331,6 +362,17 @@ export function drawScene(g, S, cam, view, st, time = 0) {
   if (st.back > 0.01) { const q = [], n = 70, A0 = [29.2, 9.3, 1.2], B0 = [7.5, 2.9, 1.3];
     for (let i = 0; i <= n * st.back; i++) { const t = i / n, env = Math.sin(Math.PI * t), sp = P(lerp(A0[0], B0[0], t), lerp(A0[1], B0[1], t), lerp(A0[2], B0[2], t) + env * 5.2); q.push(sp[0], sp[1] + Math.sin(t * 46 - time * 0.005) * Math.min(1, env * 3) * 0.12 * s); }
     if (q.length >= 4) { g.line(q, PAL.glow, Math.max(3, 0.3 * s), { alpha: 0.32, cap: 'round' }); g.line(q, PAL.tealL, Math.max(1.5, 0.085 * s), { cap: 'round' }); if (st.back < 0.995) g.ellipse(q[q.length - 2], q[q.length - 1], Math.max(3, 0.15 * s), Math.max(3, 0.15 * s), '#eafaf5'); } }
+  // the end: threads of light from the bird to every place
+  if (st.connect > 0.01 && st.bird) { const b0 = P(st.bird.x, st.bird.y, st.bird.z + 0.2);
+    S.nodes.forEach((nd, i) => { const amt = ss((st.connect - i * 0.07) / 0.55); if (amt <= 0.01) return;
+      const e1 = P(nd[0], nd[1], 0.05), mx = (b0[0] + e1[0]) / 2, my = (b0[1] + e1[1]) / 2 + Math.abs(e1[0] - b0[0]) * 0.12, n = 22, q = [];
+      const at = t => { const u = 1 - t; return [u * u * b0[0] + 2 * u * t * mx + t * t * e1[0], u * u * b0[1] + 2 * u * t * my + t * t * e1[1]]; };
+      for (let k = 0; k <= Math.round(n * amt); k++) { const c = at(k / n); q.push(c[0], c[1]); }
+      if (q.length < 4) return;
+      g.line(q, PAL.glow, Math.max(7, 0.5 * s), { alpha: 0.4, cap: 'round' }); g.line(q, PAL.brassL, Math.max(2.6, 0.13 * s), { alpha: 0.95, cap: 'round' }); g.line(q, '#fffaf0', Math.max(1, 0.05 * s), { alpha: 0.95, cap: 'round' });
+      if (amt > 0.97) { const r = Math.max(4, 0.42 * s); g.glow(e1[0], e1[1], r * 2.6, r * 2.6 * Math.max(0.35, se), PAL.glow, 0.7); g.ellipse(e1[0], e1[1], r * 0.55, r * 0.55 * Math.max(0.5, se), '#fff6dc');
+        if (time) { const c = at((time * 0.00032 + i * 0.19) % 1), d = Math.max(2.4, 0.13 * s); g.ellipse(c[0], c[1], d, d, '#fffaf0'); } }
+    }); }
   // spotlight
   if (cam.dim > 0.01) { const r = Math.max(view.fitW, view.fitH) * 0.62; g.rect(0, 0, view.W, view.H, g.rad(view.cx, view.cy, r * 1.5, [[0, 'rgba(58,38,20,0)'], [0.46, 'rgba(58,38,20,0)'], [1, `rgba(58,38,20,${(cam.dim * 0.8).toFixed(3)})`]])); }
   return api;

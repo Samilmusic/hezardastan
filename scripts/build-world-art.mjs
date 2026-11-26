@@ -2,7 +2,7 @@
 // Renders the static chapter illustrations of «جهانِ هزارآوا» (dist/world/ch1…6.svg, teaser.svg) from the same
 // scene model the live canvas uses. No dependencies. Usage: node scripts/build-world-art.mjs
 import { writeFileSync } from 'node:fs';
-import { buildScene, drawScene, cameraAt, storyState, PERCHES, perchFor } from '../dist/world/scene.mjs';
+import { buildScene, drawScene, cameraAt, storyState, birdAt, birdFaces } from '../dist/world/scene.mjs';
 
 const r1 = v => Math.round(v * 2) / 2;
 class Svg {
@@ -34,19 +34,18 @@ export const BIRD = `<linearGradient id="hb" x1="0" y1="0" x2="1" y2="1"><stop o
 
 const S = buildScene();
 export function still(p, W, H, title, o = {}) {
-  const g = new Svg(W, H), cam = { ...cameraAt(p, false), ...(o.cam || {}) }, st = storyState(p), perch = PERCHES[perchFor(p)].at;
-  st.bird = { gx: perch[0], gy: perch[1], gz: perch[2], shadow: 1 };
+  const g = new Svg(W, H), cam = { ...cameraAt(p, false), ...(o.cam || {}) }, st = storyState(p), bs = birdAt(p), at = bs.pos;
   if (o.state) Object.assign(st, o.state);
   const view = { W, H, cx: W * (o.cx ?? 0.5), cy: H * (o.cy ?? 0.52), fitW: W * (o.fit ?? 0.94), fitH: H * (o.fit ?? 0.94) };
   const api = drawScene(g, S, cam, view, st, 0);
-  const b = api.P(perch[0], perch[1], perch[2]), w = Math.max(54, 1.25 * api.s), k = Math.round(w / 160 * 1000) / 1000, flip = PERCHES[perchFor(p)].flip;
-  g.raw(`<g transform="translate(${r1(b[0] + (flip ? 86 : -86) * k)} ${r1(b[1] - 111 * k)}) scale(${flip ? -k : k} ${k})">${BIRD}</g>`);
+  const b = api.P(at[0], at[1], at[2]), base = Math.max(54, 1.25 * api.s), w = base + (Math.max(base, 120) - base) * st.connect, k = Math.round(w / 160 * 1000) / 1000, flip = birdFaces(p, api.P, 1);
+  g.raw(`<g transform="translate(${r1(b[0] + (flip ? 86 : -86) * k)} ${r1(b[1] - (bs.fly > 0.05 ? 84 : 111) * k)}) scale(${flip ? -k : k} ${k})">${BIRD}</g>`);
   return g.toString(title);
 }
 const out = new URL('../dist/world/', import.meta.url);
 const CH = [
-  [0.5, 'تصویرسازی خیالی از آموزشگاهی کوچک با حیاط و حوض'], [1.4, 'پذیرش و اتاق مدیریت، با مسیری روشن میان آن‌ها'], [2.2, 'کلاس: استاد و هنرجو با گیتار'],
-  [3.25, 'گوشهٔ تمرین در خانه'], [4.15, 'کمانی از صدا که خانه را به کلاس استاد وصل می‌کند'], [5, 'آموزشگاه و خانه در یک نگاه، با مسیرهای روشن'],
+  [0.5, 'تصویرسازی خیالی از آموزشگاهی کوچک با حیاط و حوض'], [1.45, 'اتاق مدیریت و پذیرش، با مسیری روشن میان آن‌ها'], [2.2, 'کلاس: استاد و هنرجو با گیتار'],
+  [3.25, 'گوشهٔ تمرین در خانه'], [4.15, 'کمانی از صدا که خانه را به کلاس استاد وصل می‌کند'], [5, 'آموزشگاه و خانه از بالا؛ رشته‌های نور، هزارآوا را به همه‌جا وصل می‌کند'],
 ];
 if (process.argv[1] && import.meta.url.endsWith(process.argv[1].split('/').pop())) {
   CH.forEach(([p, t], i) => { const svg = still(p, 1200, 800, t); writeFileSync(new URL(`ch${i + 1}.svg`, out), svg); console.log(`ch${i + 1}.svg`, svg.length); });
