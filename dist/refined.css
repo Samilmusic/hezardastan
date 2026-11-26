@@ -39,3 +39,15 @@
 }
 /* Narrow phones: the portal button keeps a readable short label instead of clipped text (accessible name unchanged). */
 @media(max-width:420px){.st .sx-portal{width:auto;min-width:46px;padding:0 12px;font-size:0}.st .sx-portal::after{content:'ورود';font-size:13px;font-weight:700}}
+
+/* Academy location: decorative compass, linked to the owner's exact Maps pin. */
+.st .academy-location{max-width:1280px;margin:28px var(--gut) 38px;display:grid;grid-template-columns:220px 1fr;align-items:center;gap:36px;padding:30px 40px;border:1px solid #cfb991;border-radius:20px;background:linear-gradient(120deg,#eee4d1,#fffaf0);overflow:hidden;position:relative}
+.academy-location-art{height:155px;position:relative;display:grid;place-items:center;background:radial-gradient(ellipse,#c9b68d44,transparent 66%)}
+.academy-location-art svg{height:94px;width:76px;fill:#20594f;stroke:#c8ad76;stroke-width:1.5;filter:drop-shadow(0 12px 9px #214b3930);z-index:1}
+.location-orbit{position:absolute;width:164px;height:95px;border:1px solid #b9a47b80;border-radius:50%;transform:rotate(-25deg)}
+.location-orbit:after{content:'';position:absolute;inset:12px -12px;border:1px solid #b9a47b50;border-radius:50%;transform:rotate(50deg)}
+.location-dot{position:absolute;bottom:15px;width:30px;height:7px;border-radius:50%;background:#43675633;filter:blur(2px)}
+.location-eyebrow{color:#79603b;font-size:12px}.st .academy-location h3{font-family:Vazir,Tahoma,sans-serif;font-size:26px;color:#342d25;line-height:1.8;margin:5px 0}.academy-location p{color:#655947;font-size:14px;margin:3px 0 18px}
+.st .location-directions{display:inline-flex;align-items:center;justify-content:center;gap:22px;min-height:48px;border-radius:11px;padding:12px 22px;background:#20594f;color:#fff;font-size:14px;font-weight:700;text-decoration:none;box-shadow:0 6px 16px #20594f15}.location-directions:hover{background:#143e36}.location-directions:focus-visible{outline:3px solid #9c763d;outline-offset:4px}
+@media(min-width:1440px){.st .academy-location{margin-inline:auto}}
+@media(max-width:600px){.st .academy-location{margin:20px 21px 30px;padding:22px;grid-template-columns:1fr;gap:4px;text-align:center;border-radius:17px}.academy-location-art{height:112px}.academy-location-art svg{height:76px}.location-orbit{width:140px;height:72px}.location-dot{bottom:3px}.st .academy-location h3{font-size:22px}.st .location-directions{display:flex;width:100%;font-size:13px}.academy-location p{margin-bottom:16px}}
