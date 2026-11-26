@@ -10,7 +10,7 @@
 <meta property="og:title" content="هزارآوا | دستانِ نوا"><meta property="og:description" content="دست‌هایت را حرکت بده؛ موسیقی بساز."><meta property="og:url" content="https://avayehezardastan.com/air.html">
 <link rel="icon" href="logo.png">
 <link rel="stylesheet" href="fonts.css">
-<link rel="stylesheet" href="air/air.css?v=20261126u">
+<link rel="stylesheet" href="air/air.css?v=20261126v">
 </head>
 <body class="air">
 <a class="air-skip" href="#air-main">رفتن به محتوای اصلی</a>
@@ -255,7 +255,8 @@
     <label class="air-range"><span>ریورب صدای خواننده</span><input type="range" id="air-film-reverb" min="0" max="40" step="1"><output id="air-film-reverb-out"></output></label>
     <ul class="air-film-notes">
       <li>با هدفون سیمی بهتر می‌شود؛ بدون هدفون، میکروفون صدای پد را از بلندگو هم می‌گیرد.</li>
-      <li>حداکثر ۳ دقیقه. فیلم روی همین دستگاه ساخته می‌شود و جایی فرستاده نمی‌شود.</li>
+      <li>حداکثر ۲ دقیقه. فیلم روی همین دستگاه ساخته می‌شود و جایی فرستاده نمی‌شود.</li>
+      <li>بعد از ضبط می‌توانی بلندی صدای خودت و ساز را جدا تنظیم کنی.</li>
       <li id="air-film-format"></li>
     </ul>
     <p class="air-take-error" id="air-film-error" role="alert" hidden></p>
@@ -266,9 +267,17 @@
   <div class="air-tut-head"><div><small id="air-film-meta"></small><h2 id="air-film-done-title">فیلم آماده است</h2></div><button type="button" class="air-x" data-close aria-label="بستن"><svg aria-hidden="true"><use href="#i-close"/></svg></button></div>
   <div class="air-tut-body air-film-body">
     <video class="air-film-video" id="air-film-video" controls playsinline preload="metadata"></video>
+    <p class="air-mix-progress" id="air-mix-progress" role="status"></p>
+    <div class="air-mix" id="air-mix" hidden>
+      <h3 class="air-group">تنظیم صدا بعد از ضبط</h3>
+      <p class="air-fine">پخش را بزن و بلندی‌ها را همان‌جا جابه‌جا کن.</p>
+      <label class="air-range"><span>صدای خواننده</span><input type="range" id="air-mix-voice" min="0" max="200" step="5" value="100"><output id="air-mix-voice-out"></output></label>
+      <label class="air-range"><span>ساز و پد</span><input type="range" id="air-mix-inst" min="0" max="200" step="5" value="100"><output id="air-mix-inst-out"></output></label>
+      <label class="air-range"><span>ریورب صدای خواننده</span><input type="range" id="air-mix-reverb" min="0" max="40" step="1" value="15"><output id="air-mix-reverb-out"></output></label>
+    </div>
     <p class="air-fine" id="air-film-note"></p>
   </div>
-  <div class="air-tut-foot"><button type="button" class="air-btn air-btn--ghost" id="air-film-again">دوباره</button><span></span><div class="air-film-out"><button type="button" class="air-btn air-btn--light" id="air-film-share" hidden>هم‌رسانی</button><a class="air-btn air-btn--primary" id="air-film-save" download>ذخیرهٔ فیلم</a></div></div>
+  <div class="air-tut-foot"><button type="button" class="air-btn air-btn--ghost" id="air-film-again">دوباره</button><span></span><div class="air-film-out"><a class="air-btn air-btn--ghost" id="air-film-raw" download hidden>ذخیرهٔ خام</a><button type="button" class="air-btn air-btn--primary" id="air-film-build" hidden>ساخت فیلم نهایی</button><button type="button" class="air-btn air-btn--light" id="air-film-share" hidden>هم‌رسانی</button><a class="air-btn air-btn--primary" id="air-film-save" download>ذخیرهٔ فیلم</a></div></div>
 </dialog>
 
 <!-- credits ------------------------------------------------------------- -->
@@ -287,6 +296,6 @@
   </div>
 </dialog>
 <noscript><p class="air-noscript">این تجربه برای پخش صدا به جاوااسکریپت نیاز دارد.</p></noscript>
-<script type="module" src="air/app.mjs?v=20261126u"></script>
+<script type="module" src="air/app.mjs?v=20261126v"></script>
 </body>
 </html>

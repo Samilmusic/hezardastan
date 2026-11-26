@@ -9,7 +9,7 @@ import { Lifecycle } from './lifecycle.mjs';
 import { PointerVoices } from './touch.mjs';
 import { EXERCISES, Exercise } from './learn.mjs';
 import { tutorialSteps, PlayCheck } from './tutorial.mjs';
-import { VideoTake, videoSupport } from './video.mjs';
+import { VideoTake, FilmMix, videoSupport } from './video.mjs';
 
 const $ = s => document.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -56,7 +56,8 @@ const els = {
   video: $('#air-video'), canvas: $('#air-canvas'), pads: $('#air-pads'), status: $('#air-status'), surface: $('#air-surface'),
   filmBtn: $('#air-film-btn'), filmDlg: $('#air-film'), filmMicOn: $('#air-film-mic-on'), filmReverb: $('#air-film-reverb'), filmReverbOut: $('#air-film-reverb-out'), filmFormat: $('#air-film-format'), filmError: $('#air-film-error'), filmStart: $('#air-film-start'),
   filmBar: $('#air-filmbar'), filmTime: $('#air-film-time'), filmMic: $('#air-film-mic'), filmStop: $('#air-film-stop'), filmCount: $('#air-film-count'),
-  filmDone: $('#air-film-done'), filmVideo: $('#air-film-video'), filmMeta: $('#air-film-meta'), filmNote: $('#air-film-note'), filmSave: $('#air-film-save'), filmShare: $('#air-film-share'), filmAgain: $('#air-film-again'),
+  filmDone: $('#air-film-done'), filmVideo: $('#air-film-video'), filmMeta: $('#air-film-meta'), filmNote: $('#air-film-note'), filmSave: $('#air-film-save'), filmShare: $('#air-film-share'), filmAgain: $('#air-film-again'), filmRaw: $('#air-film-raw'), filmBuild: $('#air-film-build'),
+  mix: $('#air-mix'), mixVoice: $('#air-mix-voice'), mixVoiceOut: $('#air-mix-voice-out'), mixInst: $('#air-mix-inst'), mixInstOut: $('#air-mix-inst-out'), mixReverb: $('#air-mix-reverb'), mixReverbOut: $('#air-mix-reverb-out'), mixProgress: $('#air-mix-progress'),
   hint: $('#air-hint'), padSound: $('#air-padsound'), padSoundPanel: $('#air-padsound-panel'),
   ring: $('#air-ring'), ringSlots: $('#air-ring-slots'), ringHl: $('#air-ring-hl'), ringCore: $('#air-ring-core'), ringNow: $('#air-ring-now'), ringState: $('#air-ring-state'),
   coach: $('#air-coach'), coachTitle: $('#air-coach-title'), coachBody: $('#air-coach-body'), coachChecks: $('#air-coach-checks'), coachActions: $('#air-coach-actions'),
@@ -174,6 +175,7 @@ function visiblePart() {
 const cursor = { x: 0, y: 0, pinch: 1, at: -Infinity };   // the melody hand as drawn: where it is and how close thumb and index are
 const sideLearner = new SideLearner();
 function handleHands(t, hands) {
+  if (els.filmDone.open) hands = [];                               // while a film is being reviewed the hands do not play
   const transform = makeTransform({ mirrored: true, swap: S.swap, labelForRight: S.labelForRight });
   router.transform = transform; router.leftHanded = S.lefty; router.mode = S.single ? 'single' : 'two';
   const dets = hands.map(h => ({ landmarks: h.landmarks.map(transform.point), label: h.label, score: h.score }));
@@ -760,7 +762,7 @@ document.addEventListener('click', e => { if (els.takeMidi.open && !e.target.clo
 
 // ---------------------------------------------------------------- filming (picture of the performance + sound; optional microphone)
 // Only on the player's explicit action. The film is made in this tab and handed to the player; nothing is uploaded.
-let film = null, filmUrl = null, filmTimer = null, filmResult = null;
+let film = null, filmUrl = null, filmTimer = null, filmResult = null, filmMix = null, filmRawUrl = null;
 const filmSup = videoSupport();
 function filmMsg(text) { els.filmError.textContent = text || ''; els.filmError.hidden = !text; }
 function openFilm() {
@@ -776,7 +778,7 @@ els.filmBtn.onclick = openFilm;
 els.filmMicOn.onchange = () => { S.filmMic = els.filmMicOn.checked; els.filmReverb.disabled = !S.filmMic; save(); };
 els.filmReverb.oninput = () => { S.filmReverb = Number(els.filmReverb.value); els.filmReverbOut.textContent = fa(S.filmReverb) + '٪'; }; els.filmReverb.onchange = save;
 for (const d of [els.filmDlg, els.filmDone]) { d.addEventListener('click', e => { if (e.target === d || e.target.closest('[data-close]')) d.close(); }); }
-els.filmDone.addEventListener('close', () => { els.filmVideo.pause(); });
+els.filmDone.addEventListener('close', () => { els.filmVideo.pause(); closeMix(); });
 const countdown = async () => { for (const n of [3, 2, 1]) { els.filmCount.hidden = false; els.filmCount.textContent = fa(n); await new Promise(r => setTimeout(r, reduceMotion.matches ? 350 : 800)); } els.filmCount.hidden = true; };
 /** A title and the chords, drawn only into the film (the on-screen chord list is a control and is not filmed). */
 function drawFilmExtras(c, W, H) {
@@ -800,7 +802,7 @@ function drawFilmExtras(c, W, H) {
 async function startFilm() {
   if (film || !engine) return;
   els.filmStart.disabled = true; filmMsg('');
-  const take = new VideoTake({ engine, source: els.canvas, draw: drawFilmExtras, maxSec: 180, onLimit: () => stopFilm(true) });
+  const take = new VideoTake({ engine, source: els.canvas, draw: drawFilmExtras, maxSec: 120, onLimit: () => stopFilm(true) });
   try {
     await take.start({ mic: S.filmMic, reverb: S.filmReverb / 100, long: (navigator.hardwareConcurrency || 4) <= 2 ? 960 : 1280,
       before: async () => { els.filmDlg.close(); closePanel(false); coach(null); document.body.classList.add('is-film'); film = take; resizeCanvas(); await countdown(); } });
@@ -821,17 +823,56 @@ async function stopFilm(limit = false) {
   clearInterval(filmTimer); els.filmBar.hidden = true; els.filmCount.hidden = true; document.body.classList.remove('is-film'); els.filmBtn.setAttribute('aria-pressed', 'false');
   const r = await take.stop(); resizeCanvas();
   if (!r || !r.blob.size) { if (playing && !paused) { openFilm(); filmMsg('فیلمی ساخته نشد. دوباره امتحان کن.'); } return; }
-  if (filmUrl) URL.revokeObjectURL(filmUrl);
-  filmResult = r; filmUrl = URL.createObjectURL(r.blob);
-  const name = 'dastan-nava-' + new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-') + '.' + r.ext;
-  els.filmVideo.src = filmUrl; els.filmSave.href = filmUrl; els.filmSave.download = name;
+  panicSoft();                                                     // the instrument goes quiet so the film can be heard
+  filmResult = r; closeMix();
+  if (filmRawUrl) URL.revokeObjectURL(filmRawUrl); filmRawUrl = URL.createObjectURL(r.blob);
+  const stamp = new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-');
+  els.filmRaw.href = filmRawUrl; els.filmRaw.download = 'dastan-nava-' + stamp + '-raw.' + r.ext;
+  filmNoteBase = (limit ? 'به سقف ۲ دقیقه رسید. ' : '') + 'فیلم فقط روی همین دستگاه است؛ تا ذخیره یا هم‌رسانی نکنی، با بستن صفحه از بین می‌رود.';
+  if (r.stems) {                                                  // voice and instruments were kept apart: let the player set the balance
+    filmMix = new FilmMix({ blob: r.blob, stems: r.stems, ctx: engine?.ctx }); r.stems = null; filmMix.set({ reverb: S.filmReverb / 100 });
+    els.mixVoice.value = 100; els.mixInst.value = 100; els.mixReverb.value = S.filmReverb; renderMix();
+    els.filmVideo.src = filmRawUrl; els.filmVideo.muted = true;
+    els.filmVideo.onplay = () => filmMix?.preview(els.filmVideo);                 // the sound comes from the mix, not from the file
+    els.filmVideo.onvolumechange = () => { if (filmMix && !els.filmVideo.muted) els.filmVideo.muted = true; };
+    showFilmStage('mix', r, stamp);
+  } else { showFinal(r, stamp); }
+  if (!els.filmDone.open) els.filmDone.showModal();
+}
+let filmNoteBase = '';
+function closeMix() { filmMix?.close(); filmMix = null; els.filmVideo.onplay = null; els.filmVideo.onvolumechange = null; els.mixProgress.textContent = ''; }
+function renderMix() { els.mixVoiceOut.textContent = fa(els.mixVoice.value) + '٪'; els.mixInstOut.textContent = fa(els.mixInst.value) + '٪'; els.mixReverbOut.textContent = fa(els.mixReverb.value) + '٪';
+  filmMix?.set({ voice: Number(els.mixVoice.value) / 100, engine: Number(els.mixInst.value) / 100, reverb: Number(els.mixReverb.value) / 100 }); }
+for (const r of [els.mixVoice, els.mixInst, els.mixReverb]) r.oninput = renderMix;
+/** 'mix': levels can be set and the final film still has to be made · 'final': a finished file to save or share. */
+function showFilmStage(stage, r, stamp) {
+  const mixing = stage === 'mix';
+  els.filmDone.classList.toggle('is-mixing', mixing); els.mix.hidden = !mixing; els.filmBuild.hidden = !mixing; els.filmRaw.hidden = !mixing; els.filmSave.hidden = mixing; if (mixing) els.filmShare.hidden = true;
   els.filmMeta.textContent = fmtTime(r.seconds) + ' · ' + fa((r.blob.size / 1048576).toFixed(1)) + ' مگابایت · ' + r.ext.toUpperCase();
-  els.filmNote.textContent = (limit ? 'به سقف ۳ دقیقه رسید. ' : '') + (r.mic ? 'صدای میکروفون در فیلم هست. ' : '') + 'فیلم فقط روی همین دستگاه است؛ تا ذخیره یا هم‌رسانی نکنی، با بستن صفحه از بین می‌رود.';
+  $('#air-film-done-title').textContent = mixing ? 'صدا را تنظیم کن' : 'فیلم آماده است';
+  els.filmNote.textContent = mixing ? 'بلندی‌ها از روی خودِ ضبط پیشنهاد شده‌اند. «ذخیرهٔ خام» همان فیلمِ ضبط‌شده را بدون تنظیم می‌دهد.' : filmNoteBase;
+}
+function showFinal(r, stamp) {
+  if (filmUrl) URL.revokeObjectURL(filmUrl); filmUrl = URL.createObjectURL(r.blob);
+  const name = 'dastan-nava-' + stamp + '.' + r.ext;
+  els.filmVideo.onplay = null; els.filmVideo.muted = false; els.filmVideo.src = filmUrl; els.filmSave.href = filmUrl; els.filmSave.download = name;
+  showFilmStage('final', r, stamp);
   const file = typeof File === 'function' ? new File([r.blob], name, { type: r.mime }) : null;
   els.filmShare.hidden = !(file && navigator.canShare?.({ files: [file] }));
   els.filmShare.onclick = async () => { try { await navigator.share({ files: [file], title: 'دستانِ نوا' }); } catch {} };
-  if (!els.filmDone.open) els.filmDone.showModal();
 }
+els.filmBuild.onclick = async () => {
+  if (!filmMix || !filmResult) return;
+  els.filmBuild.disabled = true; els.filmAgain.disabled = true; els.filmVideo.pause(); els.filmVideo.controls = false;
+  for (const r of [els.mixVoice, els.mixInst, els.mixReverb]) r.disabled = true;
+  try {
+    const out = await filmMix.build(p => { els.mixProgress.textContent = 'در حال ساخت فیلم نهایی… ' + fa(Math.round(p * 100)) + '٪ (صفحه را باز نگه دار)'; }, els.filmVideo);
+    const r = { ...filmResult, blob: out.blob, mime: out.mime, ext: out.ext }, stamp = new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-');
+    closeMix(); filmResult = r; showFinal(r, stamp);
+  } catch (e) { els.mixProgress.textContent = e?.kind === 'cancelled' ? '' : 'ساخت فیلم نهایی انجام نشد؛ «ذخیرهٔ خام» همچنان در دسترس است.'; if (filmMix && filmRawUrl) els.filmVideo.src = filmRawUrl; }
+  els.filmBuild.disabled = false; els.filmAgain.disabled = false; els.filmVideo.controls = true;
+  for (const r of [els.mixVoice, els.mixInst, els.mixReverb]) r.disabled = false;
+};
 els.filmStart.onclick = startFilm;
 els.filmStop.onclick = () => stopFilm();
 els.filmAgain.onclick = () => { els.filmDone.close(); openFilm(); };
@@ -1058,6 +1099,6 @@ if (!canCam) $('input[name="air-input"][value="camera"]').disabled = true;
 // test hook for automated browser checks (no effect on normal use)
 window.__air = {
   feed: (t, hands) => router && handleHands(t, hands), pauseTracking: () => tracker?.stop(), get step() { return onboarding.step; },
-  get engine() { return engine; }, get life() { return life; }, get pad() { return { ...pad }; }, get practice() { return practice && practice.stage; }, get slots() { return slots; }, get film() { return film; }, get filmResult() { return filmResult; }, openFilm, startFilm, stopFilm, get chordHand() { return chordHand; }, select: chordSelect, get settings() { return S; },
+  get engine() { return engine; }, get life() { return life; }, get pad() { return { ...pad }; }, get practice() { return practice && practice.stage; }, get slots() { return slots; }, get film() { return film; }, get filmResult() { return filmResult; }, openFilm, startFilm, stopFilm, get filmMix() { return filmMix; }, get chordHand() { return chordHand; }, select: chordSelect, get settings() { return S; },
   get tracker() { return tracker; }, get camera() { return camera; }, panic, stopPlaying, startPlaying, get events() { return events; },
 };

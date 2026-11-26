@@ -56,7 +56,8 @@ export class AudioEngine {
       this.buses.accomp.gain.value = 1; this.buses.rhythm.gain.value = 0.5;
       for (const b of Object.values(this.buses)) b.connect(this.master);
       this._buildPadChain();
-      this.master.connect(this.limiter).connect(this.out).connect(c.destination);
+      this.monitor = c.createGain(); this.monitor.gain.value = 1;       // speakers only: recordings and films take the mix before it
+      this.master.connect(this.limiter).connect(this.out).connect(this.monitor).connect(c.destination);
       c.onstatechange = () => this.emit({ type: 'state', state: c.state });
     }
     if (this.ctx.state !== 'running') await this.ctx.resume();
@@ -370,13 +371,16 @@ export class AudioEngine {
    * The final mix as a MediaStream (for filming). Other sources, such as a microphone, may be connected to `dest`;
    * they then go into that stream only, never to the speakers. delay: seconds added to the engine's own sound.
    */
-  createOutputStream({ delay = 0 } = {}) {
-    const c = this.ctx, dest = c.createMediaStreamDestination(), sum = c.createGain(), lim = c.createDynamicsCompressor(); let dl = null;
+  /** Loudness of the speakers alone (1 = normal). Does not change what is recorded or filmed. */
+  setMonitor(g) { if (this.monitor) this.monitor.gain.setTargetAtTime(Math.max(0, Math.min(2, g)), this.ctx.currentTime, 0.05); }
+  createOutputStream({ delay = 0, level = 1 } = {}) {
+    const c = this.ctx, dest = c.createMediaStreamDestination(), sum = c.createGain(), lim = c.createDynamicsCompressor(), pre = c.createDelay(1), lvl = c.createGain();
     lim.threshold.value = -3; lim.knee.value = 2; lim.ratio.value = 20; lim.attack.value = 0.003; lim.release.value = 0.15;   // whatever is added (a voice) cannot clip the film's sound
     const trim = c.createGain(); trim.gain.value = 0.75;                 // the compressor adds make-up gain; leave headroom for the encoder
     sum.connect(lim).connect(trim).connect(dest);
-    if (delay > 0) { dl = c.createDelay(1); dl.delayTime.value = Math.min(1, delay); this.out.connect(dl); dl.connect(sum); } else this.out.connect(sum);
-    return { dest: sum, stream: dest.stream, close: () => { try { if (dl) { this.out.disconnect(dl); dl.disconnect(); } else this.out.disconnect(sum); sum.disconnect(); lim.disconnect(); trim.disconnect(); } catch {} } };
+    pre.delayTime.value = Math.max(0, Math.min(1, delay)); lvl.gain.value = level; this.out.connect(pre); pre.connect(lvl).connect(sum);
+    // dest: connect other sources here (they go into the stream only) · pre: the engine's own sound, delayed, before its level
+    return { dest: sum, pre, stream: dest.stream, close: () => { try { this.out.disconnect(pre); pre.disconnect(); lvl.disconnect(); sum.disconnect(); lim.disconnect(); trim.disconnect(); } catch {} } };
   }
 
   // ---------------------------------------------------------------- recording (post-limiter mix: melody + accompaniment + rhythm)

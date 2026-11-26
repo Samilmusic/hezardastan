@@ -677,11 +677,15 @@ test('privacy: camera tracking never records or asks for the microphone; only th
   const tracker = read('tracker.mjs'), video = read('video.mjs'), app = read('app.mjs'), engine = read('engine.mjs');
   assert.match(tracker, /getUserMedia\(\{ audio: false/); assert.ok(!/MediaRecorder|captureStream/.test(tracker));
   assert.equal((video.match(/getUserMedia/g) || []).length, 1, 'one microphone request, inside the film module');
-  assert.match(video, /if \(mic\) \{\s*try \{ micStream = await navigator\.mediaDevices\.getUserMedia/, 'only when the player turned the microphone on');
+  assert.match(video, /if \(mic\) \{[\s\S]{0,500}?try \{ micStream = await navigator\.mediaDevices\.getUserMedia/s, 'only when the player turned the microphone on');
+  assert.match(video, /if \(micStream\) \{[\s\S]*?await this\._stems\(/, 'voice and instruments are kept apart only for a take with the microphone');
+  assert.ok(!/localStorage|indexedDB|caches\./.test(video), 'takes and stems stay in memory; nothing is stored');
   assert.ok(!/getUserMedia\(/.test(app) && !/getUserMedia/.test(engine), 'no other code asks for a device (the app only checks that the API exists)');
   for (const [name, src] of [['video', video], ['app', app]]) assert.ok(!/fetch\(|XMLHttpRequest|WebSocket|sendBeacon|RTCPeerConnection/.test(src), name + ' does not send anything anywhere');
   assert.match(video, /this\.mic\?\.getTracks\(\)\.forEach\(t => t\.stop\(\)\)/, 'the microphone is released when the take ends');
-  assert.ok(!/destination/.test(video.replace(/createMediaStreamDestination/g, '')), 'the microphone is never connected to the speakers');
+  const takeSrc = video.slice(video.indexOf('export class VideoTake'), video.indexOf('export class FilmMix')).replace(/createMediaStreamDestination/g, '');
+  assert.equal((takeSrc.match(/destination/g) || []).length, 1, 'while filming, one path reaches the output…');
+  assert.match(takeSrc, /sink\.gain\.value = 0; from\.connect\(n\); n\.connect\(sink\)\.connect\(ctx\.destination\)/, '…and it is silent (it only keeps the stem recorder running): the live microphone is never heard from the speakers');
   const html = fs.readFileSync(new URL('../dist/air.html', import.meta.url), 'utf8');
   assert.match(html, /فقط اگر خودت «ضبط ویدئو» را بزنی/); assert.ok(!/میکروفون درخواست نمی‌شود/.test(html), 'the page no longer claims the microphone is never requested');
 });
@@ -715,4 +719,34 @@ test('MIDI keeps accompaniment notes on their own program/channel', () => {
   const progs = m.filter(e => (e.status & 0xf0) === 0xc0);
   const padNoteChs = m.filter(e => (e.status & 0xf0) === 0x90 && e.data[1] > 0 && e.data[0] < 58).map(e => e.status & 15);
   for (const ch of padNoteChs) { const last = progs.filter(p => (p.status & 15) === ch).pop(); assert.equal(last.data[0], 89, 'channel ' + ch + ' switched to the pad program'); }
+});
+
+test('filming: balance after the take — levels are suggested from the stems and the speakers have their own gain', async () => {
+  const { rms16, suggestBalance, FilmMix } = await import('../dist/air/video.mjs');
+  const tone = (n, amp) => Int16Array.from({ length: n }, (_, i) => Math.round(Math.sin(i / 7) * amp * 32767));
+  assert.equal(rms16(new Int16Array(0)), 0); assert.ok(Math.abs(rms16(tone(48000, 0.5)) - 0.354) < 0.01, 'RMS of a sine at half scale');
+  // a quiet voice over a loud pad: the voice comes up, the pad goes down
+  const quiet = suggestBalance({ voice: tone(48000, 0.03), engine: [tone(48000, 0.4), tone(48000, 0.4)] });
+  assert.ok(quiet.voice > 2 && quiet.engine < 0.4, JSON.stringify(quiet));
+  const after = (lvl, g) => lvl * g;
+  assert.ok(after(0.03 * Math.SQRT1_2, quiet.voice) > after(0.4 * Math.SQRT1_2, quiet.engine) * 0.5, 'the voice is no longer buried');
+  // a loud voice over a soft pad is brought down rather than up; limits hold; silence is left alone
+  const loud = suggestBalance({ voice: tone(48000, 0.9), engine: [tone(48000, 0.02), tone(48000, 0.02)] });
+  assert.ok(loud.voice < 1 && loud.voice >= 0.5 && loud.engine <= 1.5, JSON.stringify(loud));
+  assert.deepEqual(suggestBalance({ voice: new Int16Array(100), engine: [new Int16Array(100), new Int16Array(100)] }), { voice: 1, engine: 1 });
+  assert.ok(suggestBalance({ voice: tone(48000, 0.0005), engine: [tone(48000, 0.4), tone(48000, 0.4)] }).voice <= 5, 'room noise is not turned into a roar');
+  const mix = new FilmMix({ blob: null, stems: { sampleRate: 48000, voice: tone(96000, 0.1), engine: [tone(96000, 0.2), tone(96000, 0.2)] } });
+  assert.equal(mix.seconds, 2); mix.set({ voice: 1.5, engine: 0.4 }); assert.deepEqual(mix.levels, { voice: 1.5, engine: 0.4, reverb: 0.15 });
+  // engine: the film tap carries its own level and exposes the delayed dry signal; the monitor gain is for the speakers only
+  const { engine } = await startEngine();
+  assert.ok(engine.monitor && typeof engine.setMonitor === 'function');
+  const tap = engine.createOutputStream({ delay: 0.05, level: 0.6 }); assert.ok(tap.pre && tap.dest && typeof tap.close === 'function'); tap.close();
+  const fs = await import('node:fs'); const read = f => fs.readFileSync(new URL('../dist/air/' + f, import.meta.url), 'utf8');
+  const video = read('video.mjs'), worklet = read('recorder-worklet.js'), eng = read('engine.mjs');
+  assert.match(eng, /connect\(this\.out\)\.connect\(this\.monitor\)\.connect\(c\.destination\)/, 'speakers: mix → monitor → output');
+  assert.match(eng, /this\.out\.connect\(pre\)/, 'films take the mix before the monitor gain');
+  assert.match(video, /session\.type = 'play-and-record'/, 'iPhone/iPad are told the page plays and records at once');
+  assert.match(video, /_session\(\)[^\n]*\n?/, 'and the audio session is given back afterwards');
+  assert.match(worklet, /registerProcessor\('air-stem'/); assert.match(worklet, /registerProcessor\('air-recorder'/);
+  assert.ok(!/fetch\(|XMLHttpRequest|WebSocket|sendBeacon/.test(worklet), 'the stem recorder sends nothing anywhere');
 });
