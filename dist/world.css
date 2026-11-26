@@ -1,0 +1,133 @@
+/* جهانِ هزارآوا — the story page. Default = simple view (complete without scripts); .wd--cinema = live scene.
+   Presentation only; no portal selectors. */
+.sx--world{--dock:0px}
+.wd{--wd-hh:var(--hh,74px);--wd-bar:48px;--wd-stage:clamp(210px,40vh,340px);position:relative;background:var(--ivory)}
+@supports (height:1svh){.wd{--wd-stage:clamp(210px,40svh,340px)}}
+.wd :focus-visible{outline:2px solid #2f7c72;outline-offset:3px;border-radius:8px}
+.wd-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* ---- control bar: chapter indicator, skip, view switch */
+.wd-top{position:sticky;top:var(--wd-hh);z-index:30}
+.wd-bar{display:flex;align-items:center;gap:6px;min-height:var(--wd-bar);padding:0 max(10px,calc(var(--gut) - 10px));background:#faf7eff7;border-bottom:1px solid var(--line,#ded7c7)}
+.wd-dots ol{display:flex;margin:0;padding:0;list-style:none}
+.wd-dots a{display:grid;place-items:center;width:26px;height:44px}
+.wd-dots a span{display:block;width:8px;height:8px;border-radius:50%;background:#cfc3aa;transition:width .25s,background-color .25s}
+.wd-dots a[aria-current] span{width:20px;border-radius:5px;background:var(--teal,#205952)}
+.wd-count{font-size:12.5px;font-weight:700;color:#7a6a4c;white-space:nowrap;margin-inline-start:2px}
+.wd-bar-actions{display:flex;gap:6px;margin-inline-start:auto}
+.wd-ctl{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:0 12px;border:1px solid #d5c4a2;border-radius:10px;background:#fffdf8;font:700 13px/1.4 Vazir,Tahoma,sans-serif;color:#5d492a;text-decoration:none;white-space:nowrap;cursor:pointer}
+.wd-ctl:hover{background:#f3ebdb}
+.wd-ctl[disabled]{opacity:.55;cursor:progress}
+.wd-ctl[hidden]{display:none}
+.wd-msg{margin:0;padding:8px var(--gut);font-size:13.5px;color:#5d492a;background:#f3ebdb;border-bottom:1px solid var(--line,#ded7c7)}
+.wd-msg:empty{display:none}
+
+/* ---- stage (cinema only) */
+.wd-stage{display:none;overflow:hidden;background:#efe5d0;direction:ltr}
+.wd-stage canvas{display:block;width:100%;height:100%}
+.wd-bird{position:absolute;left:0;top:0;width:160px;height:124px;transform-origin:0 0;pointer-events:none;opacity:0;will-change:transform}
+.wd-bird svg{display:block;width:160px;height:124px;overflow:visible}
+.wd-bird .hv-wing{transform-box:fill-box;transform-origin:28% 62%}
+.wd-bird .hv-legs{transition:opacity .2s}
+.wd-bird.is-flying .hv-legs{opacity:0}
+.wd-bird.is-flying .hv-wing{animation:wd-flap .29s ease-in-out infinite alternate}
+.wd-bird.is-settling .hv-wing{animation:wd-settle .75s ease-out 1}
+@keyframes wd-flap{from{transform:rotate(-36deg) scaleY(1.18)}to{transform:rotate(16deg) scaleY(.78)}}
+@keyframes wd-settle{0%{transform:rotate(-24deg) scaleY(1.1)}45%{transform:rotate(7deg)}75%{transform:rotate(-3deg)}100%{transform:none}}
+.wd-label{position:absolute;left:0;top:0;padding:1px 11px;border:1px solid #e2d5bd;border-radius:12px;background:#fffdf8eb;font:700 12.5px/1.9 Vazir,Tahoma,sans-serif;color:#3a2a1e;white-space:nowrap;direction:rtl;opacity:0;pointer-events:none}
+
+/* ---- chapters: simple view (the site already pads anchors by the header height; add the story bar only) */
+.wd-ch{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,.8fr);align-items:center;gap:clamp(20px,4vw,60px);max-width:1240px;margin:0 auto;padding:clamp(28px,5vw,60px) var(--gut);scroll-margin-top:var(--wd-bar)}
+.wd-ch:nth-child(even){grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr)}
+.wd-ch:nth-child(even) .wd-fig{order:2}
+.wd-fig{margin:0}
+.wd-fig img{display:block;width:100%;height:auto;aspect-ratio:3/2;border-radius:18px;background:#efe5d0;box-shadow:0 0 0 1px #e2d5bd,0 34px 60px -44px #3a2a1eaa}
+.wd-card{min-width:0;max-width:470px}
+.wd-num{margin:0 0 6px;font-size:12.5px;font-weight:700;color:#8a6f3f}
+.wd .wd-title{margin:0 0 2px;font:600 clamp(34px,4.2vw,54px)/1.5 'Hezar Naskh',Vazir,Tahoma,serif;letter-spacing:0;color:var(--teal,#205952)}
+.wd .wd-card h2{margin:0 0 6px;font-size:clamp(22px,2.3vw,30px);line-height:1.7;color:var(--ink,#302c25)}
+.wd-card>p{margin:0;font-size:16px;line-height:2;color:var(--body,#5c594e);text-wrap:pretty}
+.wd-hint{display:inline-flex;align-items:center;gap:6px;margin-top:12px!important;font-size:13.5px!important;color:#8a6f3f!important}
+.wd-hint svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+
+/* props inside the cards */
+.wd-prop{margin-top:16px;border:1px solid #e3d8c2;border-radius:14px;background:#fffdf8;padding:12px 14px}
+.wd-prop-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
+.wd-prop-head b{font-size:14.5px}
+.wd-tag{padding:0 9px;border-radius:10px;background:#f1e8d5;font-size:11.5px;font-weight:700;line-height:1.9;color:#7a6034}
+.wd-rows{display:grid;gap:2px;margin:0;font-size:14px}
+.wd-rows div{display:flex;justify-content:space-between;gap:12px}
+.wd-rows dt{color:var(--muted,#777365)}.wd-rows dd{margin:0;font-weight:700;text-align:left}
+.wd-steps{display:grid;gap:6px;margin:10px 0 0;padding:10px 0 0;border-top:1px dashed #e0d3ba;list-style:none;font-size:13.5px}
+.wd-steps li{display:flex;align-items:center;gap:8px;color:var(--muted,#777365)}
+.wd-steps li::before{content:'';width:12px;height:12px;flex:none;border-radius:50%;border:1.5px solid #cdbb96;background:#fffdf8}
+.wd-steps .is-done{color:var(--body,#5c594e)}.wd-steps .is-done::before{background:#cdbb96}
+.wd-steps .is-now{color:#205952;font-weight:700}.wd-steps .is-now::before{border-color:#205952;background:#205952;box-shadow:0 0 0 3px #2059522b}
+.wd-chips{display:grid;gap:8px;margin:16px 0 0;padding:0;list-style:none}
+.wd-chips li{display:flex;align-items:center;gap:12px;font-size:14.5px;line-height:1.6}
+.wd-chips b{display:block;font-size:15px}.wd-chips small{display:block;font-size:12.5px;color:var(--muted,#777365)}
+.wd-chips .rg-icon{width:44px;height:44px;border-radius:13px;flex:none}.wd-chips .rg-icon svg{width:24px;height:24px}
+.wd-tools{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;margin:16px 0 0;padding:0;list-style:none}
+.wd-tools li{display:flex;flex-direction:column;align-items:center;gap:5px;font-size:12px;font-weight:700;line-height:1.5;text-align:center;color:var(--body,#5c594e)}
+.wd-tools .rg-icon{width:46px;height:46px;border-radius:14px}.wd-tools .rg-icon svg{width:25px;height:25px}
+.wd-flow{display:grid;gap:0;margin:0;padding:0;list-style:none}
+.wd-flow li{position:relative;padding:5px 0 7px;padding-inline-start:20px;font-size:14px;line-height:1.75}
+.wd-flow li::before{content:'';position:absolute;inset-inline-start:2px;top:12px;width:8px;height:8px;border-radius:50%;background:#205952}
+.wd-flow li:not(:last-child)::after{content:'';position:absolute;inset-inline-start:5.5px;top:22px;bottom:-10px;width:1px;background:#cdbb96}
+.wd-flow small{display:block;font-size:12px;font-weight:700;color:#8a6f3f}
+.wd-actions{display:flex;flex-wrap:wrap;gap:8px 10px;margin-top:18px;scroll-margin-top:calc(var(--wd-bar) + 16px)}
+.wd-actions .st-btn{flex:1 1 auto}
+.wd-actions .wd-portal{flex-basis:100%;justify-content:center}
+.wd-about{max-width:1240px;margin:0 auto;padding:6px var(--gut) 40px;font-size:13.5px;color:var(--muted,#777365)}
+.wd-about summary{display:inline-flex;align-items:center;min-height:44px;cursor:pointer;font-weight:700;color:#6d5a37}
+.wd-about p{margin:0;max-width:560px;line-height:1.9}
+
+@media (max-width:899px){
+  .wd-ch,.wd-ch:nth-child(even){grid-template-columns:1fr;gap:14px;padding:22px var(--gut)}
+  .wd-ch:nth-child(even) .wd-fig{order:0}
+  .wd-card{max-width:none}
+  .wd-count{display:none}
+  .wd-dots a{width:22px}
+  .wd-ctl{padding:0 10px;font-size:12.5px}
+}
+@media (max-width:359px){.wd-dots a{width:18px}.wd-dots a[aria-current] span{width:14px}.wd-ctl{padding:0 8px;font-size:12px}.wd-bar{gap:2px;padding-inline:8px}}
+
+/* ======================================================================= cinema: phones (stage on top, text below) */
+.wd--cinema .wd-fig,.wd-pending .wd-fig{display:none}
+.wd--cinema .wd-stage{display:block;position:relative;height:var(--wd-stage)}
+.wd--cinema .wd-top{background:var(--ivory);box-shadow:0 16px 22px -22px #3a2a1e99}
+.wd--cinema .wd-ch{display:flex;align-items:center;max-width:none;min-height:calc(100vh - var(--wd-hh) - var(--wd-bar) - var(--wd-stage));padding:16px var(--gut) 20px}
+@supports (height:1svh){.wd--cinema .wd-ch{min-height:calc(100svh - var(--wd-hh) - var(--wd-bar) - var(--wd-stage))}}
+.wd--cinema .wd-card{width:100%}
+.wd--cinema .wd-label{display:none}
+.wd--cinema .wd-ch:last-child{padding-bottom:calc(28px + env(safe-area-inset-bottom))}
+
+/* ======================================================================= cinema: wide (scene behind, cards beside) */
+@media (min-width:900px),(min-width:560px) and (max-height:520px){
+  .wd--cinema .wd-top{height:calc(100vh - var(--wd-hh));overflow:hidden;box-shadow:none;z-index:1}
+  .wd--cinema .wd-stage{position:absolute;inset:0;height:auto}
+  .wd--cinema .wd-bar{position:absolute;z-index:3;top:12px;left:12px;min-height:0;padding:0 6px 0 4px;border:1px solid #e2d5bd;border-radius:14px;background:#fffdf8f0}
+  .wd--cinema .wd-msg{position:absolute;z-index:3;left:12px;top:68px;border:1px solid #e2d5bd;border-radius:12px;max-width:340px}
+  .wd--cinema .wd-chapters{position:relative;z-index:2;margin-top:calc(var(--wd-hh) - 100vh);pointer-events:none}
+  .wd--cinema .wd-ch{min-height:86vh;padding:28px clamp(18px,4vw,64px)}
+  .wd--cinema .wd-ch:first-child{min-height:calc(100vh - var(--wd-hh))}
+  .wd--cinema .wd-card{pointer-events:auto;width:min(430px,40vw);padding:24px 26px;border:1px solid #e7dcc6;border-radius:18px;background:#fffdf8f5;box-shadow:0 34px 60px -40px #3a2a1eb0}
+  .wd--cinema .wd-label{display:block}
+  @supports (height:1svh){
+    .wd--cinema .wd-top{height:calc(100svh - var(--wd-hh))}
+    .wd--cinema .wd-chapters{margin-top:calc(var(--wd-hh) - 100svh)}
+    .wd--cinema .wd-ch{min-height:86svh}.wd--cinema .wd-ch:first-child{min-height:calc(100svh - var(--wd-hh))}
+  }
+}
+@media (min-width:560px) and (max-height:520px){
+  .wd--cinema .wd-card{width:min(360px,44vw);padding:14px 16px}
+  .wd .wd-title{font-size:30px}.wd .wd-card h2{font-size:20px}.wd-card>p{font-size:16px;line-height:1.8}
+  .wd-prop{margin-top:10px;padding:8px 12px}.wd-chips{margin-top:10px;gap:5px}.wd-tools{margin-top:10px}.wd-actions{margin-top:10px}
+  .wd--cinema .wd-ch{min-height:100vh}
+  .wd--cinema .wd-label{display:none}
+  /* simple view on a phone held sideways: picture beside the text, so a chapter fits the short screen */
+  .wd:not(.wd--cinema) .wd-ch,.wd:not(.wd--cinema) .wd-ch:nth-child(even){grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);align-items:start;gap:16px;padding:16px var(--gut)}
+  .wd:not(.wd--cinema) .wd-ch .wd-fig{order:0;position:sticky;top:calc(var(--wd-hh) + var(--wd-bar) + 10px)}
+}
+@media (prefers-reduced-motion:reduce){.wd-bird .hv-wing{animation:none!important}.wd-dots a span{transition:none}}
+@media print{.wd-top{display:none}}

@@ -37,3 +37,5 @@
 .st .sx-footer nav a,.st .sx-footer nav button{min-height:42px;font-size:12px;text-align:right}
 .st .sx-footer-base{padding-top:16px;gap:8px;font-size:11px;flex-direction:column;align-items:flex-start}
 }
+/* Narrow phones: the portal button keeps a readable short label instead of clipped text (accessible name unchanged). */
+@media(max-width:420px){.st .sx-portal{width:auto;min-width:46px;padding:0 12px;font-size:0}.st .sx-portal::after{content:'ورود';font-size:13px;font-weight:700}}

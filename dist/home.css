@@ -170,3 +170,23 @@
   .hm-hero-art{order:0}
   .st-arch-window{height:70svh}
 }
+
+/* «جهانِ هزارآوا» teaser */
+.hm-world{padding-top:clamp(28px,4vw,56px)}
+.hm-world-card{display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);align-items:center;border-radius:20px;overflow:hidden;background:#efe5d0;box-shadow:0 0 0 1px #e0d2b6,0 34px 60px -46px #3a2a1eaa;color:inherit;text-decoration:none}
+.hm-world-copy{display:flex;flex-direction:column;align-items:flex-start;gap:6px;padding:clamp(20px,3.4vw,44px)}
+.hm-world-copy small{font-size:12.5px;font-weight:700;color:#8a6f3f}
+.st .hm-world-copy h2{margin:0;font:600 clamp(32px,4vw,52px)/1.5 'Hezar Naskh',Vazir,Tahoma,serif;letter-spacing:0;color:#205952}
+.hm-world-copy>span:not(.st-btn){font-size:16px;line-height:1.9;color:#5c594e}
+.hm-world-copy .st-btn{margin-top:10px}
+.hm-world-art{display:block;align-self:stretch;height:clamp(230px,23vw,310px);overflow:hidden;-webkit-mask-image:linear-gradient(to right,#000 80%,transparent);mask-image:linear-gradient(to right,#000 80%,transparent)}
+.hm-world-art img{display:block;width:100%;height:100%;object-fit:cover;object-position:46% 50%;transition:transform .8s cubic-bezier(.22,.7,.12,1)}
+.hm-world-card:hover .hm-world-art img{transform:scale(1.035)}
+@media (max-width:767px){
+  .hm-world-card{grid-template-columns:1fr}
+  .hm-world-art{order:-1;height:auto;aspect-ratio:16/9;-webkit-mask-image:linear-gradient(to bottom,#000 80%,transparent);mask-image:linear-gradient(to bottom,#000 80%,transparent)}
+  .hm-world-art img{object-position:40% 50%}
+  .hm-world-copy{padding:6px 18px 20px}
+  .hm-world-copy .st-btn{align-self:stretch}
+}
+@media (prefers-reduced-motion:reduce){.hm-world-art img{transition:none}}
